@@ -1,0 +1,49 @@
+<br />
+<b>Warning</b>:  Unknown: Input variables exceeded 1000. To increase the limit change max_input_vars in php.ini. in <b>Unknown</b> on line <b>0</b><br />
+body{
+    background-image: url('tlo2.jpg');
+}
+h2 {
+    color: black !important;
+    /*width: fit-content;*/
+    display: table;
+    padding: 1% 2%;
+}
+
+.jeden, .dwa, .trzy{
+    color: rgb(100, 7, 7);
+    border: 5px solid black;
+    border-radius: 20px;
+    text-align: center;
+
+}
+.jeden{
+    background: linear-gradient(180deg, rgb(214, 197, 102) 0%, rgb(168, 167, 104) 25%,
+    rgb(196, 190, 139) 50%,  rgb(168, 167, 104) 75%, rgb(214, 197, 102) 100%);
+}
+.dwa{
+    background: linear-gradient(180deg, rgb(102, 212, 214) 0%, rgb(104, 168, 121) 25%,
+    rgb(176, 196, 139) 50%,  rgb(104, 168, 121) 75%, rgb(102, 212, 214) 100%);
+}
+.trzy{
+    background: linear-gradient(180deg, rgb(159, 253, 255) 0%, rgb(115, 217, 235) 25%,
+    rgb(87, 159, 187) 50%, rgb(115, 217, 235) 75%, rgb(159, 253, 255) 100%)
+}
+iframe {
+    display: none;
+}
+.widoczny {
+    display: block;
+}
+
+
+h2 {
+  cursor:pointer;
+    }
+h2:hover {
+    background: linear-gradient(180deg, rgb(214, 102, 102) 0%, rgb(212, 117, 117) 25%,
+    rgb(255, 95, 95) 50%,  rgb(212, 117, 117) 75%,  rgb(214, 102, 102) 100%);
+    }
+.taskowe a:hover {
+        background: linear-gradient(180deg, rgb(214, 102, 102) 0%, rgb(212, 117, 117) 25%,
+        rgb(255, 95, 95) 50%,  rgb

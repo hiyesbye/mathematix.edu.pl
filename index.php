@@ -1,0 +1,87 @@
+<br />
+<b>Warning</b>:  Unknown: Input variables exceeded 1000. To increase the limit change max_input_vars in php.ini. in <b>Unknown</b> on line <b>0</b><br />
+<?php
+  session_start();
+?>
+
+<!DOCTYPE html>
+<html>
+<meta charset="utf-8">
+    <head>
+        <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+        <?php echo "<link rel='stylesheet' href='mystyle.css'>" ?>
+        <title>Mathematix</title>
+    </head>
+    <body>
+    <div class="obrazek2">
+            <img src="niebo2.jpg" style="width:100%; height:100%;">
+            <div class="centered3">Mathemati(x)</div>
+        </div>  
+        <div>
+        <ul id="navbar">
+            <li><a href="index.php">Aktualności</a></li>
+            <li class="dropdown">
+                <a href="javascript:void(0)" class="dropbtn">Filmy instruktażowe</a>
+                <div class="dropdown-content">
+                  <a href="klasa IV.html" title="Filmy z klasy IV">Klasa IV</a>
+                  <a href="klasa V.html" title="Filmy z klasy V">Klasa V</a>
+                  <a href="klasa VI.html" title="Filmy z klasy VI">Klasa VI</a>
+                  <a href="klasa VII.html" title="Filmy z klasy VII">Klasa VII</a>
+                  <a href="klasa VIII.html" title="Filmy z klasy VIII">Klasa VIII</a>
+                </div></li>
+                <li class="dropdown">
+                <a href="javascript:void(0)" class="dropbtn">Zadania</a>
+                <div class="dropdown-content">
+                  <a href="konkurs.php" title="Zadania konkursowe" style="font-size:80%;">Zadania konkursowe</a>
+                  <a href="taski.php" title="Zadania dodatkowe" style="font-size:80%;">Zadania dodatkowe</a>
+                  <li class="dropdown">
+                <a href="javascript:void(0)" class="dropbtn">Rozkłady materiału</a>
+                <div class="dropdown-content">
+                  <a href="./Klasa IV - Rozkład materiału.pdf" title="Rozkład materiału w klasie IV" target="_blank">Klasa IV</a>
+                  <a href="./Klasa V - Rozkład materiału.pdf" title="Rozkład materiału w klasie V" target="_blank">Klasa V</a>
+                  <a href="./Klasa VI - Rozkład materiału.pdf" title="Rozkład materiału w klasie VI" target="_blank">Klasa VI</a>
+                  <a href="./Klasa VII - Rozkład materiału.pdf" title="Rozkład materiału w klasie VII" target="_blank">Klasa VII</a>
+                  <a href="./Klasa VIII - Rozkład materiału.pdf" title="Rozkład materiału w klasie VIII" target="_blank">Klasa VIII</a>
+                </div></li>
+                <li><a href='https://eduone.pl/bialystok' target='_blank'>Dziennik elektroniczny</a></li>
+                <?php
+                  if (isset($_SESSION["useruid"])) {
+                    echo "<li><a href='profil.php'>Twój profil<br>[" 
+                    .$_SESSION['useruid'] . "]</a></li>";
+                    echo "<li><a href='includes/logout.inc.php'>Wyloguj się</a></li>";
+                    if($_SESSION["userid"] == "1"){
+                      echo "<li><a href='signup.php'>Zarejestruj się</a></li>";
+                    }
+                  }
+                  else {
+                    echo "<li><a href='login.php'>Zaloguj się</a></li>";
+                  }
+                ?>
+          </ul>
+                </div>
+          <div class="pusty">
+          &nbsp
+          </div>
+          <div id="newsy">
+            <div style="height:20px;"></div>
+            <h1 class="malaramka">Aktualności</h1>
+            <div style="height:20px;"></div>
+
+            <h2 class="malaramka">27.08.2023 r.</h2>
+              <p class="duzaramka">Filmy instruktażowe dla klas IV, VII oraz VIII są już w pełni kompletne.</p>
+
+            <h2 class="malaramka">14.09.2022 r.</h2>
+              <p class="duzaramka">Od dziś, w klasie VIII, wszystkie filmy instruktażowe, z całego 
+                rozkładu materiału są dostępne.<br><br> 
+              Wrzuciłem również trudniejsze zadania do ćwiczeń. Tu jeśli ktoś miałby 
+              ochotę potrenować do konkursu przedmiotowego.</p>
+
+            <h2 class="malaramka">04.09.2022 r.</h2>
+              <p class="duzaramka">Został dodany rozkład materiału w klasie IV. Od następnego tygodnia na 
+                bieżąco będą wrzucane filmy instruktażowe oparte na treściach rozkładu materiału. Rozkłady 
+                rozpisane zostały szczegółowo, gdyż wskazują konkretne umiejętności, które uczniowie zdobywają
+                w trakcie każdego z tematów.</p>
+
+            <h2 class="malaramka">28.08.2022 r.</h2>
+            <p class="duzaramka">Wreszcie wystartowała stronka z materiałami z matematyki. 
+              Strona będzie na bieżąco uzupełniana i poprawiana. Na chwil
