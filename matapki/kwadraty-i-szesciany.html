@@ -1,0 +1,671 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#eceffe">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Kwadraty">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔢</text></svg>">
+<title>Kwadraty i sześciany liczb</title>
+<style>
+  :root {
+    --bg:        #eceffe;
+    --card:      #ffffff;
+    --primary:   #4a6cf7;
+    --good:      #1e9e5a;
+    --bad:       #d64040;
+    --text:      #1e2340;
+
+    --score-bg:  #d6f5e6; --score-text: #1a7a44; --score-bdr: #a8e8c8;
+    --timer-bg:  #fff4d6; --timer-text: #b86b00; --timer-bdr: #ffd98a;
+
+    --sq-grad: linear-gradient(145deg,#6a11cb,#a044ff);
+    --sq-glow: rgba(106,17,203,.30);
+    --cu-grad: linear-gradient(145deg,#c45800,#f58220);
+    --cu-glow: rgba(196,88,0,.30);
+    --mx-grad: linear-gradient(145deg,#0f7ea8,#1ec8a0);
+    --mx-glow: rgba(15,126,168,.30);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin:0; padding:0; background:var(--bg);
+    font-family:"Segoe UI",Verdana,Arial,sans-serif; color:var(--text); }
+  body { display:flex; align-items:center; justify-content:center;
+    min-height:100vh; padding:16px; }
+
+  /* ── Card ───────────────────────────────────────────── */
+  .card {
+    background:var(--card); width:100%; max-width:420px;
+    border-radius:24px; box-shadow:0 12px 36px rgba(30,40,120,.14);
+    padding:28px 24px 32px; text-align:center;
+    position:relative; overflow:hidden;
+  }
+  /* ── Title box ──────────────────────────────────────── */
+  .title-box {
+    background: linear-gradient(135deg,#7b3fe8,#b060ff);
+    border: 3px solid #4a18a8;
+    border-radius: 18px;
+    padding: 13px 20px;
+    margin-bottom: 14px;
+    box-shadow: 0 2px 10px rgba(90,30,180,.25);
+  }
+  h1 {
+    font-family: "Cambria","Georgia","Palatino Linotype","Book Antiqua","Times New Roman",serif;
+    font-size: clamp(.85rem, 3.8vw, 1.5rem);
+    margin: 0;
+    letter-spacing: .5px;
+    font-style: italic;
+    white-space: nowrap;
+    color: #f0e6ff;
+    -webkit-text-fill-color: #f0e6ff;
+    text-shadow: 0 1px 6px rgba(60,0,120,.4);
+  }
+
+  /* ── Row label chip (Moduł: / Tryb:) ────────────────── */
+  .row-label {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    padding: 4px 9px;
+    border-radius: 9px;
+    background: #c6ceed;
+    color: #3d4470;
+    font-size: .78rem;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: default;
+    user-select: none;
+  }
+
+  /* ── Content tabs (Kwadraty / Sześciany / Mieszane) ─── */
+  .tabs {
+    display:flex; border-radius:14px; background:#eef0fb;
+    padding:4px; gap:4px; margin-bottom:10px;
+  }
+  .tab {
+    flex:1; border:none; background:transparent; border-radius:11px;
+    padding:9px 3px; font-size:.78rem; font-weight:700; color:#6672a8;
+    cursor:pointer; transition:background .18s,color .18s,box-shadow .18s;
+    line-height:1.3; box-shadow:none;
+  }
+  .tab:not([class*="active"]):hover { background:#dfe2f5; color:var(--text); }
+  .tab.active-sq { background:linear-gradient(135deg,#6a11cb,#a044ff); color:#fff; box-shadow:0 3px 10px rgba(106,17,203,.35); }
+  .tab.active-cu { background:linear-gradient(135deg,#c45800,#f58220); color:#fff; box-shadow:0 3px 10px rgba(196,88,0,.30); }
+  .tab.active-mx { background:linear-gradient(135deg,#0f7ea8,#1ec8a0); color:#fff; box-shadow:0 3px 10px rgba(15,126,168,.35); }
+
+  /* ── Mode tabs (Normalny / Czasowy) ────────────────── */
+  .tabs-mode {
+    display:flex; border-radius:12px; background:#eef0fb;
+    padding:3px; gap:3px; margin-bottom:18px;
+  }
+  .tab-mode {
+    flex:1; border:none; background:transparent; border-radius:10px;
+    padding:8px 6px; font-size:.88rem; font-weight:700; color:#6672a8;
+    cursor:pointer; transition:background .18s,color .18s,box-shadow .18s;
+    box-shadow:none;
+  }
+  .tab-mode:not(.active-normal):not(.active-timed):hover { background:#dfe2f5; color:var(--text); }
+  .tab-mode.active-normal { background:linear-gradient(135deg,#5b7fff,#3a54e8); color:#fff; box-shadow:0 3px 10px rgba(74,108,247,.35); }
+  .tab-mode.active-timed  { background:linear-gradient(135deg,#e8604a,#f5a623); color:#fff; box-shadow:0 3px 10px rgba(232,96,74,.35); }
+
+  /* ── Stats ──────────────────────────────────────────── */
+  .stats { display:flex; gap:10px; margin-bottom:20px; }
+  .stat-box { flex:1; border-radius:14px; padding:10px 6px; font-weight:700; }
+  .stat-label { font-size:.7rem; text-transform:uppercase; letter-spacing:.8px; opacity:.7; margin-bottom:2px; }
+  .stat-value { font-size:1.35rem; }
+  .score-box { background:var(--score-bg); color:var(--score-text); border:2px solid var(--score-bdr); }
+  .timer-box { background:var(--timer-bg); color:var(--timer-text); border:2px solid var(--timer-bdr);
+    transition:background .3s,color .3s,border-color .3s; }
+  .timer-box.warn   { background:#ffe0cc; color:#c04000; border-color:#ffb480; }
+  .timer-box.danger { background:#ffd6d6; color:#c00000; border-color:#ff9090;
+    animation:timerPulse .5s ease-in-out infinite alternate; }
+  @keyframes timerPulse { from{transform:scale(1);} to{transform:scale(1.05);} }
+
+  /* ── Question box ───────────────────────────────────── */
+  .question-box {
+    color:#fff; border-radius:18px; padding:24px 16px; margin-bottom:20px;
+    transition:background .35s,box-shadow .35s; position:relative;
+  }
+  .question-box.sq { background:var(--sq-grad); box-shadow:0 6px 22px var(--sq-glow); }
+  .question-box.cu { background:var(--cu-grad); box-shadow:0 6px 22px var(--cu-glow); }
+  .question-box.mx { background:var(--mx-grad); box-shadow:0 6px 22px var(--mx-glow); }
+  .question {
+    font-family:"Bahnschrift","DIN Alternate","Arial Rounded MT Bold","Trebuchet MS",sans-serif;
+    font-weight:700; line-height:1;
+    text-shadow:0 2px 8px rgba(0,0,0,.18);
+    display:inline-flex; align-items:flex-start; gap:2px;
+    flex-wrap:nowrap;
+  }
+  .base { font-size:clamp(2.8rem, 19vw, 5rem); }
+  .exp  { font-size:clamp(2.8rem, 19.3vw, 5.1rem); margin-top:-1.2rem; }
+
+  /* ── Form ───────────────────────────────────────────── */
+  form { display:flex; flex-direction:column; gap:12px; margin-bottom:14px; }
+  input[type="number"] {
+    width:100%; font-size:1.6rem; text-align:center; padding:12px 8px;
+    border:2px solid #cdd5f7; border-radius:14px; outline:none;
+    -moz-appearance:textfield; transition:border-color .15s;
+  }
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+  input[type="number"]:focus { border-color:var(--primary); }
+
+  button {
+    width:100%; font-size:1.1rem; font-weight:700; padding:13px 20px;
+    border:none; border-radius:14px;
+    background:linear-gradient(135deg,#5b7fff,#3a54e8); color:white;
+    cursor:pointer; transition:filter .15s,transform .06s;
+    letter-spacing:.3px; box-shadow:0 4px 14px rgba(74,108,247,.35);
+  }
+  button:hover  { filter:brightness(1.08); }
+  button:active { transform:scale(.97); }
+  button.secondary {
+    background:transparent; border:2px solid #d0d6f5;
+    color:#6672a8; font-weight:600; box-shadow:none; margin-top:2px;
+  }
+  button.secondary:hover { background:#f2f4fd; filter:none; }
+  button:disabled { opacity:.4; cursor:not-allowed; filter:none !important; transform:none !important; }
+  button.secondary:disabled { opacity:.35; cursor:not-allowed; }
+
+  /* ── Feedback ───────────────────────────────────────── */
+  .feedback {
+    min-height:66px; font-size:1.15rem; font-weight:700;
+    display:flex; align-items:center; justify-content:center;
+    border-radius:14px; padding:10px 14px; margin-bottom:10px; line-height:1.4;
+  }
+  .feedback.good  { background:#d6f5e6; color:var(--good); border:2px solid #a8e8c8; }
+  .feedback.bad   { background:#fde8e8; color:var(--bad);  border:2px solid #f4b8b8; }
+  .feedback.empty { visibility:hidden; }
+
+  /* ── Two-button row ─────────────────────────────────── */
+  .btn-row { display:flex; gap:10px; }
+  .btn-row button { margin-top:0; }
+
+  /* ── Difficulty selection ───────────────────────────── */
+  .diff-screen { padding:4px 0 8px; }
+  .diff-heading { font-size:1.05rem; font-weight:700; margin-bottom:14px; opacity:.85; }
+  .diff-buttons { display:flex; flex-direction:column; gap:10px; }
+  .diff-btn {
+    display:flex; align-items:center; gap:14px; width:100%;
+    padding:14px 18px; border:none; border-radius:16px;
+    cursor:pointer; text-align:left; color:white; font-weight:700;
+    transition:filter .15s,transform .06s; letter-spacing:normal; box-shadow:none;
+  }
+  .diff-btn:hover  { filter:brightness(1.08); }
+  .diff-btn:active { transform:scale(.97); }
+  .diff-icon { font-size:1.9rem; line-height:1; }
+  .diff-info { display:flex; flex-direction:column; gap:2px; }
+  .diff-name { font-size:1.05rem; }
+  .diff-desc { font-size:.78rem; opacity:.88; font-weight:600; }
+  .diff-easy   { background:linear-gradient(135deg,#1e9e5a,#38d68a); box-shadow:0 4px 14px rgba(30,158,90,.3); }
+  .diff-medium { background:linear-gradient(135deg,#c07800,#f5c030); box-shadow:0 4px 14px rgba(192,120,0,.3); }
+  .diff-hard   { background:linear-gradient(135deg,#d64040,#f07070); box-shadow:0 4px 14px rgba(214,64,64,.3); }
+
+  /* ════════════════════════════════════════════════════
+     ANIMACJE
+  ════════════════════════════════════════════════════ */
+  #animLayer {
+    position:absolute; inset:0; pointer-events:none; z-index:100;
+    border-radius:24px; overflow:hidden;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .anim-correct-num {
+    font-family:"Bahnschrift","DIN Alternate","Arial Rounded MT Bold",sans-serif;
+    font-size:9rem; font-weight:900; color:#fff; line-height:1; letter-spacing:2px;
+    text-shadow:0 0 10px #7fffb0,0 0 25px #50ff80,0 0 55px #20e860,0 0 100px #00c840;
+    animation:correctPop 1.3s cubic-bezier(.22,1,.36,1) forwards;
+    position:relative; z-index:2;
+  }
+  @keyframes correctPop {
+    0%   { opacity:0; transform:scale(.2) rotate(-8deg); }
+    28%  { opacity:1; transform:scale(1.18) rotate(2deg); }
+    50%  { transform:scale(.94) rotate(-1deg); }
+    68%  { opacity:1; transform:scale(1.04) rotate(.5deg); }
+    85%  { opacity:1; transform:scale(1); }
+    100% { opacity:0; transform:scale(1.4); }
+  }
+  .particle {
+    position:absolute; z-index:3; font-size:1.8rem; font-weight:900; color:#fff;
+    pointer-events:none; animation:particleFly 1s ease-out forwards;
+    text-shadow:0 0 8px rgba(80,255,140,.9),0 0 18px rgba(80,255,140,.5);
+  }
+  @keyframes particleFly {
+    0%   { opacity:1; transform:translate(0,0) scale(1.1); }
+    100% { opacity:0; transform:var(--tx) scale(.2); }
+  }
+  .correct-flash {
+    position:absolute; inset:0;
+    background:radial-gradient(ellipse at center,rgba(40,220,100,.45) 0%,rgba(40,220,100,0) 70%);
+    animation:flashFade 1.3s ease-out forwards;
+  }
+  @keyframes flashFade { 0%{opacity:0;} 15%{opacity:1;} 100%{opacity:0;} }
+  .anim-wrong-x {
+    font-size:11rem; font-weight:900; color:#ff1a1a; line-height:1;
+    animation:wrongGlow 1.2s ease-out forwards; position:relative; z-index:2;
+  }
+  @keyframes wrongGlow {
+    0%   { opacity:0; transform:scale(.4); text-shadow:0 0 8px #f00,0 0 16px #f00; }
+    18%  { opacity:1; transform:scale(1.12); text-shadow:0 0 8px #f00,0 0 20px #f00,0 0 40px #f22,0 0 80px #f44,0 0 130px #f00,0 0 200px #c00; }
+    40%  { transform:scale(1); text-shadow:0 0 4px #f00,0 0 14px #f00,0 0 30px #f22,0 0 60px #f44,0 0 100px #f00; }
+    65%  { opacity:1; transform:scale(1.06); text-shadow:0 0 12px #f00,0 0 28px #f00,0 0 55px #f22,0 0 110px #f44,0 0 180px #c00,0 0 250px #800; }
+    100% { opacity:0; transform:scale(1.25); text-shadow:0 0 30px #f00,0 0 70px #f22,0 0 140px #f00; }
+  }
+  .wrong-flash {
+    position:absolute; inset:0;
+    background:radial-gradient(ellipse at center,rgba(220,0,0,.4) 0%,rgba(220,0,0,0) 70%);
+    animation:flashFade 1.2s ease-out forwards;
+  }
+
+  /* ── Małe ekrany (≤ 380 px) ────────────────────────── */
+  @media (max-width: 380px) {
+    body       { padding: 8px; }
+    .card      { padding: 18px 14px 22px; }
+    h1         { font-size: 1.1rem; letter-spacing: .3px; }
+    .title-box { padding: 10px 12px; border-radius: 14px; }
+    .tab       { font-size: .62rem; padding: 8px 2px; }
+    .row-label { font-size: .62rem; padding: 3px 6px; }
+    .tab-mode  { font-size: .8rem;  padding: 7px 4px; }
+    .feedback  { min-height: 56px; font-size: 1rem; }
+    .diff-btn  { padding: 12px 14px; gap: 10px; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div id="animLayer"></div>
+  <div class="title-box">
+    <h1>Kwadraty i sześciany liczb</h1>
+  </div>
+
+  <!-- Zakładki treści -->
+  <div class="tabs">
+    <span class="row-label">Moduł:</span>
+    <button class="tab active-sq" id="tabSq" onclick="switchContent('sq')">Kwadraty<br>(11–20)</button>
+    <button class="tab"           id="tabCu" onclick="switchContent('cu')">Sześciany<br>(1–10)</button>
+    <button class="tab"           id="tabMx" onclick="switchContent('mx')">Mieszane<br>(wszystko)</button>
+  </div>
+
+  <!-- Zakładki trybu -->
+  <div class="tabs-mode">
+    <span class="row-label">Tryb:</span>
+    <button class="tab-mode active-normal" id="tabNormal" onclick="switchPlayMode('normal')">Normalny</button>
+    <button class="tab-mode"               id="tabTimed"  onclick="switchPlayMode('timed')">⏱ Czasowy</button>
+  </div>
+
+  <!-- PANEL: pytanie (normalny + czasowy po wyborze trudności) -->
+  <div id="panelQuestion">
+    <div class="stats">
+      <div class="stat-box score-box">
+        <div class="stat-label">Wynik</div>
+        <div class="stat-value" id="scoreVal">0 / 0</div>
+      </div>
+      <div class="stat-box timer-box" id="timerBox">
+        <div class="stat-label" id="timerLabel">Czas</div>
+        <div class="stat-value"  id="timerVal">0 s</div>
+      </div>
+    </div>
+
+    <div class="question-box sq" id="questionBox">
+      <div class="question">
+        <span class="base" id="baseEl">11</span><span class="exp" id="expEl">²</span>
+      </div>
+    </div>
+
+    <form id="answerForm" autocomplete="off">
+      <input type="number" id="answerInput" inputmode="numeric" placeholder="Twoja odpowiedź" required>
+      <button type="submit" id="actionBtn">Sprawdź</button>
+    </form>
+
+    <div class="feedback empty" id="feedback"></div>
+
+    <div class="btn-row">
+      <button type="button" id="resetBtn"  class="secondary">Resetuj wynik</button>
+      <button type="button" id="changeDiff" class="secondary" style="display:none">Zmień poziom</button>
+    </div>
+  </div>
+
+  <!-- PANEL: wybór trudności (tryb czasowy) -->
+  <div id="panelDiff" style="display:none">
+    <div class="diff-screen">
+      <div class="diff-heading">Wybierz poziom trudności</div>
+      <div class="diff-buttons">
+        <button class="diff-btn diff-easy" onclick="selectDifficulty(15)">
+          <span class="diff-icon">🟢</span>
+          <span class="diff-info">
+            <span class="diff-name">Easy</span>
+            <span class="diff-desc">15 sekund na odpowiedź</span>
+          </span>
+        </button>
+        <button class="diff-btn diff-medium" onclick="selectDifficulty(10)">
+          <span class="diff-icon">🟡</span>
+          <span class="diff-info">
+            <span class="diff-name">Medium</span>
+            <span class="diff-desc">10 sekund na odpowiedź</span>
+          </span>
+        </button>
+        <button class="diff-btn diff-hard" onclick="selectDifficulty(5)">
+          <span class="diff-icon">🔴</span>
+          <span class="diff-info">
+            <span class="diff-name">Hard</span>
+            <span class="diff-desc">5 sekund na odpowiedź</span>
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── Elementy DOM ────────────────────────────────────────
+  const animLayer    = document.getElementById('animLayer');
+  const tabSq        = document.getElementById('tabSq');
+  const tabCu        = document.getElementById('tabCu');
+  const tabMx        = document.getElementById('tabMx');
+  const tabNormal    = document.getElementById('tabNormal');
+  const tabTimed     = document.getElementById('tabTimed');
+  const panelQ       = document.getElementById('panelQuestion');
+  const panelDiff    = document.getElementById('panelDiff');
+  const questionBox  = document.getElementById('questionBox');
+  const baseEl       = document.getElementById('baseEl');
+  const expEl        = document.getElementById('expEl');
+  const scoreValEl   = document.getElementById('scoreVal');
+  const timerBox     = document.getElementById('timerBox');
+  const timerLabelEl = document.getElementById('timerLabel');
+  const timerValEl   = document.getElementById('timerVal');
+  const form         = document.getElementById('answerForm');
+  const input        = document.getElementById('answerInput');
+  const actionBtn    = document.getElementById('actionBtn');
+  const feedbackEl   = document.getElementById('feedback');
+  const resetBtn     = document.getElementById('resetBtn');
+  const changeDiff   = document.getElementById('changeDiff');
+
+  // ── Stan ────────────────────────────────────────────────
+  let contentType = 'sq';   // 'sq' | 'cu' | 'mx'
+  let playMode    = 'normal'; // 'normal' | 'timed'
+  let timedDiff   = null;   // null | 5 | 10 | 15
+
+  let currentBase, prevBase = -1, currentSubType = 'sq';
+  let correctAnswer;
+  let questionMode = 'ask'; // 'ask' | 'next'
+
+  // Wyniki osobno na każdą kombinację treść × tryb
+  const scores = {
+    sq: { normal:{c:0,t:0}, timed:{c:0,t:0} },
+    cu: { normal:{c:0,t:0}, timed:{c:0,t:0} },
+    mx: { normal:{c:0,t:0}, timed:{c:0,t:0} },
+  };
+
+  let normalInterval = null, normalStart = 0;
+  let countdownInterval = null, countdownLeft = 0;
+  let autoAdvTimeout = null;
+
+  // ── Przełączanie treści ─────────────────────────────────
+  function switchContent(type) {
+    contentType = type;
+    tabSq.className = 'tab' + (type === 'sq' ? ' active-sq' : '');
+    tabCu.className = 'tab' + (type === 'cu' ? ' active-cu' : '');
+    tabMx.className = 'tab' + (type === 'mx' ? ' active-mx' : '');
+    prevBase = -1;
+    if (playMode === 'timed') {
+      clearAll();
+      timedDiff = null;
+      loadScore();
+      showPanel('diff');
+    } else {
+      loadScore();
+      newQuestion();
+    }
+  }
+
+  // ── Przełączanie trybu ──────────────────────────────────
+  function switchPlayMode(mode) {
+    clearAll();
+    playMode = mode;
+    tabNormal.className = 'tab-mode' + (mode === 'normal' ? ' active-normal' : '');
+    tabTimed.className  = 'tab-mode' + (mode === 'timed'  ? ' active-timed'  : '');
+    changeDiff.style.display = mode === 'timed' ? '' : 'none';
+
+    if (mode === 'normal') {
+      timedDiff = null;
+      showPanel('question');
+      loadScore();
+      newQuestion();
+    } else {
+      timedDiff = null;
+      showPanel('diff');
+    }
+  }
+
+  // ── Wybór trudności ─────────────────────────────────────
+  function selectDifficulty(secs) {
+    timedDiff = secs;
+    scores[contentType].timed = { c:0, t:0 };
+    loadScore();
+    showPanel('question');
+    prevBase = -1;
+    newQuestion();
+  }
+
+  function showPanel(which) {
+    panelQ.style.display    = which === 'question' ? '' : 'none';
+    panelDiff.style.display = which === 'diff'     ? '' : 'none';
+  }
+
+  function loadScore() {
+    const s = scores[contentType][playMode];
+    scoreValEl.textContent = `${s.c} / ${s.t}`;
+    resetBtn.disabled = s.c === 0 && s.t === 0;
+  }
+
+  // ── Czyszczenie timerów / autoadvance ───────────────────
+  function clearAll() {
+    clearInterval(normalInterval);
+    clearInterval(countdownInterval);
+    clearTimeout(autoAdvTimeout);
+    animLayer.innerHTML = '';
+    questionMode = 'ask';
+    timerBox.className = 'stat-box timer-box';
+  }
+
+  // ── Losowanie pytania ───────────────────────────────────
+  function randomBase() {
+    let min, max;
+    if (contentType === 'sq') {
+      min = 11; max = 20;
+    } else if (contentType === 'cu') {
+      min = 1; max = 10;
+    } else {
+      currentSubType = Math.random() < 0.5 ? 'sq' : 'cu';
+      min = currentSubType === 'sq' ? 11 : 1;
+      max = currentSubType === 'sq' ? 20 : 10;
+    }
+    let n;
+    do { n = min + Math.floor(Math.random() * (max - min + 1)); } while (n === prevBase);
+    return n;
+  }
+
+  // ── Nowe pytanie ────────────────────────────────────────
+  function newQuestion(skipFocus = false) {
+    clearAll();
+    currentBase = randomBase();
+    prevBase = currentBase;
+
+    const isSq = contentType === 'sq' || (contentType === 'mx' && currentSubType === 'sq');
+    correctAnswer = isSq ? currentBase ** 2 : currentBase ** 3;
+
+    questionBox.className = 'question-box ' + (contentType === 'mx' ? 'mx' : contentType);
+    baseEl.textContent = currentBase;
+    expEl.textContent  = isSq ? '²' : '³';
+
+    input.value = '';
+    feedbackEl.textContent = '';
+    feedbackEl.className = 'feedback empty';
+    actionBtn.textContent = 'Sprawdź';
+    actionBtn.disabled = true;
+    loadScore();
+    if (!skipFocus) input.focus();
+
+    if (playMode === 'normal') {
+      timerLabelEl.textContent = 'Czas';
+      startNormalTimer();
+    } else {
+      timerLabelEl.textContent = 'Pozostały czas';
+      startCountdown();
+    }
+  }
+
+  // ── Timer rosnący (normalny) ────────────────────────────
+  function startNormalTimer() {
+    normalStart = Date.now();
+    timerValEl.textContent = '0 s';
+    normalInterval = setInterval(() => {
+      timerValEl.textContent = `${Math.floor((Date.now() - normalStart) / 1000)} s`;
+    }, 1000);
+  }
+  function stopNormalTimer() {
+    clearInterval(normalInterval);
+    timerValEl.textContent = `${Math.floor((Date.now() - normalStart) / 1000)} s`;
+  }
+
+  // ── Odliczanie (czasowy) ────────────────────────────────
+  function refreshCountdown() {
+    timerValEl.textContent = `${countdownLeft} s`;
+    const ratio = countdownLeft / timedDiff;
+    timerBox.className = 'stat-box timer-box' +
+      (ratio <= 0.2 ? ' danger' : ratio <= 0.5 ? ' warn' : '');
+  }
+  function startCountdown() {
+    countdownLeft = timedDiff;
+    refreshCountdown();
+    countdownInterval = setInterval(() => {
+      countdownLeft--;
+      refreshCountdown();
+      if (countdownLeft <= 0) timeUp();
+    }, 1000);
+  }
+  function stopCountdown() { clearInterval(countdownInterval); }
+
+  function timeUp() {
+    if (questionMode !== 'ask') return;
+    stopCountdown();
+    questionMode = 'next';
+    const s = scores[contentType][playMode];
+    s.t++;
+    loadScore();
+    feedbackEl.textContent = `⏰ Czas minął! Poprawna odpowiedź to ${correctAnswer}.`;
+    feedbackEl.className = 'feedback bad';
+    input.blur();
+    playWrongAnim();
+  }
+
+  // ── Sprawdzenie odpowiedzi ──────────────────────────────
+  function checkAnswer() {
+    if (questionMode !== 'ask') return;
+    questionMode = 'next';
+
+    if (playMode === 'normal') stopNormalTimer(); else stopCountdown();
+
+    const ans = Number(input.value);
+    const s = scores[contentType][playMode];
+    s.t++;
+    if (ans === correctAnswer) {
+      s.c++;
+      feedbackEl.textContent = '✅ Brawo! To poprawna odpowiedź.';
+      feedbackEl.className = 'feedback good';
+      playCorrectAnim(correctAnswer);
+    } else {
+      feedbackEl.textContent = `❌ Niepoprawnie. Poprawna odpowiedź to ${correctAnswer}.`;
+      feedbackEl.className = 'feedback bad';
+      playWrongAnim();
+    }
+    loadScore();
+    actionBtn.textContent = 'Następne pytanie';
+    input.blur();
+  }
+
+  // ════════════════════════════════════════════════════════
+  //  ANIMACJE
+  // ════════════════════════════════════════════════════════
+  function playCorrectAnim(answer) {
+    animLayer.innerHTML = '';
+
+    const flash = document.createElement('div');
+    flash.className = 'correct-flash';
+    animLayer.appendChild(flash);
+
+    const num = document.createElement('div');
+    num.className = 'anim-correct-num';
+    num.textContent = answer;
+    animLayer.appendChild(num);
+
+    const symbols = ['²','³','=','★','✦','✧','◆'];
+    for (let i = 0; i < 14; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.textContent = symbols[i % symbols.length];
+      const angle = (360 / 14) * i;
+      const dist  = 110 + Math.random() * 80;
+      const rad   = angle * Math.PI / 180;
+      p.style.setProperty('--tx', `translate(${Math.cos(rad)*dist}px,${Math.sin(rad)*dist}px)`);
+      p.style.animationDelay = `${Math.random() * 0.12}s`;
+      p.style.fontSize = `${1.2 + Math.random() * 1.2}rem`;
+      animLayer.appendChild(p);
+    }
+    setTimeout(() => { animLayer.innerHTML = ''; }, 1400);
+    autoAdvTimeout = setTimeout(newQuestion, 1900);
+  }
+
+  function playWrongAnim() {
+    animLayer.innerHTML = '';
+    const flash = document.createElement('div');
+    flash.className = 'wrong-flash';
+    animLayer.appendChild(flash);
+    const x = document.createElement('div');
+    x.className = 'anim-wrong-x';
+    x.textContent = '✕';
+    animLayer.appendChild(x);
+    if (playMode === 'timed') {
+      setTimeout(() => { animLayer.innerHTML = ''; }, 1300);
+      autoAdvTimeout = setTimeout(newQuestion, 1900);
+    } else {
+      setTimeout(() => { animLayer.innerHTML = ''; actionBtn.textContent = 'Dalej'; actionBtn.disabled = false; }, 1300);
+    }
+  }
+
+  // ── Zdarzenia ───────────────────────────────────────────
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (questionMode === 'ask') {
+      if (input.value === '') return;
+      checkAnswer();
+    } else {
+      clearTimeout(autoAdvTimeout);
+      newQuestion();
+    }
+  });
+
+  input.addEventListener('input', () => {
+    if (questionMode === 'ask') {
+      actionBtn.disabled = input.value.trim() === '';
+    }
+  });
+
+  resetBtn.addEventListener('click', () => {
+    scores[contentType][playMode] = { c:0, t:0 };
+    loadScore();
+    document.activeElement.blur();
+    newQuestion(true);
+  });
+
+  changeDiff.addEventListener('click', () => {
+    clearAll();
+    timedDiff = null;
+    showPanel('diff');
+  });
+
+  // ── Init ────────────────────────────────────────────────
+  newQuestion();
+</script>
+</body>
+</html>

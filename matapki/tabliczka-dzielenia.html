@@ -1,0 +1,1215 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f0eefe">
+<title>Tabliczka dzielenia</title>
+<style>
+  :root {
+    --bg:        #f0eefe;
+    --card:      #ffffff;
+    --primary:   #7c4cf7;
+    --good:      #1e9e5a;
+    --bad:       #d64040;
+    --text:      #1e2340;
+
+    --score-bg:  #d6f5e6; --score-text: #1a7a44; --score-bdr: #a8e8c8;
+    --timer-bg:  #fff4d6; --timer-text: #b86b00; --timer-bdr: #ffd98a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg);
+    font-family: "Segoe UI", Verdana, Arial, sans-serif; color: var(--text); }
+  body { display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; padding: 16px; }
+
+  .card {
+    background: var(--card); width: 100%; max-width: 420px;
+    border-radius: 24px; box-shadow: 0 12px 36px rgba(60,30,120,.14);
+    padding: 28px 24px 32px; text-align: center;
+    position: relative; overflow: hidden;
+  }
+  h1 {
+    font-size: 1.55rem; font-weight: 900; letter-spacing: -0.2px;
+    margin: 0 0 16px; padding: 13px 20px;
+    background: linear-gradient(135deg, #ffd6d6, #ff7070);
+    border: 2px solid #f48080; border-radius: 16px; color: #7a0000;
+  }
+
+  .mode-row {
+    display: flex; align-items: center; background: #eeeafb;
+    border-radius: 14px; padding: 4px; gap: 4px; margin-bottom: 20px;
+  }
+  .mode-title {
+    flex: 0 0 auto; display: flex; align-items: center;
+    padding: 4px 9px; border-radius: 9px; background: #c8bfee; color: #3d3470;
+    font-size: .78rem; font-weight: 700; white-space: nowrap;
+    cursor: default; user-select: none;
+  }
+  .tab {
+    flex: 1; border: none; background: transparent; border-radius: 11px;
+    padding: 10px 6px; font-size: .88rem; font-weight: 700; color: #6672a8;
+    cursor: pointer; transition: background .18s, color .18s, box-shadow .18s;
+    line-height: 1.3; box-shadow: none;
+  }
+  .tab:not(.active-n):not(.active-t):not(.active-r):not(.active-e):hover { background: #dfe2f5; color: var(--text); }
+  .tab.active-n { background: linear-gradient(135deg,#8b6fff,#6a3de8); color:#fff; box-shadow:0 3px 10px rgba(107,74,247,.35); }
+  .tab.active-t { background: linear-gradient(135deg,#e8604a,#f5a623); color:#fff; box-shadow:0 3px 10px rgba(232,96,74,.35); }
+  .tab.active-r { background: linear-gradient(135deg,#0a9e8a,#15ceb0); color:#fff; box-shadow:0 3px 10px rgba(10,158,138,.35); }
+  .tab.active-e { background: linear-gradient(135deg,#2e7d32,#43a047); color:#fff; box-shadow:0 3px 10px rgba(46,125,50,.35); }
+  button:disabled, button:disabled:hover { opacity: 0.42; cursor: not-allowed; transform: none !important; box-shadow: none !important; filter: none !important; }
+
+  .stats { display: flex; gap: 10px; margin-bottom: 20px; }
+  .stat-box { flex: 1; border-radius: 14px; padding: 10px 6px; font-weight: 700; }
+  .stat-label { font-size: .7rem; text-transform: uppercase; letter-spacing: .8px; opacity: .7; margin-bottom: 2px; }
+  .stat-value { font-size: 1.35rem; }
+  .score-box { background: var(--score-bg); color: var(--score-text); border: 2px solid var(--score-bdr); }
+  .timer-box { background: var(--timer-bg); color: var(--timer-text); border: 2px solid var(--timer-bdr);
+    transition: background .3s, color .3s, border-color .3s; }
+  .timer-box.warn   { background: #ffe0cc; color: #c04000; border-color: #ffb480; }
+  .timer-box.danger { background: #ffd6d6; color: #c00000; border-color: #ff9090;
+    animation: timerPulse .5s ease-in-out infinite alternate; }
+  @keyframes timerPulse { from { transform:scale(1); } to { transform:scale(1.05); } }
+
+  .question-box {
+    background: linear-gradient(145deg,#5a1eb5,#9b4de8); color: #fff;
+    border-radius: 18px; padding: 24px 16px; margin-bottom: 20px;
+    box-shadow: 0 6px 22px rgba(90,30,181,.38);
+  }
+  .question {
+    font-family: "Bahnschrift","DIN Alternate","Arial Rounded MT Bold","Trebuchet MS",sans-serif;
+    font-size: clamp(2.4rem, 11vw, 5rem); font-weight: 700;
+    letter-spacing: clamp(1px, 0.4vw, 3px); line-height: 1; white-space: nowrap;
+    text-shadow: 0 2px 8px rgba(0,0,0,.18);
+  }
+
+  form { display: flex; flex-direction: column; gap: 12px; margin-bottom: 14px; }
+  input[type="number"] { touch-action: manipulation;
+    width: 100%; font-size: 1.6rem; text-align: center; padding: 12px 8px;
+    border: 2px solid #cdbff7; border-radius: 14px; outline: none;
+    -moz-appearance: textfield; transition: border-color .15s;
+  }
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button { touch-action: manipulation; -webkit-appearance:none; margin:0; }
+  input[type="number"]:focus { border-color: var(--primary); }
+
+  button {
+    width: 100%; font-size: 1.1rem; font-weight: 700; padding: 13px 20px;
+    border: none; border-radius: 14px;
+    background: linear-gradient(135deg,#8b6fff,#6a3de8); color: white;
+    cursor: pointer; transition: filter .15s, transform .06s;
+    letter-spacing: .3px; box-shadow: 0 4px 14px rgba(107,74,247,.35);
+  }
+  button:hover  { filter: brightness(1.08); }
+  button:active { transform: scale(.97); }
+  button.secondary {
+    background: transparent; border: 2px solid #d0d6f5;
+    color: #6672a8; font-weight: 600; box-shadow: none; margin-top: 2px;
+  }
+  button.secondary:hover { background: #f2f4fd; filter: none; }
+
+  .feedback {
+    min-height: 66px; font-size: 1.05rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 14px; padding: 10px 14px; margin-bottom: 10px; line-height: 1.4;
+  }
+  .feedback.good  { background: #d6f5e6; color: var(--good); border: 2px solid #a8e8c8; }
+  .feedback.bad   { background: #fde8e8; color: var(--bad);  border: 2px solid #f4b8b8; }
+  .feedback.empty { visibility: hidden; }
+
+  .diff-screen { padding: 4px 0 8px; }
+  .diff-heading { font-size: 1.05rem; font-weight: 700; margin-bottom: 14px; opacity: .85; }
+  .diff-buttons { display: flex; flex-direction: column; gap: 10px; }
+  .diff-btn {
+    display: flex; align-items: center; gap: 14px; width: 100%;
+    padding: 14px 18px; border: none; border-radius: 16px;
+    cursor: pointer; text-align: left; color: white; font-weight: 700;
+    transition: filter .15s, transform .06s; letter-spacing: normal; box-shadow: none;
+  }
+  .diff-btn:hover  { filter: brightness(1.08); }
+  .diff-btn:active { transform: scale(.97); }
+  .diff-icon { font-size: 1.9rem; line-height: 1; }
+  .diff-info { display: flex; flex-direction: column; gap: 2px; }
+  .diff-name { font-size: 1.05rem; }
+  .diff-desc { font-size: .78rem; opacity: .88; font-weight: 600; }
+  .diff-easy   { background: linear-gradient(135deg,#1e9e5a,#38d68a); box-shadow: 0 4px 14px rgba(30,158,90,.3); }
+  .diff-medium { background: linear-gradient(135deg,#c07800,#f5c030); box-shadow: 0 4px 14px rgba(192,120,0,.3); }
+  .diff-hard   { background: linear-gradient(135deg,#d64040,#f07070); box-shadow: 0 4px 14px rgba(214,64,64,.3); }
+
+  .btn-row { display: flex; gap: 10px; }
+  .btn-row button { margin-top: 0; }
+
+  .question-box.teal {
+    background: linear-gradient(145deg,#0a6e7a,#12a0b0);
+    box-shadow: 0 6px 22px rgba(10,110,122,.38);
+  }
+  .question-box.green {
+    background: linear-gradient(145deg,#1b5e20,#2e7d32);
+    box-shadow: 0 6px 22px rgba(27,94,32,.40);
+  }
+  .question-box.indigo {
+    background: linear-gradient(145deg,#1a237e,#283593);
+    box-shadow: 0 6px 22px rgba(26,35,126,.42);
+  }
+
+  .r-inputs {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .r-inputs input { flex: 1; min-width: 0; }
+  .r-sep {
+    font-size: .88rem; font-weight: 700; color: #6672a8;
+    white-space: nowrap; flex-shrink: 0;
+  }
+
+  #animLayer {
+    position: absolute; inset: 0; pointer-events: none; z-index: 100;
+    border-radius: 24px; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .anim-correct-num {
+    font-family: "Bahnschrift","DIN Alternate","Arial Rounded MT Bold",sans-serif;
+    font-size: 9rem; font-weight: 900; color: #fff; line-height: 1; letter-spacing: 2px;
+    text-shadow: 0 0 10px #7fffb0,0 0 25px #50ff80,0 0 55px #20e860,0 0 100px #00c840;
+    animation: correctPop 1.3s cubic-bezier(.22,1,.36,1) forwards;
+    position: relative; z-index: 2;
+  }
+  .anim-correct-thumb {
+    font-size: 8rem; line-height: 1;
+    filter: hue-rotate(90deg) saturate(1.4) drop-shadow(0 0 10px #50ff80) drop-shadow(0 0 28px #20e860) drop-shadow(0 0 60px #00c840);
+    animation: correctPop 1.3s cubic-bezier(.22,1,.36,1) forwards;
+    position: relative; z-index: 2;
+  }
+  @keyframes correctPop {
+    0%   { opacity:0; transform:scale(.2) rotate(-8deg); }
+    28%  { opacity:1; transform:scale(1.18) rotate(2deg); }
+    50%  { transform:scale(.94) rotate(-1deg); }
+    68%  { opacity:1; transform:scale(1.04) rotate(.5deg); }
+    85%  { opacity:1; transform:scale(1); }
+    100% { opacity:0; transform:scale(1.4); }
+  }
+  .particle {
+    position: absolute; z-index: 3; font-size: 1.8rem; font-weight: 900; color: #fff;
+    pointer-events: none; animation: particleFly 1s ease-out forwards;
+    text-shadow: 0 0 8px rgba(80,255,140,.9),0 0 18px rgba(80,255,140,.5);
+  }
+  @keyframes particleFly {
+    0%   { opacity:1; transform:translate(0,0) scale(1.1); }
+    100% { opacity:0; transform:var(--tx) scale(.2); }
+  }
+  .correct-flash {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center,rgba(40,220,100,.45) 0%,rgba(40,220,100,0) 70%);
+    animation: flashFade 1.3s ease-out forwards;
+  }
+  @keyframes flashFade { 0%{opacity:0;} 15%{opacity:1;} 100%{opacity:0;} }
+  .anim-wrong-x {
+    font-size: 11rem; font-weight: 900; color: #ff1a1a; line-height: 1;
+    animation: wrongGlow 1.2s ease-out forwards; position: relative; z-index: 2;
+  }
+  @keyframes wrongGlow {
+    0%   { opacity:0; transform:scale(.4); text-shadow:0 0 8px #f00,0 0 16px #f00; }
+    18%  { opacity:1; transform:scale(1.12); text-shadow:0 0 8px #f00,0 0 20px #f00,0 0 40px #f22,0 0 80px #f44,0 0 130px #f00,0 0 200px #c00; }
+    40%  { transform:scale(1); text-shadow:0 0 4px #f00,0 0 14px #f00,0 0 30px #f22,0 0 60px #f44,0 0 100px #f00; }
+    65%  { opacity:1; transform:scale(1.06); text-shadow:0 0 12px #f00,0 0 28px #f00,0 0 55px #f22,0 0 110px #f44,0 0 180px #c00,0 0 250px #800; }
+    100% { opacity:0; transform:scale(1.25); text-shadow:0 0 30px #f00,0 0 70px #f22,0 0 140px #f00; }
+  }
+  .wrong-flash {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center,rgba(220,0,0,.4) 0%,rgba(220,0,0,0) 70%);
+    animation: flashFade 1.2s ease-out forwards;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div id="animLayer"></div>
+  <h1>Tabliczka dzielenia</h1>
+
+  <div class="mode-row" style="margin-bottom:8px">
+    <span class="mode-title">Moduł:</span>
+    <button class="tab active-n" id="moduleBtnNodiv" onclick="switchModule('nodiv')">Bez reszty</button>
+    <button class="tab"          id="moduleBtnRem"   onclick="switchModule('remainder')">Z resztą</button>
+  </div>
+  <div class="mode-row">
+    <span class="mode-title">Tryb:</span>
+    <button class="tab active-n" id="modeBtnNormal" onclick="switchMode('normal')">Normalny</button>
+    <button class="tab"          id="modeBtnTimed"  onclick="switchMode('timed')">&#x23F1; Czasowy</button>
+    <button class="tab"          id="modeBtnExt"    onclick="switchMode('extended')">Extended</button>
+  </div>
+
+  <div id="panelNormal">
+    <div class="stats">
+      <div class="stat-box score-box">
+        <div class="stat-label">Wynik</div>
+        <div class="stat-value" id="nScore">0 / 0</div>
+      </div>
+      <div class="stat-box timer-box">
+        <div class="stat-label">Czas</div>
+        <div class="stat-value" id="nTimer">0 s</div>
+      </div>
+    </div>
+    <div class="question-box">
+      <div class="question" id="nQuestion">? : ?</div>
+    </div>
+    <form id="nForm" autocomplete="off">
+      <input type="number" id="nInput" inputmode="numeric" placeholder="Twoja odpowiedź" required>
+      <button type="submit" id="nSubmitBtn">Sprawdź</button>
+    </form>
+    <div class="feedback empty" id="nFeedback"></div>
+    <button type="button" id="nReset" class="secondary">Resetuj wynik</button>
+  </div>
+
+  <div id="panelDiff" style="display:none">
+    <div class="diff-screen">
+      <div class="diff-heading">Wybierz poziom trudności</div>
+      <div class="diff-buttons">
+        <button class="diff-btn diff-easy" onclick="selectDifficulty(15)">
+          <span class="diff-icon">🟢</span>
+          <span class="diff-info">
+            <span class="diff-name">Easy</span>
+            <span class="diff-desc">15 sekund na odpowiedź</span>
+          </span>
+        </button>
+        <button class="diff-btn diff-medium" onclick="selectDifficulty(10)">
+          <span class="diff-icon">🟡</span>
+          <span class="diff-info">
+            <span class="diff-name">Medium</span>
+            <span class="diff-desc">10 sekund na odpowiedź</span>
+          </span>
+        </button>
+        <button class="diff-btn diff-hard" onclick="selectDifficulty(5)">
+          <span class="diff-icon">🔴</span>
+          <span class="diff-info">
+            <span class="diff-name">Hard</span>
+            <span class="diff-desc">5 sekund na odpowiedź</span>
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="panelTimed" style="display:none">
+    <div class="stats">
+      <div class="stat-box score-box">
+        <div class="stat-label">Wynik</div>
+        <div class="stat-value" id="tScore">0 / 0</div>
+      </div>
+      <div class="stat-box timer-box" id="tTimerBox">
+        <div class="stat-label">Pozostały czas</div>
+        <div class="stat-value" id="tTimer">&#x2014; s</div>
+      </div>
+    </div>
+    <div class="question-box">
+      <div class="question" id="tQuestion">? : ?</div>
+    </div>
+    <form id="tForm" autocomplete="off">
+      <input type="number" id="tInput" inputmode="numeric" placeholder="Twoja odpowiedź" required>
+      <button type="submit" id="tSubmitBtn">Sprawdź</button>
+    </form>
+    <div class="feedback empty" id="tFeedback"></div>
+    <div class="btn-row">
+      <button type="button" id="tReset" class="secondary">Resetuj wynik</button>
+      <button type="button" id="btnChangeDiff" class="secondary">Zmień poziom</button>
+    </div>
+  </div>
+
+  <div id="panelRemainder" style="display:none">
+    <div class="stats">
+      <div class="stat-box score-box">
+        <div class="stat-label">Wynik</div>
+        <div class="stat-value" id="rScore">0 / 0</div>
+      </div>
+      <div class="stat-box timer-box">
+        <div class="stat-label">Czas</div>
+        <div class="stat-value" id="rTimer">0 s</div>
+      </div>
+    </div>
+    <div class="question-box teal">
+      <div class="question" id="rQuestion">? : ?</div>
+    </div>
+    <form id="rForm" autocomplete="off">
+      <div class="r-inputs">
+        <input type="number" id="rInputQ" inputmode="numeric" placeholder="Wynik" required>
+        <span class="r-sep">reszta</span>
+        <input type="number" id="rInputR" inputmode="numeric" placeholder="reszta" required>
+      </div>
+      <button type="submit" id="rSubmitBtn">Sprawdź</button>
+    </form>
+    <div class="feedback empty" id="rFeedback"></div>
+    <button type="button" id="rReset" class="secondary">Resetuj wynik</button>
+  </div>
+
+  <div id="panelRemainderTimed" style="display:none">
+    <div class="stats">
+      <div class="stat-box score-box">
+        <div class="stat-label">Wynik</div>
+        <div class="stat-value" id="rtScore">0 / 0</div>
+      </div>
+      <div class="stat-box timer-box" id="rtTimerBox">
+        <div class="stat-label">Pozostały czas</div>
+        <div class="stat-value" id="rtTimer">&#x2014; s</div>
+      </div>
+    </div>
+    <div class="question-box teal">
+      <div class="question" id="rtQuestion">? : ?</div>
+    </div>
+    <form id="rtForm" autocomplete="off">
+      <div class="r-inputs">
+        <input type="number" id="rtInputQ" inputmode="numeric" placeholder="Wynik" required>
+        <span class="r-sep">reszta</span>
+        <input type="number" id="rtInputR" inputmode="numeric" placeholder="reszta" required>
+      </div>
+      <button type="submit" id="rtSubmitBtn">Sprawdź</button>
+    </form>
+    <div class="feedback empty" id="rtFeedback"></div>
+    <div class="btn-row">
+      <button type="button" id="rtReset" class="secondary">Resetuj wynik</button>
+      <button type="button" id="btnChangeRemainderDiff" class="secondary">Zmień poziom</button>
+    </div>
+  </div>
+
+  <div id="panelNodivExt" style="display:none">
+    <div class="stats">
+      <div class="stat-box score-box">
+        <div class="stat-label">Wynik</div>
+        <div class="stat-value" id="neScore">0 / 0</div>
+      </div>
+      <div class="stat-box timer-box">
+        <div class="stat-label">Czas</div>
+        <div class="stat-value" id="neTimer">0 s</div>
+      </div>
+    </div>
+    <div class="question-box green">
+      <div class="question" id="neQuestion">? : ?</div>
+    </div>
+    <form id="neForm" autocomplete="off">
+      <input type="number" id="neInput" inputmode="numeric" placeholder="Twoja odpowiedź" required>
+      <button type="submit" id="neSubmitBtn">Sprawdź</button>
+    </form>
+    <div class="feedback empty" id="neFeedback"></div>
+    <button type="button" id="neReset" class="secondary">Resetuj wynik</button>
+  </div>
+
+  <div id="panelRemExt" style="display:none">
+    <div class="stats">
+      <div class="stat-box score-box">
+        <div class="stat-label">Wynik</div>
+        <div class="stat-value" id="reScore">0 / 0</div>
+      </div>
+      <div class="stat-box timer-box">
+        <div class="stat-label">Czas</div>
+        <div class="stat-value" id="reTimer">0 s</div>
+      </div>
+    </div>
+    <div class="question-box indigo">
+      <div class="question" id="reQuestion">? : ?</div>
+    </div>
+    <form id="reForm" autocomplete="off">
+      <div class="r-inputs">
+        <input type="number" id="reInputQ" inputmode="numeric" placeholder="Wynik" required>
+        <span class="r-sep">reszta</span>
+        <input type="number" id="reInputR" inputmode="numeric" placeholder="reszta" required>
+      </div>
+      <button type="submit" id="reSubmitBtn">Sprawdź</button>
+    </form>
+    <div class="feedback empty" id="reFeedback"></div>
+    <button type="button" id="reReset" class="secondary">Resetuj wynik</button>
+  </div>
+</div>
+
+<script>
+  const animLayer      = document.getElementById('animLayer');
+  const moduleBtnNodiv = document.getElementById('moduleBtnNodiv');
+  const moduleBtnRem   = document.getElementById('moduleBtnRem');
+  const modeBtnNormal  = document.getElementById('modeBtnNormal');
+  const modeBtnTimed   = document.getElementById('modeBtnTimed');
+  const modeBtnExt     = document.getElementById('modeBtnExt');
+
+  const nScoreEl    = document.getElementById('nScore');
+  const nTimerEl    = document.getElementById('nTimer');
+  const nQuestionEl = document.getElementById('nQuestion');
+  const nForm       = document.getElementById('nForm');
+  const nInput      = document.getElementById('nInput');
+  const nFeedback   = document.getElementById('nFeedback');
+  const nReset      = document.getElementById('nReset');
+  const panelNormal = document.getElementById('panelNormal');
+
+  const tScoreEl    = document.getElementById('tScore');
+  const tTimerEl    = document.getElementById('tTimer');
+  const tTimerBox   = document.getElementById('tTimerBox');
+  const tQuestionEl = document.getElementById('tQuestion');
+  const tForm       = document.getElementById('tForm');
+  const tInput      = document.getElementById('tInput');
+  const tFeedback   = document.getElementById('tFeedback');
+  const tReset      = document.getElementById('tReset');
+  const panelDiff      = document.getElementById('panelDiff');
+  const panelTimed     = document.getElementById('panelTimed');
+
+  const rScoreEl    = document.getElementById('rScore');
+  const rTimerEl    = document.getElementById('rTimer');
+  const rQuestionEl = document.getElementById('rQuestion');
+  const rForm       = document.getElementById('rForm');
+  const rInputQ     = document.getElementById('rInputQ');
+  const rInputR     = document.getElementById('rInputR');
+  const rFeedback   = document.getElementById('rFeedback');
+  const rReset      = document.getElementById('rReset');
+  const panelRemainder = document.getElementById('panelRemainder');
+
+  const rtScoreEl    = document.getElementById('rtScore');
+  const rtTimerEl    = document.getElementById('rtTimer');
+  const rtTimerBox   = document.getElementById('rtTimerBox');
+  const rtQuestionEl = document.getElementById('rtQuestion');
+  const rtForm       = document.getElementById('rtForm');
+  const rtInputQ     = document.getElementById('rtInputQ');
+  const rtInputR     = document.getElementById('rtInputR');
+  const rtFeedback   = document.getElementById('rtFeedback');
+  const rtReset      = document.getElementById('rtReset');
+  const panelRemainderTimed = document.getElementById('panelRemainderTimed');
+
+  const neScoreEl    = document.getElementById('neScore');
+  const neTimerEl    = document.getElementById('neTimer');
+  const neQuestionEl = document.getElementById('neQuestion');
+  const neForm       = document.getElementById('neForm');
+  const neInput      = document.getElementById('neInput');
+  const neFeedback   = document.getElementById('neFeedback');
+  const neReset      = document.getElementById('neReset');
+  const panelNodivExt = document.getElementById('panelNodivExt');
+
+  const reScoreEl    = document.getElementById('reScore');
+  const reTimerEl    = document.getElementById('reTimer');
+  const reQuestionEl = document.getElementById('reQuestion');
+  const reForm       = document.getElementById('reForm');
+  const reInputQ     = document.getElementById('reInputQ');
+  const reInputR     = document.getElementById('reInputR');
+  const reFeedback   = document.getElementById('reFeedback');
+  const reReset      = document.getElementById('reReset');
+  const panelRemExt  = document.getElementById('panelRemExt');
+
+  let currentModule = 'nodiv';
+  let currentMode   = 'normal';
+  // dividend = quotient × divisor; wyświetlamy "dividend : divisor = ?"
+  let quotient, divisor, correctAnswer;
+  const history = []; // ostatnie 10 par [quotient, divisor]
+  let mode = 'ask';
+  let autoAdvanceTimeout = null;
+
+  let nCorrect = 0, nTotal = 0;
+  let normalInterval = null, normalStart = 0;
+
+  let tCorrect = 0, tTotal = 0;
+  let timedDiff = null;
+  let countdownInterval = null, countdownLeft = 0;
+
+  let rDividend, rDivisor, rQuotient, rRemainder;
+  let rCorrect = 0, rTotal = 0;
+  let rInterval = null, rStart = 0;
+  const historyR = [];
+
+  let rtCorrect = 0, rtTotal = 0;
+  let rtCountdownInterval = null, rtCountdownLeft = 0;
+
+  let neDividend, neDivisor, neAnswer;
+  let neCorrect = 0, neTotal = 0;
+  let neInterval = null, neStart = 0;
+  const historyNE = [];
+
+  let reDividend, reDivisor, reQuotient, reRemainder;
+  let reCorrect = 0, reTotal = 0;
+  let reInterval = null, reStart = 0;
+  const historyRE = [];
+
+  function switchModule(mod) {
+    timedDiff = null;
+    clearAll();
+    currentModule = mod;
+    moduleBtnNodiv.className = 'tab' + (mod === 'nodiv'     ? ' active-n' : '');
+    moduleBtnRem.className   = 'tab' + (mod === 'remainder' ? ' active-r' : '');
+    updateView();
+  }
+
+  function switchMode(m) {
+    timedDiff = null;
+    clearAll();
+    currentMode = m;
+    modeBtnNormal.className = 'tab' + (m === 'normal'   ? ' active-n' : '');
+    modeBtnTimed.className  = 'tab' + (m === 'timed'    ? ' active-t' : '');
+    modeBtnExt.className    = 'tab' + (m === 'extended' ? ' active-e' : '');
+    updateView();
+  }
+
+  function updateView() {
+    panelNormal.style.display          = 'none';
+    panelDiff.style.display            = 'none';
+    panelTimed.style.display           = 'none';
+    panelRemainder.style.display       = 'none';
+    panelRemainderTimed.style.display  = 'none';
+    panelNodivExt.style.display        = 'none';
+    panelRemExt.style.display          = 'none';
+
+    if (currentModule === 'nodiv') {
+      if (currentMode === 'normal') {
+        panelNormal.style.display = '';
+        newQuestion();
+      } else if (currentMode === 'timed') {
+        if (timedDiff === null) { showDiffScreen(); }
+        else { panelTimed.style.display = ''; newQuestion(); }
+      } else {
+        panelNodivExt.style.display = '';
+        newNodivExtQuestion();
+      }
+    } else {
+      if (currentMode === 'normal') {
+        panelRemainder.style.display = '';
+        newRemainderQuestion();
+      } else if (currentMode === 'timed') {
+        if (timedDiff === null) { showDiffScreen(); }
+        else { panelRemainderTimed.style.display = ''; newRemainderTimedQuestion(); }
+      } else {
+        panelRemExt.style.display = '';
+        newRemExtQuestion();
+      }
+    }
+  }
+
+  function showDiffScreen() {
+    panelDiff.style.display           = '';
+    panelTimed.style.display          = 'none';
+    panelRemainderTimed.style.display = 'none';
+    panelNodivExt.style.display       = 'none';
+    panelRemExt.style.display         = 'none';
+  }
+
+  function selectDifficulty(secs) {
+    timedDiff = secs;
+    panelDiff.style.display = 'none';
+    if (currentModule === 'remainder') {
+      rtCorrect = 0; rtTotal = 0;
+      rtScoreEl.textContent = '0 / 0';
+      panelRemainderTimed.style.display = '';
+      newRemainderTimedQuestion();
+    } else {
+      tCorrect = 0; tTotal = 0;
+      tScoreEl.textContent = '0 / 0';
+      panelTimed.style.display = '';
+      newQuestion();
+    }
+  }
+
+  function clearAll() {
+    clearInterval(normalInterval);
+    clearInterval(countdownInterval);
+    clearInterval(rInterval);
+    clearInterval(rtCountdownInterval);
+    clearInterval(neInterval);
+    clearInterval(reInterval);
+    clearTimeout(autoAdvanceTimeout);
+    mode = 'ask';
+    animLayer.innerHTML = '';
+  }
+
+  // Zwraca wartość 1–10; 4–9 są najczęstsze
+  function weightedFactor() {
+    const w = [1, 1, 1, 5, 5, 5, 5, 5, 5, 2]; // indeksy 0-9 → wartości 1-10
+    const total = w.reduce((s, v) => s + v, 0);
+    let r = Math.random() * total;
+    for (let i = 0; i < w.length; i++) {
+      if (r < w[i]) return i + 1;
+      r -= w[i];
+    }
+    return 10;
+  }
+
+  // Dzielnik 2–10 (brak 1 – unika trywialnych przypadków)
+  function weightedDivisor() {
+    const w = [1, 2, 5, 5, 5, 5, 5, 4, 2]; // indeksy 0-8 → wartości 2-10
+    const total = w.reduce((s, v) => s + v, 0);
+    let r = Math.random() * total;
+    for (let i = 0; i < w.length; i++) {
+      if (r < w[i]) return i + 2;
+      r -= w[i];
+    }
+    return 10;
+  }
+
+  // Iloraz 1–9 (gwarantuje dzielną ≤ 99)
+  function weightedQuotient() {
+    const w = [1, 2, 4, 5, 5, 5, 4, 3, 1]; // indeksy 0-8 → wartości 1-9
+    const total = w.reduce((s, v) => s + v, 0);
+    let r = Math.random() * total;
+    for (let i = 0; i < w.length; i++) {
+      if (r < w[i]) return i + 1;
+      r -= w[i];
+    }
+    return 9;
+  }
+
+  function autoAdvance() {
+    if (currentModule === 'remainder') {
+      if (currentMode === 'timed')    newRemainderTimedQuestion();
+      else if (currentMode === 'extended') newRemExtQuestion();
+      else newRemainderQuestion();
+    } else {
+      if (currentMode === 'extended') newNodivExtQuestion();
+      else newQuestion();
+    }
+  }
+
+  function newQuestion(skipFocus = false) {
+    clearAll();
+    getSubmitBtn().textContent = 'Sprawdź';
+    getSubmitBtn().disabled = true;
+    let nq, nd;
+    do {
+      nq = weightedFactor();
+      nd = weightedFactor();
+    } while (history.some(([q, d]) => q === nq && d === nd));
+    quotient = nq; divisor = nd;
+    history.push([quotient, divisor]);
+    if (history.length > 10) history.shift();
+    const dividend = quotient * divisor;
+    correctAnswer = quotient;
+
+    const questionText = `${dividend} : ${divisor}`;
+
+    if (currentMode === 'normal') {
+      nQuestionEl.textContent = questionText;
+      nInput.value = '';
+      nFeedback.textContent = ''; nFeedback.className = 'feedback empty';
+      if (!skipFocus) nInput.focus();
+      startNormalTimer();
+    } else {
+      tQuestionEl.textContent = questionText;
+      tInput.value = '';
+      tFeedback.textContent = ''; tFeedback.className = 'feedback empty';
+      if (!skipFocus) tInput.focus();
+      startCountdown();
+    }
+  }
+
+  function startNormalTimer() {
+    normalStart = Date.now();
+    nTimerEl.textContent = '0 s';
+    normalInterval = setInterval(() => {
+      nTimerEl.textContent = `${Math.floor((Date.now() - normalStart) / 1000)} s`;
+    }, 1000);
+  }
+  function stopNormalTimer() {
+    clearInterval(normalInterval);
+    nTimerEl.textContent = `${Math.floor((Date.now() - normalStart) / 1000)} s`;
+  }
+
+  function refreshCountdownDisplay() {
+    tTimerEl.textContent = `${countdownLeft} s`;
+    const ratio = countdownLeft / timedDiff;
+    tTimerBox.className = 'stat-box timer-box' +
+      (ratio <= 0.2 ? ' danger' : ratio <= 0.5 ? ' warn' : '');
+  }
+  function startCountdown() {
+    countdownLeft = timedDiff;
+    refreshCountdownDisplay();
+    countdownInterval = setInterval(() => {
+      countdownLeft--;
+      refreshCountdownDisplay();
+      if (countdownLeft <= 0) timeUp();
+    }, 1000);
+  }
+  function stopCountdown() { clearInterval(countdownInterval); }
+
+  function timeUp() {
+    if (mode !== 'ask') return;
+    stopCountdown();
+    mode = 'next';
+    tTotal++;
+    tScoreEl.textContent = `${tCorrect} / ${tTotal}`;
+    const dividend = quotient * divisor;
+    tFeedback.textContent = `⏰ Czas minął! Poprawna odpowiedź to ${correctAnswer} (${dividend} : ${divisor} = ${correctAnswer}).`;
+    tFeedback.className = 'feedback bad';
+    tInput.blur();
+    playWrongAnim();
+    syncResetBtns();
+  }
+
+  function playCorrectAnim(answer) {
+    animLayer.innerHTML = '';
+    const flash = document.createElement('div');
+    flash.className = 'correct-flash';
+    animLayer.appendChild(flash);
+
+    const num = document.createElement('div');
+    if (currentModule === 'remainder') {
+      num.className = 'anim-correct-thumb';
+      num.textContent = '👍';
+    } else {
+      num.className = 'anim-correct-num';
+      num.textContent = answer;
+    }
+    animLayer.appendChild(num);
+
+    const symbols = ['÷', ':', '=', '★', '✦', '✧', '◆'];
+    for (let i = 0; i < 14; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.textContent = symbols[i % symbols.length];
+      const angle = (360 / 14) * i;
+      const dist  = 110 + Math.random() * 80;
+      const rad   = angle * Math.PI / 180;
+      p.style.setProperty('--tx', `translate(${Math.cos(rad)*dist}px,${Math.sin(rad)*dist}px)`);
+      p.style.animationDelay = `${Math.random() * 0.12}s`;
+      p.style.fontSize = `${1.2 + Math.random() * 1.2}rem`;
+      animLayer.appendChild(p);
+    }
+    setTimeout(() => { animLayer.innerHTML = ''; }, 1400);
+    autoAdvanceTimeout = setTimeout(autoAdvance, 1900);
+  }
+
+  function getSubmitBtn() {
+    if (currentModule === 'nodiv') {
+      if (currentMode === 'normal')   return document.getElementById('nSubmitBtn');
+      if (currentMode === 'timed')    return document.getElementById('tSubmitBtn');
+      return document.getElementById('neSubmitBtn');
+    } else {
+      if (currentMode === 'normal')   return document.getElementById('rSubmitBtn');
+      if (currentMode === 'timed')    return document.getElementById('rtSubmitBtn');
+      return document.getElementById('reSubmitBtn');
+    }
+  }
+
+  function playWrongAnim() {
+    const btn = getSubmitBtn();
+    btn.disabled = true;
+    animLayer.innerHTML = '';
+    const flash = document.createElement('div');
+    flash.className = 'wrong-flash';
+    animLayer.appendChild(flash);
+    const x = document.createElement('div');
+    x.className = 'anim-wrong-x';
+    x.textContent = '✕';
+    animLayer.appendChild(x);
+    setTimeout(() => {
+      animLayer.innerHTML = '';
+      if (currentMode === 'timed') {
+        autoAdvanceTimeout = setTimeout(autoAdvance, 400);
+      } else {
+        btn.disabled = false;
+        btn.textContent = 'Dalej';
+      }
+    }, 1300);
+  }
+
+  function checkAnswer(isNormal) {
+    if (mode !== 'ask') return;
+    mode = 'next';
+    const dividend = quotient * divisor;
+
+    if (isNormal) {
+      stopNormalTimer();
+      const ans = Number(nInput.value);
+      nTotal++;
+      if (ans === correctAnswer) {
+        nCorrect++;
+        nFeedback.textContent = '✅ Brawo! To poprawna odpowiedź.';
+        nFeedback.className = 'feedback good';
+        playCorrectAnim(correctAnswer);
+      } else {
+        nFeedback.textContent = `❌ Niepoprawnie. ${dividend} : ${divisor} = ${correctAnswer}.`;
+        nFeedback.className = 'feedback bad';
+        playWrongAnim();
+      }
+      nScoreEl.textContent = `${nCorrect} / ${nTotal}`;
+      nInput.blur();
+    } else {
+      stopCountdown();
+      const ans = Number(tInput.value);
+      tTotal++;
+      if (ans === correctAnswer) {
+        tCorrect++;
+        tFeedback.textContent = '✅ Brawo! To poprawna odpowiedź.';
+        tFeedback.className = 'feedback good';
+        playCorrectAnim(correctAnswer);
+      } else {
+        tFeedback.textContent = `❌ Niepoprawnie. ${dividend} : ${divisor} = ${correctAnswer}.`;
+        tFeedback.className = 'feedback bad';
+        playWrongAnim();
+      }
+      tScoreEl.textContent = `${tCorrect} / ${tTotal}`;
+      tInput.blur();
+    }
+    syncResetBtns();
+  }
+
+  function newRemainderQuestion(skipFocus = false) {
+    clearAll();
+    getSubmitBtn().textContent = 'Sprawdź';
+    getSubmitBtn().disabled = true;
+    let nd, nq, nr, ndv;
+    do {
+      nd  = weightedDivisor();
+      nq  = weightedQuotient();
+      nr  = Math.floor(Math.random() * nd);
+      ndv = nq * nd + nr;
+    } while (historyR.some(([dv, dd]) => dv === ndv && dd === nd));
+    rDivisor = nd; rQuotient = nq; rRemainder = nr; rDividend = ndv;
+    historyR.push([rDividend, rDivisor]);
+    if (historyR.length > 10) historyR.shift();
+
+    rQuestionEl.textContent = `${rDividend} : ${rDivisor}`;
+    rInputQ.value = ''; rInputR.value = '';
+    rFeedback.textContent = ''; rFeedback.className = 'feedback empty';
+    if (!skipFocus) rInputQ.focus();
+    rStart = Date.now();
+    rTimerEl.textContent = '0 s';
+    rInterval = setInterval(() => {
+      rTimerEl.textContent = `${Math.floor((Date.now() - rStart) / 1000)} s`;
+    }, 1000);
+  }
+
+  function checkRemainderAnswer() {
+    if (mode !== 'ask') return;
+    mode = 'next';
+    clearInterval(rInterval);
+    rTimerEl.textContent = `${Math.floor((Date.now() - rStart) / 1000)} s`;
+
+    const ansQ = Number(rInputQ.value);
+    const ansR = Number(rInputR.value);
+    rTotal++;
+
+    if (ansQ === rQuotient && ansR === rRemainder) {
+      rCorrect++;
+      rFeedback.textContent = '✅ Brawo! Poprawna odpowiedź.';
+      rFeedback.className = 'feedback good';
+      playCorrectAnim(rQuotient);
+    } else {
+      const detail = rRemainder === 0
+        ? `${rDividend} : ${rDivisor} = ${rQuotient} (bez reszty)`
+        : `${rDividend} : ${rDivisor} = ${rQuotient} reszta ${rRemainder}`;
+      rFeedback.textContent = `❌ Niepoprawnie. ${detail}.`;
+      rFeedback.className = 'feedback bad';
+      playWrongAnim();
+    }
+    rScoreEl.textContent = `${rCorrect} / ${rTotal}`;
+    rInputQ.blur(); rInputR.blur();
+    syncResetBtns();
+  }
+
+  function newRemainderTimedQuestion(skipFocus = false) {
+    clearAll();
+    getSubmitBtn().textContent = 'Sprawdź';
+    getSubmitBtn().disabled = true;
+    let nd, nq, nr, ndv;
+    do {
+      nd  = weightedDivisor();
+      nq  = weightedQuotient();
+      nr  = Math.floor(Math.random() * nd);
+      ndv = nq * nd + nr;
+    } while (historyR.some(([dv, dd]) => dv === ndv && dd === nd));
+    rDivisor = nd; rQuotient = nq; rRemainder = nr; rDividend = ndv;
+    historyR.push([rDividend, rDivisor]);
+    if (historyR.length > 10) historyR.shift();
+
+    rtQuestionEl.textContent = `${rDividend} : ${rDivisor}`;
+    rtInputQ.value = ''; rtInputR.value = '';
+    rtFeedback.textContent = ''; rtFeedback.className = 'feedback empty';
+    if (!skipFocus) rtInputQ.focus();
+    startRemainderCountdown();
+  }
+
+  function startRemainderCountdown() {
+    rtCountdownLeft = timedDiff;
+    refreshRemainderCountdown();
+    rtCountdownInterval = setInterval(() => {
+      rtCountdownLeft--;
+      refreshRemainderCountdown();
+      if (rtCountdownLeft <= 0) timeUpRemainder();
+    }, 1000);
+  }
+
+  function refreshRemainderCountdown() {
+    rtTimerEl.textContent = `${rtCountdownLeft} s`;
+    const ratio = rtCountdownLeft / timedDiff;
+    rtTimerBox.className = 'stat-box timer-box' +
+      (ratio <= 0.2 ? ' danger' : ratio <= 0.5 ? ' warn' : '');
+  }
+
+  function timeUpRemainder() {
+    if (mode !== 'ask') return;
+    clearInterval(rtCountdownInterval);
+    mode = 'next';
+    rtTotal++;
+    rtScoreEl.textContent = `${rtCorrect} / ${rtTotal}`;
+    const detail = rRemainder === 0
+      ? `${rDividend} : ${rDivisor} = ${rQuotient} (bez reszty)`
+      : `${rDividend} : ${rDivisor} = ${rQuotient} reszta ${rRemainder}`;
+    rtFeedback.textContent = `⏰ Czas minął! Poprawna odpowiedź: ${detail}.`;
+    rtFeedback.className = 'feedback bad';
+    rtInputQ.blur(); rtInputR.blur();
+    playWrongAnim();
+    syncResetBtns();
+  }
+
+  function checkRemainderTimedAnswer() {
+    if (mode !== 'ask') return;
+    mode = 'next';
+    clearInterval(rtCountdownInterval);
+
+    const ansQ = Number(rtInputQ.value);
+    const ansR = Number(rtInputR.value);
+    rtTotal++;
+
+    if (ansQ === rQuotient && ansR === rRemainder) {
+      rtCorrect++;
+      rtFeedback.textContent = '✅ Brawo! Poprawna odpowiedź.';
+      rtFeedback.className = 'feedback good';
+      playCorrectAnim(rQuotient);
+    } else {
+      const detail = rRemainder === 0
+        ? `${rDividend} : ${rDivisor} = ${rQuotient} (bez reszty)`
+        : `${rDividend} : ${rDivisor} = ${rQuotient} reszta ${rRemainder}`;
+      rtFeedback.textContent = `❌ Niepoprawnie. ${detail}.`;
+      rtFeedback.className = 'feedback bad';
+      playWrongAnim();
+    }
+    rtScoreEl.textContent = `${rtCorrect} / ${rtTotal}`;
+    rtInputQ.blur(); rtInputR.blur();
+    syncResetBtns();
+  }
+
+  nForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (mode === 'ask' && nInput.value !== '') checkAnswer(true);
+    else if (mode === 'next') newQuestion();
+  });
+
+  tForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (mode === 'ask' && tInput.value !== '') checkAnswer(false);
+    else if (mode === 'next') newQuestion();
+  });
+
+  nReset.addEventListener('click', () => {
+    nCorrect = 0; nTotal = 0;
+    nScoreEl.textContent = '0 / 0';
+    document.activeElement.blur();
+    syncResetBtns();
+    newQuestion(true);
+  });
+
+  tReset.addEventListener('click', () => {
+    tCorrect = 0; tTotal = 0;
+    tScoreEl.textContent = '0 / 0';
+    document.activeElement.blur();
+    syncResetBtns();
+    newQuestion(true);
+  });
+
+  document.getElementById('btnChangeDiff').addEventListener('click', () => {
+    clearAll();
+    showDiffScreen();
+  });
+
+  rForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (mode === 'ask' && rInputQ.value !== '' && rInputR.value !== '') checkRemainderAnswer();
+    else if (mode === 'next') newRemainderQuestion();
+  });
+
+  rReset.addEventListener('click', () => {
+    rCorrect = 0; rTotal = 0;
+    rScoreEl.textContent = '0 / 0';
+    document.activeElement.blur();
+    syncResetBtns();
+    newRemainderQuestion(true);
+  });
+
+  rtForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (mode === 'ask' && rtInputQ.value !== '' && rtInputR.value !== '') checkRemainderTimedAnswer();
+    else if (mode === 'next') newRemainderTimedQuestion();
+  });
+
+  rtReset.addEventListener('click', () => {
+    rtCorrect = 0; rtTotal = 0;
+    rtScoreEl.textContent = '0 / 0';
+    document.activeElement.blur();
+    syncResetBtns();
+    newRemainderTimedQuestion(true);
+  });
+
+  document.getElementById('btnChangeRemainderDiff').addEventListener('click', () => {
+    clearAll();
+    showDiffScreen();
+  });
+
+  function newNodivExtQuestion(skipFocus) {
+    let d, q, n, tries = 0;
+    do {
+      d = 2 + Math.floor(Math.random() * 24); // 2..25
+      const minQ = Math.ceil(101 / d);
+      const maxQ = Math.floor(200 / d);
+      if (maxQ < minQ) { tries++; continue; }
+      q = minQ + Math.floor(Math.random() * (maxQ - minQ + 1));
+      n = q * d;
+      tries++;
+    } while (tries < 300 && historyNE.some(h => h[0] === n && h[1] === d));
+    neDividend = n; neDivisor = d; neAnswer = q;
+    if (historyNE.length >= 10) historyNE.shift();
+    historyNE.push([n, d]);
+    neQuestionEl.textContent = `${n} : ${d}`;
+    neInput.value = '';
+    neFeedback.textContent = ''; neFeedback.className = 'feedback empty';
+    if (!skipFocus) neInput.focus();
+    clearInterval(neInterval);
+    neStart = Date.now();
+    neInterval = setInterval(() => {
+      neTimerEl.textContent = `${Math.floor((Date.now() - neStart) / 1000)} s`;
+    }, 500);
+    mode = 'ask';
+    const neBtn = getSubmitBtn();
+    neBtn.textContent = 'Sprawdź';
+    neBtn.disabled = true;
+  }
+
+  function checkNodivExtAnswer() {
+    if (mode !== 'ask') return;
+    mode = 'next';
+    clearInterval(neInterval);
+    const ans = Number(neInput.value);
+    neTotal++;
+    if (ans === neAnswer) {
+      neCorrect++;
+      neFeedback.textContent = '✅ Brawo! To poprawna odpowiedź.';
+      neFeedback.className = 'feedback good';
+      playCorrectAnim(neAnswer);
+    } else {
+      neFeedback.textContent = `❌ Niepoprawnie. ${neDividend} : ${neDivisor} = ${neAnswer}.`;
+      neFeedback.className = 'feedback bad';
+      playWrongAnim();
+    }
+    neScoreEl.textContent = `${neCorrect} / ${neTotal}`;
+    neInput.blur();
+    syncResetBtns();
+  }
+
+  function newRemExtQuestion(skipFocus) {
+    let d, n, q, r, tries = 0;
+    do {
+      d = 2 + Math.floor(Math.random() * 19); // 2..20
+      n = 101 + Math.floor(Math.random() * 100); // 101..200
+      q = Math.floor(n / d);
+      r = n % d;
+      tries++;
+    } while (tries < 300 && historyRE.some(h => h[0] === n && h[1] === d));
+    reDividend = n; reDivisor = d; reQuotient = q; reRemainder = r;
+    if (historyRE.length >= 10) historyRE.shift();
+    historyRE.push([n, d]);
+    reQuestionEl.textContent = `${n} : ${d}`;
+    reInputQ.value = ''; reInputR.value = '';
+    reFeedback.textContent = ''; reFeedback.className = 'feedback empty';
+    if (!skipFocus) reInputQ.focus();
+    clearInterval(reInterval);
+    reStart = Date.now();
+    reInterval = setInterval(() => {
+      reTimerEl.textContent = `${Math.floor((Date.now() - reStart) / 1000)} s`;
+    }, 500);
+    mode = 'ask';
+    const reBtn = getSubmitBtn();
+    reBtn.textContent = 'Sprawdź';
+    reBtn.disabled = true;
+  }
+
+  function checkRemExtAnswer() {
+    if (mode !== 'ask') return;
+    mode = 'next';
+    clearInterval(reInterval);
+    const ansQ = Number(reInputQ.value);
+    const ansR = Number(reInputR.value);
+    reTotal++;
+    if (ansQ === reQuotient && ansR === reRemainder) {
+      reCorrect++;
+      reFeedback.textContent = '✅ Brawo! Poprawna odpowiedź.';
+      reFeedback.className = 'feedback good';
+      playCorrectAnim(reQuotient);
+    } else {
+      const detail = reRemainder === 0
+        ? `${reDividend} : ${reDivisor} = ${reQuotient} (bez reszty)`
+        : `${reDividend} : ${reDivisor} = ${reQuotient} reszta ${reRemainder}`;
+      reFeedback.textContent = `❌ Niepoprawnie. ${detail}.`;
+      reFeedback.className = 'feedback bad';
+      playWrongAnim();
+    }
+    reScoreEl.textContent = `${reCorrect} / ${reTotal}`;
+    reInputQ.blur(); reInputR.blur();
+    syncResetBtns();
+  }
+
+  neForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (mode === 'ask' && neInput.value !== '') checkNodivExtAnswer();
+    else if (mode === 'next') newNodivExtQuestion();
+  });
+
+  neReset.addEventListener('click', () => {
+    neCorrect = 0; neTotal = 0;
+    neScoreEl.textContent = '0 / 0';
+    document.activeElement.blur();
+    syncResetBtns();
+    newNodivExtQuestion(true);
+  });
+
+  reForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (mode === 'ask' && reInputQ.value !== '' && reInputR.value !== '') checkRemExtAnswer();
+    else if (mode === 'next') newRemExtQuestion();
+  });
+
+  reReset.addEventListener('click', () => {
+    reCorrect = 0; reTotal = 0;
+    reScoreEl.textContent = '0 / 0';
+    document.activeElement.blur();
+    syncResetBtns();
+    newRemExtQuestion(true);
+  });
+
+  function syncResetBtns() {
+    nReset.disabled  = nTotal  === 0;
+    tReset.disabled  = tTotal  === 0;
+    rReset.disabled  = rTotal  === 0;
+    rtReset.disabled = rtTotal === 0;
+    neReset.disabled = neTotal === 0;
+    reReset.disabled = reTotal === 0;
+  }
+
+  nInput.addEventListener('input', () => {
+    if (mode === 'ask') document.getElementById('nSubmitBtn').disabled = nInput.value === '';
+  });
+  tInput.addEventListener('input', () => {
+    if (mode === 'ask') document.getElementById('tSubmitBtn').disabled = tInput.value === '';
+  });
+  rInputQ.addEventListener('input', () => {
+    if (mode === 'ask') document.getElementById('rSubmitBtn').disabled = (rInputQ.value === '' || rInputR.value === '');
+  });
+  rInputR.addEventListener('input', () => {
+    if (mode === 'ask') document.getElementById('rSubmitBtn').disabled = (rInputQ.value === '' || rInputR.value === '');
+  });
+  rtInputQ.addEventListener('input', () => {
+    if (mode === 'ask') document.getElementById('rtSubmitBtn').disabled = (rtInputQ.value === '' || rtInputR.value === '');
+  });
+  rtInputR.addEventListener('input', () => {
+    if (mode === 'ask') document.getElementById('rtSubmitBtn').disabled = (rtInputQ.value === '' || rtInputR.value === '');
+  });
+  neInput.addEventListener('input', () => {
+    if (mode === 'ask') document.getElementById('neSubmitBtn').disabled = neInput.value === '';
+  });
+  reInputQ.addEventListener('input', () => {
+    if (mode === 'ask') document.getElementById('reSubmitBtn').disabled = (reInputQ.value === '' || reInputR.value === '');
+  });
+  reInputR.addEventListener('input', () => {
+    if (mode === 'ask') document.getElementById('reSubmitBtn').disabled = (reInputQ.value === '' || reInputR.value === '');
+  });
+
+  syncResetBtns();
+  newQuestion();
+</script>
+</body>
+</html>

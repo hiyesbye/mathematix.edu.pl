@@ -1,0 +1,745 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f0eefe">
+<title>Działania na liczbach ujemnych</title>
+<style>
+  :root {
+    --bg:        #f0eefe;
+    --card:      #ffffff;
+    --primary:   #7c4cf7;
+    --good:      #1e9e5a;
+    --bad:       #d64040;
+    --text:      #1e2340;
+    --score-bg:  #d6f5e6; --score-text: #1a7a44; --score-bdr: #a8e8c8;
+    --timer-bg:  #fff4d6; --timer-text: #b86b00; --timer-bdr: #ffd98a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg);
+    font-family: "Segoe UI", Verdana, Arial, sans-serif; color: var(--text); }
+  body { display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; padding: 16px; }
+
+  .card {
+    background: var(--card); width: 100%; max-width: 420px;
+    border-radius: 24px; box-shadow: 0 12px 36px rgba(60,30,120,.14);
+    padding: 28px 24px 32px; text-align: center;
+    position: relative; overflow: hidden;
+  }
+  h1 {
+    font-size: 1.35rem; font-weight: 900; letter-spacing: -0.2px;
+    margin: 0 0 16px; padding: 13px 20px;
+    background: linear-gradient(135deg, #b3d4ff, #3a7bd5);
+    border: 2px solid #5a8fd4; border-radius: 16px; color: #001f4d;
+  }
+
+  .mode-row {
+    display: flex; align-items: center; background: #eeeafb;
+    border-radius: 14px; padding: 4px; gap: 4px; margin-bottom: 20px;
+  }
+  .mode-title {
+    flex: 0 0 auto; display: flex; align-items: center;
+    padding: 4px 9px; border-radius: 9px; background: #c8bfee; color: #3d3470;
+    font-size: .78rem; font-weight: 700; white-space: nowrap;
+    cursor: default; user-select: none;
+  }
+  .tab {
+    flex: 1; border: none; background: transparent; border-radius: 11px;
+    padding: 10px 6px; font-size: .85rem; font-weight: 700; color: #6672a8;
+    cursor: pointer; transition: background .18s, color .18s, box-shadow .18s;
+    line-height: 1.3; box-shadow: none;
+  }
+  .tab:not(.active-n):not(.active-t):not(.active-r):hover { background: #dfe2f5; color: var(--text); }
+  .tab.active-n { background: linear-gradient(135deg,#8b6fff,#6a3de8); color:#fff; box-shadow:0 3px 10px rgba(107,74,247,.35); }
+  .tab.active-t { background: linear-gradient(135deg,#e8604a,#f5a623); color:#fff; box-shadow:0 3px 10px rgba(232,96,74,.35); }
+  .tab.active-r { background: linear-gradient(135deg,#0a9e8a,#15ceb0); color:#fff; box-shadow:0 3px 10px rgba(10,158,138,.35); }
+  .tab.active-e { background: linear-gradient(135deg,#2e7d32,#43a047); color:#fff; box-shadow:0 3px 10px rgba(46,125,50,.35); }
+
+  /* Mniejsza czcionka dla długich nazw modułów */
+  .tab.mod-tab { font-size: .8rem; }
+
+  .stats { display: flex; gap: 10px; margin-bottom: 20px; }
+  .stat-box { flex: 1; border-radius: 14px; padding: 10px 6px; font-weight: 700; }
+  .stat-label { font-size: .7rem; text-transform: uppercase; letter-spacing: .8px; opacity: .7; margin-bottom: 2px; }
+  .stat-value { font-size: 1.35rem; }
+  .score-box { background: var(--score-bg); color: var(--score-text); border: 2px solid var(--score-bdr); }
+  .timer-box { background: var(--timer-bg); color: var(--timer-text); border: 2px solid var(--timer-bdr);
+    transition: background .3s, color .3s, border-color .3s; }
+  .timer-box.warn   { background: #ffe0cc; color: #c04000; border-color: #ffb480; }
+  .timer-box.danger { background: #ffd6d6; color: #c00000; border-color: #ff9090;
+    animation: timerPulse .5s ease-in-out infinite alternate; }
+  @keyframes timerPulse { from{transform:scale(1);}to{transform:scale(1.05);} }
+
+  .question-box {
+    border-radius: 18px; padding: 22px 14px; margin-bottom: 20px; color: #fff;
+    background: linear-gradient(145deg,#1565c0,#1e88e5);
+    box-shadow: 0 6px 22px rgba(21,101,192,.38);
+  }
+  .question-box.orange {
+    background: linear-gradient(145deg,#bf360c,#e64a19);
+    box-shadow: 0 6px 22px rgba(191,54,12,.38);
+  }
+  .question {
+    font-family: "Bahnschrift","DIN Alternate","Arial Rounded MT Bold","Trebuchet MS",sans-serif;
+    font-size: clamp(1.5rem, 7.5vw, 3rem); font-weight: 700;
+    letter-spacing: 0; line-height: 1.15; white-space: nowrap;
+    text-shadow: 0 2px 8px rgba(0,0,0,.2);
+  }
+
+  form { display: flex; flex-direction: column; gap: 12px; margin-bottom: 14px; }
+  input[type="number"] { touch-action: manipulation;
+    width: 100%; font-size: 1.6rem; text-align: center; padding: 12px 8px;
+    border: 2px solid #cdbff7; border-radius: 14px; outline: none;
+    -moz-appearance: textfield; transition: border-color .15s;
+  }
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+  input[type="number"]:focus { border-color: var(--primary); }
+
+  button {
+    width: 100%; font-size: 1.1rem; font-weight: 700; padding: 13px 20px;
+    border: none; border-radius: 14px;
+    background: linear-gradient(135deg,#8b6fff,#6a3de8); color: white;
+    cursor: pointer; transition: filter .15s, transform .06s;
+    letter-spacing: .3px; box-shadow: 0 4px 14px rgba(107,74,247,.35);
+  }
+  button:hover  { filter: brightness(1.08); }
+  button:active { transform: scale(.97); }
+  button:disabled { opacity: 0.38; cursor: not-allowed; filter: none; transform: none; }
+  button.secondary {
+    background: transparent; border: 2px solid #d0d6f5;
+    color: #6672a8; font-weight: 600; box-shadow: none; margin-top: 2px;
+  }
+  button.secondary:hover { background: #f2f4fd; filter: none; }
+
+  .feedback {
+    min-height: 66px; font-size: 1rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 14px; padding: 10px 14px; margin-bottom: 10px; line-height: 1.4;
+    text-align: center;
+  }
+  .feedback.good  { background: #d6f5e6; color: var(--good); border: 2px solid #a8e8c8; }
+  .feedback.bad   { background: #fde8e8; color: var(--bad);  border: 2px solid #f4b8b8; }
+  .feedback.empty { visibility: hidden; }
+
+  .diff-screen { padding: 4px 0 8px; }
+  .diff-heading { font-size: 1.05rem; font-weight: 700; margin-bottom: 14px; opacity: .85; }
+  .diff-buttons { display: flex; flex-direction: column; gap: 10px; }
+  .diff-btn {
+    display: flex; align-items: center; gap: 14px; width: 100%;
+    padding: 14px 18px; border: none; border-radius: 16px;
+    cursor: pointer; text-align: left; color: white; font-weight: 700;
+    transition: filter .15s, transform .06s; letter-spacing: normal; box-shadow: none;
+  }
+  .diff-btn:hover  { filter: brightness(1.08); }
+  .diff-btn:active { transform: scale(.97); }
+  .diff-icon { font-size: 1.9rem; line-height: 1; }
+  .diff-info { display: flex; flex-direction: column; gap: 2px; }
+  .diff-name { font-size: 1.05rem; }
+  .diff-desc { font-size: .78rem; opacity: .88; font-weight: 600; }
+  .diff-easy   { background: linear-gradient(135deg,#1e9e5a,#38d68a); box-shadow: 0 4px 14px rgba(30,158,90,.3); }
+  .diff-medium { background: linear-gradient(135deg,#c07800,#f5c030); box-shadow: 0 4px 14px rgba(192,120,0,.3); }
+  .diff-hard   { background: linear-gradient(135deg,#d64040,#f07070); box-shadow: 0 4px 14px rgba(214,64,64,.3); }
+
+  .btn-row { display: flex; gap: 10px; }
+  .btn-row button { margin-top: 0; }
+
+  #animLayer {
+    position: absolute; inset: 0; pointer-events: none; z-index: 100;
+    border-radius: 24px; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .anim-correct-num {
+    font-family: "Bahnschrift","DIN Alternate","Arial Rounded MT Bold",sans-serif;
+    font-size: 7rem; font-weight: 900; color: #fff; line-height: 1;
+    text-shadow: 0 0 10px #7fffb0,0 0 25px #50ff80,0 0 55px #20e860,0 0 100px #00c840;
+    animation: correctPop 1.3s cubic-bezier(.22,1,.36,1) forwards;
+    position: relative; z-index: 2;
+  }
+  @keyframes correctPop {
+    0%   {opacity:0;transform:scale(.2) rotate(-8deg);}
+    28%  {opacity:1;transform:scale(1.18) rotate(2deg);}
+    50%  {transform:scale(.94) rotate(-1deg);}
+    68%  {opacity:1;transform:scale(1.04) rotate(.5deg);}
+    85%  {opacity:1;transform:scale(1);}
+    100% {opacity:0;transform:scale(1.4);}
+  }
+  .particle {
+    position: absolute; z-index: 3; font-size: 1.8rem; font-weight: 900; color: #fff;
+    pointer-events: none; animation: particleFly 1s ease-out forwards;
+    text-shadow: 0 0 8px rgba(80,255,140,.9),0 0 18px rgba(80,255,140,.5);
+  }
+  @keyframes particleFly {
+    0%   {opacity:1;transform:translate(0,0) scale(1.1);}
+    100% {opacity:0;transform:var(--tx) scale(.2);}
+  }
+  .correct-flash {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center,rgba(40,220,100,.45) 0%,rgba(40,220,100,0) 70%);
+    animation: flashFade 1.3s ease-out forwards;
+  }
+  @keyframes flashFade {0%{opacity:0;}15%{opacity:1;}100%{opacity:0;}}
+  .anim-wrong-x {
+    font-size: 11rem; font-weight: 900; color: #ff1a1a; line-height: 1;
+    animation: wrongGlow 1.2s ease-out forwards; position: relative; z-index: 2;
+  }
+  @keyframes wrongGlow {
+    0%   {opacity:0;transform:scale(.4);text-shadow:0 0 8px #f00,0 0 16px #f00;}
+    18%  {opacity:1;transform:scale(1.12);text-shadow:0 0 8px #f00,0 0 20px #f00,0 0 40px #f22,0 0 80px #f44,0 0 130px #f00,0 0 200px #c00;}
+    40%  {transform:scale(1);text-shadow:0 0 4px #f00,0 0 14px #f00,0 0 30px #f22,0 0 60px #f44,0 0 100px #f00;}
+    65%  {opacity:1;transform:scale(1.06);text-shadow:0 0 12px #f00,0 0 28px #f00,0 0 55px #f22,0 0 110px #f44,0 0 180px #c00,0 0 250px #800;}
+    100% {opacity:0;transform:scale(1.25);text-shadow:0 0 30px #f00,0 0 70px #f22,0 0 140px #f00;}
+  }
+  .wrong-flash {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center,rgba(220,0,0,.4) 0%,rgba(220,0,0,0) 70%);
+    animation: flashFade 1.2s ease-out forwards;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div id="animLayer"></div>
+  <h1>Działania na liczbach ujemnych</h1>
+
+  <div style="display:flex;justify-content:center;margin-bottom:6px">
+    <span class="mode-title">Moduł:</span>
+  </div>
+  <div class="mode-row" style="margin-bottom:8px">
+    <button class="tab mod-tab active-n" id="moduleBtnAS" onclick="switchModule('addSub')">dodawanie i odejmowanie</button>
+    <button class="tab mod-tab"          id="moduleBtnMD" onclick="switchModule('mulDiv')">mnożenie i dzielenie</button>
+  </div>
+
+  <div class="mode-row" style="margin-bottom:8px">
+    <span class="mode-title">Poziom:</span>
+    <button class="tab active-n" id="levelBtnL1" onclick="switchLevel('lvl1')">Lvl 1</button>
+    <button class="tab"          id="levelBtnL2" onclick="switchLevel('lvl2')">Lvl 2</button>
+  </div>
+
+  <div class="mode-row">
+    <span class="mode-title">Tryb:</span>
+    <button class="tab active-n" id="modeBtnNormal" onclick="switchMode('normal')">Normalny</button>
+    <button class="tab"          id="modeBtnTimed"  onclick="switchMode('timed')">&#x23F1; Czasowy</button>
+  </div>
+
+  <!-- ═══ ADD/SUB NORMAL ═══ -->
+  <div id="panelASN">
+    <div class="stats">
+      <div class="stat-box score-box">
+        <div class="stat-label">Wynik</div>
+        <div class="stat-value" id="asnScore">0 / 0</div>
+      </div>
+      <div class="stat-box timer-box">
+        <div class="stat-label">Czas</div>
+        <div class="stat-value" id="asnTimer">0 s</div>
+      </div>
+    </div>
+    <div class="question-box">
+      <div class="question" id="asnQ">?</div>
+    </div>
+    <form id="asnForm" autocomplete="off">
+      <input type="number" id="asnInput" inputmode="numeric" placeholder="Twoja odpowiedź" required>
+      <button type="submit" id="asnBtn">Sprawdź</button>
+    </form>
+    <div class="feedback empty" id="asnFb"></div>
+    <button class="secondary" id="asnResetBtn" disabled onclick="resetScore('asn')">Resetuj wynik</button>
+  </div>
+
+  <!-- ═══ ADD/SUB TIMED ═══ -->
+  <div id="panelAST" style="display:none">
+    <div class="stats">
+      <div class="stat-box score-box">
+        <div class="stat-label">Wynik</div>
+        <div class="stat-value" id="astScore">0 / 0</div>
+      </div>
+      <div class="stat-box timer-box" id="astTimerBox">
+        <div class="stat-label">Pozostały czas</div>
+        <div class="stat-value" id="astTimer">— s</div>
+      </div>
+    </div>
+    <div class="question-box">
+      <div class="question" id="astQ">?</div>
+    </div>
+    <form id="astForm" autocomplete="off">
+      <input type="number" id="astInput" inputmode="numeric" placeholder="Twoja odpowiedź" required>
+      <button type="submit" id="astBtn">Sprawdź</button>
+    </form>
+    <div class="feedback empty" id="astFb"></div>
+    <div class="btn-row">
+      <button class="secondary" id="astResetBtn" disabled onclick="resetScore('ast')">Resetuj wynik</button>
+      <button class="secondary" onclick="goChangeDiff()">Zmień poziom</button>
+    </div>
+  </div>
+
+  <!-- ═══ DIFFICULTY SCREEN (shared) ═══ -->
+  <div id="panelDiff" style="display:none">
+    <div class="diff-screen">
+      <div class="diff-heading">Wybierz poziom trudności</div>
+      <div class="diff-buttons">
+        <button class="diff-btn diff-easy" onclick="selectDiff(15)">
+          <span class="diff-icon">🟢</span>
+          <span class="diff-info">
+            <span class="diff-name">Easy</span>
+            <span class="diff-desc">15 sekund na odpowiedź</span>
+          </span>
+        </button>
+        <button class="diff-btn diff-medium" onclick="selectDiff(10)">
+          <span class="diff-icon">🟡</span>
+          <span class="diff-info">
+            <span class="diff-name">Medium</span>
+            <span class="diff-desc">10 sekund na odpowiedź</span>
+          </span>
+        </button>
+        <button class="diff-btn diff-hard" onclick="selectDiff(5)">
+          <span class="diff-icon">🔴</span>
+          <span class="diff-info">
+            <span class="diff-name">Hard</span>
+            <span class="diff-desc">5 sekund na odpowiedź</span>
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ MUL/DIV NORMAL ═══ -->
+  <div id="panelMDN" style="display:none">
+    <div class="stats">
+      <div class="stat-box score-box">
+        <div class="stat-label">Wynik</div>
+        <div class="stat-value" id="mdnScore">0 / 0</div>
+      </div>
+      <div class="stat-box timer-box">
+        <div class="stat-label">Czas</div>
+        <div class="stat-value" id="mdnTimer">0 s</div>
+      </div>
+    </div>
+    <div class="question-box orange">
+      <div class="question" id="mdnQ">?</div>
+    </div>
+    <form id="mdnForm" autocomplete="off">
+      <input type="number" id="mdnInput" inputmode="numeric" placeholder="Twoja odpowiedź" required>
+      <button type="submit" id="mdnBtn">Sprawdź</button>
+    </form>
+    <div class="feedback empty" id="mdnFb"></div>
+    <button class="secondary" id="mdnResetBtn" disabled onclick="resetScore('mdn')">Resetuj wynik</button>
+  </div>
+
+  <!-- ═══ MUL/DIV TIMED ═══ -->
+  <div id="panelMDT" style="display:none">
+    <div class="stats">
+      <div class="stat-box score-box">
+        <div class="stat-label">Wynik</div>
+        <div class="stat-value" id="mdtScore">0 / 0</div>
+      </div>
+      <div class="stat-box timer-box" id="mdtTimerBox">
+        <div class="stat-label">Pozostały czas</div>
+        <div class="stat-value" id="mdtTimer">— s</div>
+      </div>
+    </div>
+    <div class="question-box orange">
+      <div class="question" id="mdtQ">?</div>
+    </div>
+    <form id="mdtForm" autocomplete="off">
+      <input type="number" id="mdtInput" inputmode="numeric" placeholder="Twoja odpowiedź" required>
+      <button type="submit" id="mdtBtn">Sprawdź</button>
+    </form>
+    <div class="feedback empty" id="mdtFb"></div>
+    <div class="btn-row">
+      <button class="secondary" id="mdtResetBtn" disabled onclick="resetScore('mdt')">Resetuj wynik</button>
+      <button class="secondary" onclick="goChangeDiff()">Zmień poziom</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DOM ───────────────────────────────────────────────────────────────────────
+const animLayer = document.getElementById('animLayer');
+const panels = {
+  asn:  document.getElementById('panelASN'),
+  ast:  document.getElementById('panelAST'),
+  diff: document.getElementById('panelDiff'),
+  mdn:  document.getElementById('panelMDN'),
+  mdt:  document.getElementById('panelMDT'),
+};
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let currentModule = 'addSub'; // 'addSub' | 'mulDiv'
+let currentMode   = 'normal'; // 'normal' | 'timed'
+let currentLevel  = 'lvl1';  // 'lvl1' | 'lvl2'
+let timedDiff     = null;
+let mode          = 'ask';
+let autoAdvTmt    = null;
+let normalIv      = null, normalStart = 0;
+let cdIv          = null, cdLeft = 0;
+let curAnswer, curQText;
+
+const scores = {
+  asn: [0,0], ast: [0,0],
+  mdn: [0,0], mdt: [0,0],
+};
+
+const histAS = [], histMD = [];
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function rInt(a, b)  { return a + Math.floor(Math.random() * (b - a + 1)); }
+function rNZ(a, b)   { let n; do { n = rInt(a, b); } while (n === 0); return n; }
+function rFactor(mx) { return rNZ(-mx, mx); }
+
+function fmtSecond(n) { return n < 0 ? `(${n})` : `${n}`; }
+function fmtFactor(n) { return n < 0 ? `(${n})` : `${n}`; }
+
+function pushHist(hist, entry) {
+  if (hist.length >= 14) hist.shift();
+  hist.push(entry);
+}
+
+// Lvl 1: addSub ±30, mulDiv maxFactor 10
+// Lvl 2: addSub ±100, mulDiv maxFactor 20, dzielna max ±200
+function asRange()  { return currentLevel === 'lvl1' ? 30 : 100; }
+function mdFactor() { return currentLevel === 'lvl1' ? 10 : 20; }
+function mdMaxDiv() { return currentLevel === 'lvl2' ? 200 : Infinity; }
+
+// ── Question generators ───────────────────────────────────────────────────────
+function genAddSub(range) {
+  let a, op, b, tries = 0;
+  do {
+    op = Math.random() < 0.5 ? '+' : '−';
+    if (Math.random() < 0.05) {
+      a = rInt(1, range);
+      b = rInt(1, range);
+    } else {
+      do {
+        a = rInt(-range, range);
+        b = rInt(-range, range);
+      } while (a > 0 && b > 0);
+    }
+    tries++;
+  } while (tries < 200 && histAS.some(h => h[0]===a && h[1]===op && h[2]===b));
+  pushHist(histAS, [a, op, b]);
+  curAnswer = op === '+' ? a + b : a - b;
+  curQText  = `${a} ${op} ${fmtSecond(b)}`;
+  return curQText;
+}
+
+function genMulDiv(maxFactor, maxDividend) {
+  const divLimit = maxDividend || Infinity;
+  let a, op, b, tries = 0;
+  do {
+    op = Math.random() < 0.5 ? '·' : ':';
+    if (op === '·') {
+      let f1, f2;
+      do {
+        f1 = rFactor(maxFactor);
+        f2 = rFactor(maxFactor);
+      } while (f1 > 0 && f2 > 0);
+      a = f1; b = f2;
+      curAnswer = a * b;
+    } else {
+      let q, d;
+      do {
+        q = rFactor(maxFactor);
+        d = rFactor(maxFactor);
+      } while ((q > 0 && d > 0) || Math.abs(q * d) > divLimit);
+      a = q * d; b = d;
+      curAnswer = q;
+    }
+    tries++;
+  } while (tries < 200 && histMD.some(h => h[0]===a && h[1]===op && h[2]===b));
+  pushHist(histMD, [a, op, b]);
+  curQText = `${fmtFactor(a)} ${op} ${fmtFactor(b)}`;
+  return curQText;
+}
+
+// ── Panel switching ───────────────────────────────────────────────────────────
+function hideAll() { Object.values(panels).forEach(p => p.style.display = 'none'); }
+
+function switchModule(mod) {
+  clearAll();
+  currentModule = mod;
+  document.getElementById('moduleBtnAS').className = 'tab mod-tab' + (mod==='addSub' ? ' active-n' : '');
+  document.getElementById('moduleBtnMD').className = 'tab mod-tab' + (mod==='mulDiv' ? ' active-r' : '');
+  updateView();
+}
+
+function switchMode(m) {
+  clearAll();
+  currentMode = m;
+  document.getElementById('modeBtnNormal').className = 'tab' + (m==='normal' ? ' active-n' : '');
+  document.getElementById('modeBtnTimed').className  = 'tab' + (m==='timed'  ? ' active-t' : '');
+  updateView();
+}
+
+function switchLevel(lv) {
+  clearAll();
+  currentLevel = lv;
+  document.getElementById('levelBtnL1').className = 'tab' + (lv==='lvl1' ? ' active-n' : '');
+  document.getElementById('levelBtnL2').className = 'tab' + (lv==='lvl2' ? ' active-e' : '');
+  ['asn','ast','mdn','mdt'].forEach(k => {
+    scores[k] = [0, 0];
+    document.getElementById(k + 'Score').textContent = '0 / 0';
+  });
+  updateView();
+}
+
+function updateView() {
+  hideAll();
+  if (currentMode === 'timed' && timedDiff === null) {
+    panels.diff.style.display = ''; return;
+  }
+  if (currentModule === 'addSub') {
+    if (currentMode === 'normal') { panels.asn.style.display = ''; newASN(); }
+    else                          { panels.ast.style.display = ''; newAST(); }
+  } else {
+    if (currentMode === 'normal') { panels.mdn.style.display = ''; newMDN(); }
+    else                          { panels.mdt.style.display = ''; newMDT(); }
+  }
+}
+
+function goChangeDiff() { clearAll(); hideAll(); panels.diff.style.display = ''; }
+
+function selectDiff(secs) {
+  timedDiff = secs;
+  panels.diff.style.display = 'none';
+  if (currentModule === 'addSub') { resetScore('ast'); panels.ast.style.display = ''; newAST(); }
+  else                            { resetScore('mdt'); panels.mdt.style.display = ''; newMDT(); }
+}
+
+function clearAll() {
+  clearInterval(normalIv);
+  clearInterval(cdIv);
+  clearTimeout(autoAdvTmt);
+  timedDiff = null;
+  mode = 'ask';
+  animLayer.innerHTML = '';
+}
+
+function updateResetBtn(key) {
+  const el = document.getElementById(key + 'ResetBtn');
+  if (el) el.disabled = scores[key][1] === 0;
+}
+
+function resetScore(key) {
+  scores[key] = [0, 0];
+  document.getElementById(key + 'Score').textContent = '0 / 0';
+  updateResetBtn(key);
+  document.activeElement.blur();
+  clearInterval(normalIv); clearInterval(cdIv); clearTimeout(autoAdvTmt);
+  mode = 'ask'; animLayer.innerHTML = '';
+  ({ asn: newASN, ast: newAST, mdn: newMDN, mdt: newMDT })[key](true);
+}
+
+// ── Timer helpers ─────────────────────────────────────────────────────────────
+function startElapsed(timerEl) {
+  normalStart = Date.now();
+  timerEl.textContent = '0 s';
+  normalIv = setInterval(() => {
+    timerEl.textContent = `${Math.floor((Date.now()-normalStart)/1000)} s`;
+  }, 1000);
+}
+function stopElapsed(timerEl) {
+  clearInterval(normalIv);
+  timerEl.textContent = `${Math.floor((Date.now()-normalStart)/1000)} s`;
+}
+
+function startCountdown(timerEl, timerBox, onEnd) {
+  cdLeft = timedDiff;
+  tickCD(timerEl, timerBox);
+  cdIv = setInterval(() => { cdLeft--; tickCD(timerEl, timerBox); if (cdLeft<=0) onEnd(); }, 1000);
+}
+function tickCD(el, box) {
+  el.textContent = `${cdLeft} s`;
+  const r = cdLeft / timedDiff;
+  box.className = 'stat-box timer-box' + (r<=0.2?' danger':r<=0.5?' warn':'');
+}
+function stopCountdown() { clearInterval(cdIv); }
+
+// ── Animation ─────────────────────────────────────────────────────────────────
+function playCorrect(ans) {
+  animLayer.innerHTML = '';
+  const flash = document.createElement('div');
+  flash.className = 'correct-flash';
+  animLayer.appendChild(flash);
+  const num = document.createElement('div');
+  num.className = 'anim-correct-num';
+  num.textContent = ans;
+  const len = String(ans).length;
+  if (len > 4) num.style.fontSize = '4.5rem';
+  if (len > 5) num.style.fontSize = '3rem';
+  animLayer.appendChild(num);
+  const syms = ['+','−','·',':','=','★','✦','✧','◆'];
+  for (let i = 0; i < 14; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.textContent = syms[i % syms.length];
+    const ang = (360/14)*i, d = 110+Math.random()*80, rad = ang*Math.PI/180;
+    p.style.setProperty('--tx', `translate(${Math.cos(rad)*d}px,${Math.sin(rad)*d}px)`);
+    p.style.animationDelay = `${Math.random()*0.12}s`;
+    p.style.fontSize = `${1.2+Math.random()*1.2}rem`;
+    animLayer.appendChild(p);
+  }
+  setTimeout(() => { animLayer.innerHTML=''; }, 1400);
+  autoAdvTmt = setTimeout(autoAdvance, 1900);
+}
+
+function activeKey() {
+  if (currentModule==='addSub') return currentMode==='normal' ? 'asn' : 'ast';
+  return currentMode==='normal' ? 'mdn' : 'mdt';
+}
+
+function getActiveBtn() {
+  return document.getElementById(activeKey() + 'Btn');
+}
+
+function playWrong(autoAdv) {
+  const btn = getActiveBtn();
+  btn.disabled = true;
+  animLayer.innerHTML = '';
+  const fl = document.createElement('div'); fl.className='wrong-flash'; animLayer.appendChild(fl);
+  const x  = document.createElement('div'); x.className='anim-wrong-x'; x.textContent='✕'; animLayer.appendChild(x);
+  if (autoAdv) {
+    setTimeout(() => { animLayer.innerHTML=''; btn.disabled=false; }, 1300);
+    autoAdvTmt = setTimeout(autoAdvance, 1900);
+  } else {
+    setTimeout(() => { animLayer.innerHTML=''; btn.disabled=false; btn.textContent='Dalej'; }, 1300);
+  }
+}
+
+function autoAdvance() {
+  ({ asn: newASN, ast: newAST, mdn: newMDN, mdt: newMDT })[activeKey()]();
+}
+
+// ── Generic check ─────────────────────────────────────────────────────────────
+function check(key, inputEl, fbEl, stopTimer) {
+  if (mode !== 'ask') return;
+  mode = 'next';
+  stopTimer();
+  const ans = Number(inputEl.value);
+  const [c, t] = scores[key];
+  let newC = c;
+  if (ans === curAnswer) {
+    newC = c + 1;
+    fbEl.textContent = '✅ Brawo! To poprawna odpowiedź.';
+    fbEl.className = 'feedback good';
+    playCorrect(curAnswer);
+  } else {
+    fbEl.textContent = `❌ Niepoprawnie. ${curQText} = ${curAnswer}.`;
+    fbEl.className = 'feedback bad';
+    playWrong(key === 'ast' || key === 'mdt');
+  }
+  scores[key] = [newC, t + 1];
+  document.getElementById(key+'Score').textContent = `${newC} / ${t+1}`;
+  updateResetBtn(key);
+  inputEl.blur();
+}
+
+function timeUp(key, fbEl) {
+  if (mode !== 'ask') return;
+  stopCountdown();
+  mode = 'next';
+  const [c, t] = scores[key];
+  scores[key] = [c, t + 1];
+  document.getElementById(key+'Score').textContent = `${c} / ${t+1}`;
+  updateResetBtn(key);
+  fbEl.textContent = `⏰ Czas minął! ${curQText} = ${curAnswer}.`;
+  fbEl.className = 'feedback bad';
+  playWrong(true);
+}
+
+// ── Panel functions ───────────────────────────────────────────────────────────
+
+function newASN(skipFocus) {
+  clearInterval(normalIv); clearTimeout(autoAdvTmt); mode='ask';
+  animLayer.innerHTML='';
+  document.getElementById('asnBtn').textContent='Sprawdź';
+  document.getElementById('asnBtn').disabled=true;
+  document.getElementById('asnQ').textContent = genAddSub(asRange());
+  const inp=document.getElementById('asnInput'), fb=document.getElementById('asnFb');
+  inp.value=''; fb.textContent=''; fb.className='feedback empty';
+  if(!skipFocus) inp.focus();
+  startElapsed(document.getElementById('asnTimer'));
+}
+document.getElementById('asnForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const inp=document.getElementById('asnInput'), fb=document.getElementById('asnFb');
+  if (mode==='ask' && inp.value!=='') check('asn', inp, fb, ()=>stopElapsed(document.getElementById('asnTimer')));
+  else if (mode==='next') newASN();
+});
+
+function newAST(skipFocus) {
+  clearInterval(cdIv); clearTimeout(autoAdvTmt); mode='ask';
+  animLayer.innerHTML='';
+  document.getElementById('astBtn').textContent='Sprawdź';
+  document.getElementById('astBtn').disabled=true;
+  document.getElementById('astQ').textContent = genAddSub(asRange());
+  const inp=document.getElementById('astInput'), fb=document.getElementById('astFb');
+  inp.value=''; fb.textContent=''; fb.className='feedback empty';
+  if(!skipFocus) inp.focus();
+  startCountdown(
+    document.getElementById('astTimer'),
+    document.getElementById('astTimerBox'),
+    () => timeUp('ast', fb)
+  );
+}
+document.getElementById('astForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const inp=document.getElementById('astInput'), fb=document.getElementById('astFb');
+  if (mode==='ask' && inp.value!=='') check('ast', inp, fb, stopCountdown);
+  else if (mode==='next') newAST();
+});
+
+function newMDN(skipFocus) {
+  clearInterval(normalIv); clearTimeout(autoAdvTmt); mode='ask';
+  animLayer.innerHTML='';
+  document.getElementById('mdnBtn').textContent='Sprawdź';
+  document.getElementById('mdnBtn').disabled=true;
+  document.getElementById('mdnQ').textContent = genMulDiv(mdFactor(), mdMaxDiv());
+  const inp=document.getElementById('mdnInput'), fb=document.getElementById('mdnFb');
+  inp.value=''; fb.textContent=''; fb.className='feedback empty';
+  if(!skipFocus) inp.focus();
+  startElapsed(document.getElementById('mdnTimer'));
+}
+document.getElementById('mdnForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const inp=document.getElementById('mdnInput'), fb=document.getElementById('mdnFb');
+  if (mode==='ask' && inp.value!=='') check('mdn', inp, fb, ()=>stopElapsed(document.getElementById('mdnTimer')));
+  else if (mode==='next') newMDN();
+});
+
+function newMDT(skipFocus) {
+  clearInterval(cdIv); clearTimeout(autoAdvTmt); mode='ask';
+  animLayer.innerHTML='';
+  document.getElementById('mdtBtn').textContent='Sprawdź';
+  document.getElementById('mdtBtn').disabled=true;
+  document.getElementById('mdtQ').textContent = genMulDiv(mdFactor(), mdMaxDiv());
+  const inp=document.getElementById('mdtInput'), fb=document.getElementById('mdtFb');
+  inp.value=''; fb.textContent=''; fb.className='feedback empty';
+  if(!skipFocus) inp.focus();
+  startCountdown(
+    document.getElementById('mdtTimer'),
+    document.getElementById('mdtTimerBox'),
+    () => timeUp('mdt', fb)
+  );
+}
+document.getElementById('mdtForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const inp=document.getElementById('mdtInput'), fb=document.getElementById('mdtFb');
+  if (mode==='ask' && inp.value!=='') check('mdt', inp, fb, stopCountdown);
+  else if (mode==='next') newMDT();
+});
+
+// ── Input → enable Sprawdź ────────────────────────────────────────────────────
+[['asnInput','asnBtn'],['astInput','astBtn'],['mdnInput','mdnBtn'],['mdtInput','mdtBtn']].forEach(([iid,bid]) => {
+  document.getElementById(iid).addEventListener('input', function() {
+    if (mode === 'ask') document.getElementById(bid).disabled = this.value === '';
+  });
+});
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+newASN();
+</script>
+</body>
+</html>

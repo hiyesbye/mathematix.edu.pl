@@ -1,0 +1,1447 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#f0f2ff">
+<title>Działania na ułamkach</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:         #f0f2ff;
+    --card:       #ffffff;
+    --text:       #2a2d4a;
+    --primary:    #5b7fff;
+    --good:       #1a7a3a;
+    --bad:        #b00020;
+    --score-bg:   #eef6ff; --score-text: #1a4a8a; --score-bdr: #b8d4f5;
+    --timer-bg:   #f5f0ff; --timer-text: #5a1a8a; --timer-bdr: #d4b8f5;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; background: var(--bg);
+    font-family: "Segoe UI", Verdana, Arial, sans-serif; color: var(--text);
+  }
+  body {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; padding: 12px;
+  }
+  .card {
+    background: var(--card); width: 100%; max-width: 440px;
+    border-radius: 24px; padding: 22px 20px 26px;
+    box-shadow: 0 8px 36px rgba(60,80,200,.13), 0 2px 8px rgba(60,80,200,.08);
+    position: relative; overflow: hidden;
+  }
+  .app-title {
+    font-family: 'Nunito', "Segoe UI", sans-serif;
+    font-size: 1.5rem;
+    font-weight: 900;
+    letter-spacing: -0.2px;
+    text-align: center;
+    margin: 0 0 16px;
+    padding: 13px 20px;
+    background: linear-gradient(135deg, #7b93f7, #b978f2);
+    border: 2px solid #a89cd8;
+    border-radius: 16px;
+    color: #fff;
+  }
+
+  /* ── Control rows ─────────────────────────────── */
+  .mode-row {
+    display: flex; align-items: center; gap: 5px;
+    background: #eef0fb; border-radius: 15px;
+    padding: 5px 6px; margin-bottom: 8px;
+  }
+  .mode-title {
+    background: #c6ceed; color: #3d4470;
+    font-size: .73rem; font-weight: 700;
+    border-radius: 9px; padding: 6px 9px;
+    white-space: nowrap; flex-shrink: 0;
+  }
+  .tab {
+    flex: 1; border: none; background: transparent; border-radius: 11px;
+    padding: 9px 4px; font-size: .82rem; font-weight: 700; color: #6672a8;
+    cursor: pointer; transition: background .18s, color .18s, box-shadow .18s;
+  }
+  .module-buttons { display: flex; gap: 3px; flex: 1; min-width: 0; }
+  .module-buttons .tab {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+    flex: 1; min-width: 0; padding: 6px 0 7px; font-size: .56rem;
+    letter-spacing: -0.3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .module-buttons .tab .tab-icon { font-size: 1.2em; line-height: 1; }
+  .module-buttons .tab .tab-label { line-height: 1.1; }
+  .tab:not([class*="active"]):hover { background: #dfe2f5; color: var(--text); }
+
+  /* Module tabs */
+  .tab.active-add { background: linear-gradient(135deg,#1b8a3d,#2ec26e); color:#fff; box-shadow:0 3px 10px rgba(27,138,61,.35); }
+  .tab.active-sub { background: linear-gradient(135deg,#d64040,#f07070); color:#fff; box-shadow:0 3px 10px rgba(214,64,64,.35); }
+  .tab.active-mul { background: linear-gradient(135deg,#7b2ff7,#b966ff); color:#fff; box-shadow:0 3px 10px rgba(123,47,247,.35); }
+  .tab.active-div { background: linear-gradient(135deg,#0a99a0,#12ccd0); color:#fff; box-shadow:0 3px 10px rgba(10,153,160,.35); }
+
+  /* Level tabs */
+  .tab.active-lv1 { background: linear-gradient(135deg,#0099cc,#00ccff); color:#fff; box-shadow:0 3px 10px rgba(0,153,204,.35); }
+  .tab.active-lv2 { background: linear-gradient(135deg,#7b2ff7,#b966ff); color:#fff; box-shadow:0 3px 10px rgba(123,47,247,.35); }
+
+  /* ── Stats ────────────────────────────────────── */
+  .stats { display: flex; gap: 10px; margin-bottom: 14px; }
+  .stat-box { flex: 1; border-radius: 14px; padding: 10px 6px; font-weight: 700; text-align: center; }
+  .stat-label { font-size: .7rem; text-transform: uppercase; letter-spacing: .8px; opacity: .7; margin-bottom: 2px; }
+  .stat-value { font-size: 1.35rem; }
+  .score-box { background: var(--score-bg); color: var(--score-text); border: 2px solid var(--score-bdr); }
+  .timer-box { background: var(--timer-bg); color: var(--timer-text); border: 2px solid var(--timer-bdr); }
+
+  /* ── Question box ─────────────────────────────── */
+  .question-box {
+    background: linear-gradient(145deg,#4527a0,#7b52d9); color: #fff;
+    border-radius: 18px; padding: 20px 12px 18px; text-align: center; margin-bottom: 16px;
+  }
+  .question {
+    font-family: "Bahnschrift","DIN Alternate","Arial Rounded MT Bold","Trebuchet MS",sans-serif;
+    font-size: clamp(1.7rem, 9vw, 3.6rem); font-weight: 700;
+    letter-spacing: 0.5px; line-height: 1;
+    display: flex; align-items: center; justify-content: center; flex-wrap: nowrap;
+    gap: 0.18em;
+  }
+  .mixed-whole { margin-right: 0.05em; }
+  .frac-box {
+    display: inline-flex; flex-direction: column; align-items: center;
+    font-size: 0.5em; line-height: 1.15; vertical-align: middle; margin: 0 0.05em;
+  }
+  .frac-box .num, .frac-box .den { display: block; padding: 0 0.25em; }
+  .frac-box .num { border-bottom: 0.14em solid currentColor; padding-bottom: 0.08em; }
+  .frac-box .den { padding-top: 0.08em; }
+  .op-symbol { font-size: 0.85em; }
+  .question.stepped {
+    font-size: clamp(1rem, 5.2vw, 1.85rem); flex-wrap: wrap; row-gap: .25em;
+  }
+
+  /* ── Kroki (Lv2 dodawanie/odejmowanie) ──────────── */
+  .step-info {
+    font-size: .78rem; font-weight: 700; color: #5b5f8a;
+    text-align: center; margin-bottom: 8px; line-height: 1.4;
+  }
+  .step-op-symbol {
+    font-size: 1.5rem; font-weight: 700; color: #4a4e78;
+    align-self: center; flex-shrink: 0;
+  }
+  /* Każdy segment "= krok" trzyma się razem przy zawijaniu linii */
+  .eq-step {
+    display: inline-flex; align-items: center; gap: 0.18em; flex-shrink: 0;
+  }
+  .step-static-frac {
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 2.6rem; font-weight: 700; color: #2a2d4a;
+    align-self: center; flex-shrink: 0;
+  }
+  button.secondary.forfeit-btn { border-color: #f0b0b0; color: #b00020; }
+  button.secondary.forfeit-btn:hover { background: #fdeaea; }
+
+  /* ── Skracanie wzajemne (Mnożenie Lv1) ───────── */
+  .mul-reduce-section {
+    display: flex; align-items: center; justify-content: center;
+    gap: 1.4em; margin-bottom: 10px;
+  }
+  .mr-frac { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .mr-frac-body {
+    display: flex; flex-direction: column; align-items: center;
+    font-size: 2rem; font-weight: 700;
+  }
+  .mr-bar { width: 2.2em; height: 2.5px; background: currentColor; margin: 2px 0; }
+  .mr-inp { width: 52px; }
+  .mr-times { font-size: 2rem; font-weight: 700; align-self: center; }
+
+  /* ── Answer inputs (całość + ułamek) ────────────── */
+  .frac-inputs {
+    display: flex; align-items: stretch; justify-content: center;
+    gap: 10px; margin-bottom: 10px;
+  }
+  .whole-field { display: flex; flex-direction: column; align-items: center; }
+  .whole-field input { width: 68px; height: 100%; flex: 1; }
+  .frac-pair-io { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+  .frac-pair-io input { width: 92px; }
+  .frac-pair-io .frac-divider { width: 60px; height: 2px; background: #c6ceed; margin: 2px 0; }
+
+  /* Krok 1 (Lv2): dwie liczby obok siebie w jednej linii */
+  #answerRow.common-mode { gap: 6px; }
+  #answerRow.common-mode .whole-field input { width: 44px; }
+  #answerRow.common-mode .frac-pair-io { gap: 2px; }
+  #answerRow.common-mode .frac-pair-io input { width: 54px; }
+  #answerRow.common-mode .frac-pair-io .frac-divider { width: 38px; }
+  #answerRow.common-mode #inputsB { gap: 6px; margin-bottom: 0; }
+  #answerRow.common-mode input::placeholder { font-size: .5rem; letter-spacing: 0; }
+
+  input[type="number"] {
+    font-size: 1.3rem; text-align: center; padding: 10px 6px;
+    border: 2.5px solid #d0d6f5; border-radius: 14px;
+    font-family: inherit; outline: none; transition: border-color .2s;
+    -moz-appearance: textfield;
+  }
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type="number"]:focus { border-color: var(--primary); }
+  input[type="number"]::placeholder { font-size: .62rem; text-transform: uppercase; letter-spacing: .3px; }
+
+  button[type="submit"] {
+    width: 100%; font-size: 1.1rem; font-weight: 700; padding: 13px 20px;
+    border: none; border-radius: 14px; cursor: pointer;
+    background: linear-gradient(135deg,#5b7fff,#3a54e8); color: white;
+    box-shadow: 0 4px 16px rgba(74,108,247,.3); transition: filter .2s;
+    margin-bottom: 6px;
+  }
+  button[type="submit"]:hover { filter: brightness(1.08); }
+
+  button.secondary {
+    flex: 1; font-size: .93rem; font-weight: 600; padding: 10px 12px;
+    border-radius: 12px; cursor: pointer;
+    background: transparent; border: 2px solid #d0d6f5;
+    color: #6672a8; box-shadow: none;
+  }
+  button.secondary:hover { background: #f2f4fd; }
+  button[type="submit"]:disabled { opacity: 0.38; cursor: not-allowed; filter: none; box-shadow: none; }
+  button.secondary:disabled      { opacity: 0.32; cursor: not-allowed; }
+
+  .btn-row { display: flex; gap: 8px; }
+
+  /* ── Feedback ─────────────────────────────────── */
+  .feedback {
+    min-height: 60px; font-size: 1rem; font-weight: 700;
+    border-radius: 14px; padding: 12px 14px; text-align: center;
+    margin-bottom: 10px; transition: all .2s; line-height: 1.4;
+  }
+  .feedback.empty  { background: transparent; border: 2px dashed #dde2f5; color: transparent; }
+  .feedback.good { background: #d6f5e6; color: var(--good); border: 2px solid #a8e8c8; }
+  .feedback.bad  { background: #fde8e8; color: var(--bad);  border: 2px solid #f4b8b8; }
+
+  /* ── Animation layer ──────────────────────────── */
+  #animLayer {
+    position: absolute; inset: 0; pointer-events: none; z-index: 100;
+    border-radius: 24px; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .anim-correct-num {
+    font-family: "Bahnschrift","DIN Alternate","Arial Rounded MT Bold",sans-serif;
+    font-size: 5rem; font-weight: 900; color: #fff; line-height: 1.1; letter-spacing: 1px;
+    text-shadow: 0 0 10px #7fffb0,0 0 25px #50ff80,0 0 55px #20e860,0 0 100px #00c840;
+    animation: correctPop 1.3s cubic-bezier(.22,1,.36,1) forwards;
+    position: relative; z-index: 2; text-align: center;
+    display: flex; align-items: center; justify-content: center;
+  }
+  @keyframes correctPop {
+    0%   { opacity:0; transform:scale(.2) rotate(-8deg); }
+    28%  { opacity:1; transform:scale(1.18) rotate(2deg); }
+    50%  { transform:scale(.94) rotate(-1deg); }
+    68%  { opacity:1; transform:scale(1.04) rotate(.5deg); }
+    85%  { opacity:1; transform:scale(1); }
+    100% { opacity:0; transform:scale(1.4); }
+  }
+  .particle {
+    position: absolute; z-index: 3; font-size: 1.8rem; font-weight: 900; color: #fff;
+    pointer-events: none; animation: particleFly 1s ease-out forwards;
+    text-shadow: 0 0 8px rgba(80,255,140,.9),0 0 18px rgba(80,255,140,.5);
+  }
+  @keyframes particleFly {
+    0%   { opacity:1; transform:translate(0,0) scale(1.1); }
+    100% { opacity:0; transform:var(--tx) scale(.2); }
+  }
+  .correct-flash {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center,rgba(40,220,100,.45) 0%,rgba(40,220,100,0) 70%);
+    animation: flashFade 1.3s ease-out forwards;
+  }
+  @keyframes flashFade { 0%{opacity:0;} 15%{opacity:1;} 100%{opacity:0;} }
+  .anim-big-x {
+    font-size: 9rem; font-weight: 900; color: #ff1a1a; line-height: 1;
+    position: absolute; z-index: 3;
+    animation: wrongGlow 1.2s ease-out forwards;
+  }
+  @keyframes wrongGlow {
+    0%   { opacity:0; transform:scale(.4); text-shadow:0 0 8px #f00,0 0 16px #f00; }
+    18%  { opacity:1; transform:scale(1.12); text-shadow:0 0 8px #f00,0 0 20px #f00,0 0 40px #f22,0 0 80px #f44; }
+    65%  { opacity:1; transform:scale(1.06); text-shadow:0 0 12px #f00,0 0 28px #f00,0 0 55px #f22; }
+    100% { opacity:0; transform:scale(1.25); }
+  }
+  .wrong-flash {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center,rgba(220,0,0,.4) 0%,rgba(220,0,0,0) 70%);
+    animation: flashFade 1.2s ease-out forwards;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div id="animLayer"></div>
+  <div class="app-title">Działania na ułamkach</div>
+
+  <!-- Module row -->
+  <div class="mode-row module-row">
+    <span class="mode-title">Moduł:</span>
+    <div class="module-buttons">
+      <button class="tab active-add" id="modAddBtn" onclick="switchModule('add')"><span class="tab-icon">➕</span><span class="tab-label">Dodawanie</span></button>
+      <button class="tab"           id="modSubBtn" onclick="switchModule('sub')"><span class="tab-icon">➖</span><span class="tab-label">Odejmowanie</span></button>
+      <button class="tab"           id="modMulBtn" onclick="switchModule('mul')"><span class="tab-icon">✖️</span><span class="tab-label">Mnożenie</span></button>
+      <button class="tab"           id="modDivBtn" onclick="switchModule('div')"><span class="tab-icon">➗</span><span class="tab-label">Dzielenie</span></button>
+    </div>
+  </div>
+
+  <!-- Level row -->
+  <div class="mode-row">
+    <span class="mode-title">Poziom:</span>
+    <button class="tab active-lv1" id="lvl1Btn" onclick="switchLevel('lvl1')">Lv 1</button>
+    <button class="tab"            id="lvl2Btn" onclick="switchLevel('lvl2')">Lv 2</button>
+  </div>
+
+  <div class="stats">
+    <div class="stat-box score-box">
+      <div class="stat-label">Wynik</div>
+      <div class="stat-value" id="score">0 / 0</div>
+    </div>
+    <div class="stat-box timer-box">
+      <div class="stat-label">Czas</div>
+      <div class="stat-value" id="timer">0 s</div>
+    </div>
+  </div>
+  <div class="question-box">
+    <div class="question" id="question">?</div>
+  </div>
+  <div class="step-info" id="stepInfo" style="display:none"></div>
+  <form id="mainForm" autocomplete="off">
+    <div class="frac-inputs" id="answerRow">
+      <div class="whole-field">
+        <input type="number" id="whole" inputmode="numeric" placeholder="całość">
+      </div>
+      <div class="frac-pair-io">
+        <input type="number" id="num" inputmode="numeric" placeholder="licznik">
+        <div class="frac-divider"></div>
+        <input type="number" id="den" inputmode="numeric" placeholder="mianownik">
+      </div>
+      <span class="step-op-symbol" id="stepOpSymbol" style="display:none"></span>
+      <div class="frac-inputs" id="inputsB" style="display:none">
+        <div class="whole-field">
+          <input type="number" id="whole2" inputmode="numeric" placeholder="całość">
+        </div>
+        <div class="frac-pair-io">
+          <input type="number" id="num2" inputmode="numeric" placeholder="licznik">
+          <div class="frac-divider"></div>
+          <input type="number" id="den2" inputmode="numeric" placeholder="mianownik">
+        </div>
+      </div>
+      <span class="step-static-frac" id="stepStaticB" style="display:none"></span>
+    </div>
+    <div id="mulReduceSection" style="display:none" class="mul-reduce-section">
+      <div class="mr-frac">
+        <input type="number" id="mrn1" class="mr-inp" inputmode="numeric" placeholder="?">
+        <div class="mr-frac-body">
+          <span id="mrOldN1"></span>
+          <div class="mr-bar"></div>
+          <span id="mrOldD1"></span>
+        </div>
+        <input type="number" id="mrd1" class="mr-inp" inputmode="numeric" placeholder="?">
+      </div>
+      <span class="mr-times">·</span>
+      <div class="mr-frac">
+        <input type="number" id="mrn2" class="mr-inp" inputmode="numeric" placeholder="?">
+        <div class="mr-frac-body">
+          <span id="mrOldN2"></span>
+          <div class="mr-bar"></div>
+          <span id="mrOldD2"></span>
+        </div>
+        <input type="number" id="mrd2" class="mr-inp" inputmode="numeric" placeholder="?">
+      </div>
+    </div>
+    <div id="impSection" style="display:none" class="mul-reduce-section">
+      <div class="mr-frac">
+        <div class="mr-frac-body">
+          <input type="number" id="ipn1" class="mr-inp" inputmode="numeric" placeholder="?">
+          <div class="mr-bar"></div>
+          <input type="number" id="ipd1" class="mr-inp" inputmode="numeric" placeholder="?">
+        </div>
+      </div>
+      <span id="impOpSymbol" class="mr-times">·</span>
+      <div class="mr-frac">
+        <div class="mr-frac-body">
+          <input type="number" id="ipn2" class="mr-inp" inputmode="numeric" placeholder="?">
+          <div class="mr-bar"></div>
+          <input type="number" id="ipd2" class="mr-inp" inputmode="numeric" placeholder="?">
+        </div>
+      </div>
+    </div>
+    <button type="submit" id="submitBtn" disabled>Sprawdź</button>
+  </form>
+  <div class="feedback empty" id="feedback"></div>
+  <div class="btn-row">
+    <button type="button" id="resetBtn" class="secondary" disabled>Resetuj wynik</button>
+    <button type="button" id="forfeitBtn" class="secondary forfeit-btn" style="display:none">Poddaję się</button>
+  </div>
+</div>
+
+<script>
+  const animLayer = document.getElementById('animLayer');
+
+  // DOM refs — module & level tabs
+  const modAddBtn   = document.getElementById('modAddBtn');
+  const modSubBtn   = document.getElementById('modSubBtn');
+  const modMulBtn   = document.getElementById('modMulBtn');
+  const modDivBtn   = document.getElementById('modDivBtn');
+  const lvl1Btn     = document.getElementById('lvl1Btn');
+  const lvl2Btn     = document.getElementById('lvl2Btn');
+
+  // Panel refs
+  const scoreEl     = document.getElementById('score');
+  const timerEl     = document.getElementById('timer');
+  const questionEl  = document.getElementById('question');
+  const feedbackEl  = document.getElementById('feedback');
+  const stepInfoEl  = document.getElementById('stepInfo');
+  const answerRowEl = document.getElementById('answerRow');
+  const stepOpSymbolEl = document.getElementById('stepOpSymbol');
+  const inputsBEl   = document.getElementById('inputsB');
+  const stepStaticBEl = document.getElementById('stepStaticB');
+  const submitBtn   = document.getElementById('submitBtn');
+  const resetBtn    = document.getElementById('resetBtn');
+  const forfeitBtn  = document.getElementById('forfeitBtn');
+  const wholeEl     = document.getElementById('whole');
+  const numEl       = document.getElementById('num');
+  const denEl       = document.getElementById('den');
+  const whole2El    = document.getElementById('whole2');
+  const num2El       = document.getElementById('num2');
+  const den2El       = document.getElementById('den2');
+  const mulReduceSection = document.getElementById('mulReduceSection');
+  const mrn1El = document.getElementById('mrn1'); const mrd1El = document.getElementById('mrd1');
+  const mrn2El = document.getElementById('mrn2'); const mrd2El = document.getElementById('mrd2');
+  const mrOldN1El = document.getElementById('mrOldN1'); const mrOldD1El = document.getElementById('mrOldD1');
+  const mrOldN2El = document.getElementById('mrOldN2'); const mrOldD2El = document.getElementById('mrOldD2');
+  const impSection = document.getElementById('impSection');
+  const impOpSymbol = document.getElementById('impOpSymbol');
+  const ipn1El = document.getElementById('ipn1'); const ipd1El = document.getElementById('ipd1');
+  const ipn2El = document.getElementById('ipn2'); const ipd2El = document.getElementById('ipd2');
+
+  // ── State ───────────────────────────────────────
+  let currentModule = 'add';   // add | sub | mul | div
+  let currentLevel  = 'lvl1';  // lvl1 | lvl2
+
+  let aOperand, bOperand, target; // {whole,num,den}
+  let mode = 'ask';
+  let autoAdvanceTimeout = null;
+  let recentQ = [];
+
+  let correctCount = 0, totalCount = 0;
+  let timerInterval = null, timerStart = 0;
+
+  // ── Kroki (Lv2 dodawanie/odejmowanie, Lv1 odejmowanie/dodawanie/mnożenie) ──
+  let stepActive    = false;
+  let stepPhase     = null;   // 'common'|'borrow'|'result'|'extract'|'reduce'|'mul-reduce'
+  let stepCommonDen = null;
+  let stepARewrite  = null;   // {whole,num,den} — zapis A nad wspólnym mianownikiem
+  let stepBRewrite  = null;
+  let stepBorrowedA = null;   // {whole,num,den} — A po pożyczeniu całości (Lv1 odejmowanie)
+  let stepRaw2      = null;   // oczekiwany surowy wynik (przed wyłączeniem całości / skróceniem)
+  let stepRaw3      = null;   // oczekiwany wynik po wyłączeniu całości
+  let stepFixedWhole = 0;     // stała całość pokazywana w kroku "skróć ułamek"
+  let equationSteps = [];     // segmenty HTML doklejane po kolejnych "="
+  let stepMulN1 = 0, stepMulD1 = 1, stepMulN2 = 0, stepMulD2 = 1; // skracanie wzajemne
+
+  // ── Math helpers ────────────────────────────────
+  function gcd(a, b) {
+    a = Math.abs(a); b = Math.abs(b);
+    while (b) { const r = a % b; a = b; b = r; }
+    return a || 1;
+  }
+
+  function lcm(a, b) { return (a * b) / gcd(a, b); }
+
+  function coprimeNumerator(den) {
+    if (den <= 1) return 0;
+    let num;
+    do { num = 1 + Math.floor(Math.random() * (den - 1)); } while (gcd(num, den) !== 1);
+    return num;
+  }
+
+  function generateOperand(maxDen, maxWhole, mixedProb = 0.5, sharedDen = null) {
+    const den = sharedDen !== null ? sharedDen : (2 + Math.floor(Math.random() * (maxDen - 1)));
+    const num = coprimeNumerator(den);
+    const whole = (maxWhole > 0 && Math.random() < mixedProb) ? 1 + Math.floor(Math.random() * maxWhole) : 0;
+    return { whole, num, den };
+  }
+
+  function toImproper(o) { return o.whole * o.den + o.num; }
+
+  function reduceToMixed(num, den) {
+    const g = gcd(num, den);
+    num /= g; den /= g;
+    const whole = Math.floor(num / den);
+    const rem = num - whole * den;
+    return { whole, num: rem, den: rem === 0 ? 1 : den };
+  }
+
+  // ── Question generation ────────────────────────
+  function generateNumbers() {
+    let attempts = 0;
+    do {
+      _generateOnce();
+      attempts++;
+    } while (recentQ.includes(getQuestionKey()) && attempts < 50);
+    recentQ.push(getQuestionKey());
+    if (recentQ.length > 10) recentQ.shift();
+  }
+
+  function _generateOnce() {
+    const isMulDiv = (currentModule === 'mul' || currentModule === 'div');
+    const maxDen   = isMulDiv ? 8 : 10;
+    const maxWhole = isMulDiv ? 3 : 5;
+
+    if (isMulDiv) {
+      if (currentLevel === 'lvl1' && currentModule === 'mul') {
+        if (Math.random() < 0.6) {
+          // Duży zakres (do 40), ułamki właściwe i niewłaściwe, wymuszamy skracanie wzajemne
+          // Wykluczamy liczby pierwsze > 11 (13,17,19,23,29,31,37)
+          const bigPrimes = new Set([13, 17, 19, 23, 29, 31, 37]);
+          const rndDen = () => { let v; do { v = 2 + Math.floor(Math.random() * 29); } while (bigPrimes.has(v)); return v; };
+          const rndNum = () => { let v; do { v = 1 + Math.floor(Math.random() * 30); } while (bigPrimes.has(v)); return v; };
+          let tries = 0;
+          do {
+            const dA = rndDen(), dB = rndDen();
+            let nA, nB;
+            do { nA = rndNum(); } while (gcd(nA, dA) !== 1);
+            do { nB = rndNum(); } while (gcd(nB, dB) !== 1);
+            aOperand = { whole: 0, num: nA, den: dA };
+            bOperand = { whole: 0, num: nB, den: dB };
+            tries++;
+          } while (tries < 100 && gcd(aOperand.num, bOperand.den) === 1 && gcd(bOperand.num, aOperand.den) === 1);
+        } else {
+          // Mały zakres, ułamki właściwe (bez skracania wzajemnego)
+          aOperand = generateOperand(maxDen, 0);
+          bOperand = generateOperand(maxDen, 0);
+        }
+      } else if (currentLevel === 'lvl1') {
+        // Lv1 Dzielenie: ułamki zwykłe, bias 60% w kierunku skracania po odwróceniu
+        if (Math.random() < 0.6) {
+          let tries = 0;
+          do {
+            aOperand = generateOperand(maxDen, 0);
+            bOperand = generateOperand(maxDen, 0);
+            tries++;
+            // po zamianie: a.num/a.den · b.den/b.num — skracanie: GCD(a.num,b.num)>1 lub GCD(b.den,a.den)>1
+          } while (tries < 100 &&
+                   gcd(aOperand.num, bOperand.num) === 1 &&
+                   gcd(bOperand.den, aOperand.den) === 1);
+        } else {
+          aOperand = generateOperand(maxDen, 0);
+          bOperand = generateOperand(maxDen, 0);
+        }
+      } else if (currentModule === 'mul') {
+        // Lv2 Mnożenie: bias 70% w kierunku skracania wzajemnego po zamianie na ułamki niewłaściwe
+        if (Math.random() < 0.7) {
+          let tries = 0;
+          do {
+            aOperand = generateOperand(maxDen, maxWhole, 0.75);
+            bOperand = generateOperand(maxDen, maxWhole, 0.75);
+            tries++;
+          } while (tries < 100 &&
+                   gcd(toImproper(aOperand), bOperand.den) === 1 &&
+                   gcd(toImproper(bOperand), aOperand.den) === 1);
+        } else {
+          aOperand = generateOperand(maxDen, maxWhole, 0.75);
+          bOperand = generateOperand(maxDen, maxWhole, 0.75);
+        }
+      } else if (currentModule === 'div') {
+        // Lv2 Dzielenie: bias 70% w kierunku skracania po zamianie na imp i odwróceniu
+        // po zamianie: aImp/a.den · b.den/bImp — skracanie: GCD(aImp,bImp)>1 lub GCD(b.den,a.den)>1
+        if (Math.random() < 0.7) {
+          let tries = 0;
+          do {
+            aOperand = generateOperand(maxDen, maxWhole, 0.75);
+            bOperand = generateOperand(maxDen, maxWhole, 0.75);
+            tries++;
+          } while (tries < 100 &&
+                   gcd(toImproper(aOperand), toImproper(bOperand)) === 1 &&
+                   gcd(bOperand.den, aOperand.den) === 1);
+        } else {
+          aOperand = generateOperand(maxDen, maxWhole, 0.75);
+          bOperand = generateOperand(maxDen, maxWhole, 0.75);
+        }
+      } else {
+        // Pozostałe
+        aOperand = generateOperand(maxDen, maxWhole, 0.75);
+        bOperand = generateOperand(maxDen, maxWhole, 0.75);
+      }
+    } else {
+      if (currentLevel === 'lvl1') {
+        // Lv1: te same mianowniki w obu składnikach
+        if (currentModule === 'sub' && Math.random() < 0.368) {
+          // Odejmowanie: mocno preferuj przypadki wymagające pożyczenia całości
+          // (mianownik >= 3, żeby zawsze istniały dwa różne liczniki względnie pierwsze z nim)
+          const sharedDen = 3 + Math.floor(Math.random() * (maxDen - 2));
+          let n1 = coprimeNumerator(sharedDen);
+          let n2;
+          do { n2 = coprimeNumerator(sharedDen); } while (n2 === n1);
+          const aNum = Math.min(n1, n2); // licznik A mniejszy — wymusza pożyczkę
+          const bNum = Math.max(n1, n2);
+          const bWhole = Math.floor(Math.random() * maxWhole);
+          const aWhole = bWhole + 1 + Math.floor(Math.random() * (maxWhole - bWhole));
+          aOperand = { whole: aWhole, num: aNum, den: sharedDen };
+          bOperand = { whole: bWhole, num: bNum, den: sharedDen };
+        } else {
+          // Lv1 Sub bez pożyczania: różne liczniki (te same ułamki to nudne zadanie)
+          let tries = 0;
+          do {
+            const sharedDen = 2 + Math.floor(Math.random() * (maxDen - 1));
+            aOperand = generateOperand(maxDen, maxWhole, 0.5, sharedDen);
+            bOperand = generateOperand(maxDen, maxWhole, 0.5, sharedDen);
+            tries++;
+          } while (tries < 50 && aOperand.num === bOperand.num);
+        }
+      } else {
+        // Lv2: różne mianowniki
+        if (currentModule === 'sub') {
+          // Sub Lv2: eliminuj te same mianowniki; 30% z krokiem pożyczania
+          const wantBorrow = Math.random() < 0.30;
+          let hasBorrow = false, tries = 0;
+          do {
+            aOperand = generateOperand(maxDen, maxWhole);
+            bOperand = generateOperand(maxDen, maxWhole);
+            // Pre-swap, żeby hasBorrow był liczony w prawidłowej orientacji
+            const aI = toImproper(aOperand), bI = toImproper(bOperand);
+            if (aI * bOperand.den < bI * aOperand.den) {
+              const tmp = aOperand; aOperand = bOperand; bOperand = tmp;
+            }
+            const D = lcm(aOperand.den, bOperand.den);
+            hasBorrow = bOperand.num * (D / bOperand.den) > aOperand.num * (D / aOperand.den);
+            tries++;
+          } while (tries < 200 && (aOperand.den === bOperand.den || wantBorrow !== hasBorrow));
+        } else {
+          aOperand = generateOperand(maxDen, maxWhole);
+          bOperand = generateOperand(maxDen, maxWhole);
+        }
+      }
+    }
+
+    if (currentModule === 'sub') {
+      const aImp = toImproper(aOperand), bImp = toImproper(bOperand);
+      if (aImp * bOperand.den < bImp * aOperand.den) {
+        const tmp = aOperand; aOperand = bOperand; bOperand = tmp;
+      }
+    }
+
+    const aImp = toImproper(aOperand), bImp = toImproper(bOperand);
+    let num, den;
+    switch (currentModule) {
+      case 'add': num = aImp * bOperand.den + bImp * aOperand.den; den = aOperand.den * bOperand.den; break;
+      case 'sub': num = aImp * bOperand.den - bImp * aOperand.den; den = aOperand.den * bOperand.den; break;
+      case 'mul': num = aImp * bImp;                               den = aOperand.den * bOperand.den; break;
+      case 'div': num = aImp * bOperand.den;                       den = aOperand.den * bImp;          break;
+    }
+    target = reduceToMixed(num, den);
+  }
+
+  function getQuestionKey() {
+    return `${currentModule}_${aOperand.whole}_${aOperand.num}_${aOperand.den}_${bOperand.whole}_${bOperand.num}_${bOperand.den}`;
+  }
+
+  function getOpSymbol() {
+    return { add: '+', sub: '−', mul: '·', div: ':' }[currentModule];
+  }
+
+  // ── Rendering ───────────────────────────────────
+  function renderMixedHTML(o) {
+    let html = '';
+    if (o.whole !== 0) html += `<span class="mixed-whole">${o.whole}</span>`;
+    if (o.num !== 0 || o.whole === 0) {
+      html += `<span class="frac-box"><span class="num">${o.num}</span><span class="den">${o.den}</span></span>`;
+    }
+    return html;
+  }
+
+  function buildQuestionHTML() {
+    let html = `<span class="eq-step">${renderMixedHTML(aOperand)}<span class="op-symbol">${getOpSymbol()}</span>${renderMixedHTML(bOperand)}</span>`;
+    for (const seg of equationSteps) {
+      html += `<span class="eq-step"><span class="op-symbol">=</span>${seg}</span>`;
+    }
+    return html;
+  }
+
+  function renderRecapHTML() {
+    return `${renderMixedHTML(aOperand)}<span class="op-symbol">${getOpSymbol()}</span>${renderMixedHTML(bOperand)}<span class="op-symbol">=</span>${renderMixedHTML(target)}`;
+  }
+
+  function addLineBreakEquals() {
+    questionEl.querySelectorAll('.trail-eq').forEach(el => el.remove());
+    const steps = questionEl.querySelectorAll('.eq-step');
+    if (steps.length < 2) return;
+    steps.forEach((step, i) => {
+      if (i === steps.length - 1) return;
+      const next = steps[i + 1];
+      if (Math.abs(step.getBoundingClientRect().top - next.getBoundingClientRect().top) > 5) {
+        const trail = document.createElement('span');
+        trail.className = 'trail-eq op-symbol';
+        trail.textContent = '=';
+        step.appendChild(trail);
+      }
+    });
+  }
+
+  function renderQuestionBox() {
+    questionEl.innerHTML = buildQuestionHTML();
+    questionEl.className = 'question' + (equationSteps.length > 0 ? ' stepped' : '');
+    requestAnimationFrame(() => requestAnimationFrame(addLineBreakEquals));
+  }
+
+  // ── Kroki: obliczanie oczekiwanych wartości pośrednich ──
+  function computeRawFromRewrites(aR, bR, den) {
+    let wholeSum, fracNum;
+    if (currentModule === 'add') {
+      wholeSum = aR.whole + bR.whole;
+      fracNum  = aR.num + bR.num;
+    } else {
+      wholeSum = aR.whole - bR.whole;
+      fracNum  = aR.num - bR.num;
+      if (fracNum < 0) { fracNum += den; wholeSum -= 1; }
+    }
+    return { whole: wholeSum, num: fracNum, den };
+  }
+
+  function computeRaw2() {
+    return computeRawFromRewrites(stepARewrite, stepBRewrite, stepCommonDen);
+  }
+
+  // Lv1 odejmowanie: wynik odejmowania po ewentualnym pożyczeniu całości
+  function computeLv1SubRaw(aValue) {
+    return { whole: aValue.whole - bOperand.whole, num: aValue.num - bOperand.num, den: aValue.den };
+  }
+
+  // ── Pełne rozwiązanie krok po kroku (do komunikatu przy błędnej odpowiedzi) ──
+  function buildAddSubChainHTML() {
+    const commonDen = lcm(aOperand.den, bOperand.den);
+    const segments = [];
+    let aR = aOperand, bR = bOperand;
+    if (commonDen !== aOperand.den || commonDen !== bOperand.den) {
+      aR = { whole: aOperand.whole, num: aOperand.num * (commonDen / aOperand.den), den: commonDen };
+      bR = { whole: bOperand.whole, num: bOperand.num * (commonDen / bOperand.den), den: commonDen };
+      segments.push(`${renderMixedHTML(aR)}<span class="op-symbol">${getOpSymbol()}</span>${renderMixedHTML(bR)}`);
+    }
+    if (currentModule === 'sub' && bR.num > aR.num) {
+      const borrowedA = { whole: aR.whole - 1, num: aR.num + commonDen, den: commonDen };
+      segments.push(`${renderMixedHTML(borrowedA)}<span class="op-symbol">−</span>${renderMixedHTML(bR)}`);
+    }
+    const raw = computeRawFromRewrites(aR, bR, commonDen);
+    segments.push(renderMixedHTML(raw));
+    let cur = raw;
+    if (raw.num >= raw.den) {
+      const ext = { whole: raw.whole + Math.floor(raw.num / raw.den), num: raw.num % raw.den, den: raw.den };
+      segments.push(renderMixedHTML(ext));
+      cur = ext;
+    }
+    if (cur.whole !== target.whole || cur.num !== target.num || cur.den !== target.den) {
+      segments.push(renderMixedHTML(target));
+    }
+    return segments;
+  }
+
+  function buildMulChainHTML() {
+    const aImp = toImproper(aOperand), bImp = toImproper(bOperand);
+    let n1 = aImp, d1 = aOperand.den, n2 = bImp, d2 = bOperand.den;
+    const segments = [];
+    // Krok zamiany na ułamki niewłaściwe: dla Lv2 zawsze, dla Lv1 tylko gdy są całości
+    if (currentLevel === 'lvl2' || aOperand.whole !== 0 || bOperand.whole !== 0) {
+      segments.push(`${renderMixedHTML({whole:0,num:n1,den:d1})}<span class="op-symbol">·</span>${renderMixedHTML({whole:0,num:n2,den:d2})}`);
+    }
+    // Krok skracania wzajemnego (Lv1 i Lv2): iteracyjnie aż do pełnego skrócenia
+    {
+      let anyCancel = false, changed = true;
+      while (changed) {
+        changed = false;
+        const ga = gcd(n1, d2);
+        if (ga > 1) { n1 /= ga; d2 /= ga; changed = anyCancel = true; }
+        const gb = gcd(n2, d1);
+        if (gb > 1) { n2 /= gb; d1 /= gb; changed = anyCancel = true; }
+      }
+      if (anyCancel) {
+        segments.push(`${renderMixedHTML({whole:0,num:n1,den:d1})}<span class="op-symbol">·</span>${renderMixedHTML({whole:0,num:n2,den:d2})}`);
+      }
+    }
+    const raw = { whole: 0, num: n1 * n2, den: d1 * d2 };
+    segments.push(renderMixedHTML(raw));
+    let cur = raw;
+    if (raw.num >= raw.den) {
+      const ext = { whole: Math.floor(raw.num / raw.den), num: raw.num % raw.den, den: raw.den };
+      segments.push(renderMixedHTML(ext));
+      cur = ext;
+    }
+    if (cur.whole !== target.whole || cur.num !== target.num || cur.den !== target.den) {
+      segments.push(renderMixedHTML(target));
+    }
+    return segments;
+  }
+
+  function buildDivChainHTML() {
+    const aImp = toImproper(aOperand), bImp = toImproper(bOperand);
+    const aImpFrac = { whole: 0, num: aImp, den: aOperand.den };
+    const bImpFrac = { whole: 0, num: bImp, den: bOperand.den };
+    const bReciprocal = { whole: 0, num: bOperand.den, den: bImp };
+    const segments = [];
+    // Krok imp: dla Lv2 zawsze (bo zawsze jest faza 'imp'), dla Lv1 tylko gdy są całości
+    if (currentLevel === 'lvl2' || aOperand.whole !== 0 || bOperand.whole !== 0) {
+      segments.push(`${renderMixedHTML(aImpFrac)}<span class="op-symbol">:</span>${renderMixedHTML(bImpFrac)}`);
+    }
+    segments.push(`${renderMixedHTML(aImpFrac)}<span class="op-symbol">·</span>${renderMixedHTML(bReciprocal)}`);
+    // Skracanie wzajemne (Lv1 i Lv2): iteracyjnie aż do pełnego skrócenia
+    let cn1 = aImp, cd1 = aOperand.den, cn2 = bOperand.den, cd2 = bImp;
+    {
+      let anyCancel = false, changed = true;
+      while (changed) {
+        changed = false;
+        const ga = gcd(cn1, cd2);
+        if (ga > 1) { cn1 /= ga; cd2 /= ga; changed = anyCancel = true; }
+        const gb = gcd(cn2, cd1);
+        if (gb > 1) { cn2 /= gb; cd1 /= gb; changed = anyCancel = true; }
+      }
+      if (anyCancel) {
+        segments.push(`${renderMixedHTML({whole:0,num:cn1,den:cd1})}<span class="op-symbol">·</span>${renderMixedHTML({whole:0,num:cn2,den:cd2})}`);
+      }
+    }
+    const raw = { whole: 0, num: cn1 * cn2, den: cd1 * cd2 };
+    segments.push(renderMixedHTML(raw));
+    let cur = raw;
+    if (raw.num >= raw.den) {
+      const ext = { whole: Math.floor(raw.num / raw.den), num: raw.num % raw.den, den: raw.den };
+      segments.push(renderMixedHTML(ext));
+      cur = ext;
+    }
+    if (cur.whole !== target.whole || cur.num !== target.num || cur.den !== target.den) {
+      segments.push(renderMixedHTML(target));
+    }
+    return segments;
+  }
+
+  function buildWorkedSolutionHTML() {
+    const segments = (currentModule === 'add' || currentModule === 'sub')
+      ? buildAddSubChainHTML()
+      : (currentModule === 'mul' ? buildMulChainHTML() : buildDivChainHTML());
+    let html = `${renderMixedHTML(aOperand)}<span class="op-symbol">${getOpSymbol()}</span>${renderMixedHTML(bOperand)}`;
+    for (const seg of segments) {
+      html += `<span class="op-symbol">=</span>${seg}`;
+    }
+    return html;
+  }
+
+  // ── Module switching ───────────────────────────
+  function switchModule(mod) {
+    if (currentModule === mod) return;
+    currentModule = mod;
+    modAddBtn.className = 'tab' + (mod === 'add' ? ' active-add' : '');
+    modSubBtn.className = 'tab' + (mod === 'sub' ? ' active-sub' : '');
+    modMulBtn.className = 'tab' + (mod === 'mul' ? ' active-mul' : '');
+    modDivBtn.className = 'tab' + (mod === 'div' ? ' active-div' : '');
+    fullReset();
+  }
+
+  // ── Level switching ────────────────────────────
+  function switchLevel(lvl) {
+    if (currentLevel === lvl) return;
+    currentLevel = lvl;
+    lvl1Btn.className = 'tab' + (lvl === 'lvl1' ? ' active-lv1' : '');
+    lvl2Btn.className = 'tab' + (lvl === 'lvl2' ? ' active-lv2' : '');
+    fullReset();
+  }
+
+  // ── Full reset ─────────────────────────────────
+  function fullReset() {
+    stopTimer();
+    clearTimeout(autoAdvanceTimeout);
+    mode = 'ask';
+    recentQ = [];
+
+    correctCount = 0; totalCount = 0;
+    scoreEl.textContent = '0 / 0';
+    updateResetBtn();
+
+    newQuestion();
+  }
+
+  function clearInputs() {
+    wholeEl.value = ''; numEl.value = ''; denEl.value = '';
+    whole2El.value = ''; num2El.value = ''; den2El.value = '';
+    mrn1El.value = ''; mrd1El.value = ''; mrn2El.value = ''; mrd2El.value = '';
+    ipn1El.value = ''; ipd1El.value = ''; ipn2El.value = ''; ipd2El.value = '';
+  }
+
+  // ── New question ───────────────────────────────
+  function newQuestion(skipFocus = false) {
+    clearTimeout(autoAdvanceTimeout);
+    mode = 'ask';
+    generateNumbers();
+
+    const isLv2AddSub = (currentModule === 'add' || currentModule === 'sub') && currentLevel === 'lvl2';
+    const isLv1Sub    = currentModule === 'sub' && currentLevel === 'lvl1';
+    const isLv1Add    = currentModule === 'add' && currentLevel === 'lvl1';
+    const isLv1Mul    = currentModule === 'mul' && currentLevel === 'lvl1';
+    const isLv2Mul    = currentModule === 'mul' && currentLevel === 'lvl2';
+    const isLv1Div    = currentModule === 'div' && currentLevel === 'lvl1';
+    const isLv2Div    = currentModule === 'div' && currentLevel === 'lvl2';
+    stepActive = isLv2AddSub || isLv1Sub || isLv1Add || isLv1Mul || isLv2Mul || isLv1Div || isLv2Div;
+    equationSteps = [];
+    stepCommonDen = null; stepARewrite = null; stepBRewrite = null; stepBorrowedA = null;
+    stepRaw2 = null; stepRaw3 = null; stepFixedWhole = 0;
+    stepMulN1 = 0; stepMulD1 = 1; stepMulN2 = 0; stepMulD2 = 1;
+
+    if (isLv2AddSub) {
+      stepPhase = 'common';
+    } else if (isLv1Sub) {
+      if (aOperand.num < bOperand.num) {
+        stepPhase = 'borrow';
+      } else {
+        stepPhase = 'result';
+        stepRaw2 = computeLv1SubRaw(aOperand);
+      }
+    } else if (isLv1Add) {
+      stepPhase = 'result';
+      stepRaw2 = { whole: aOperand.whole + bOperand.whole, num: aOperand.num + bOperand.num, den: aOperand.den };
+    } else if (isLv1Mul) {
+      const p = aOperand.num, q = aOperand.den, r = bOperand.num, s = bOperand.den;
+      stepMulN1 = p; stepMulD1 = q; stepMulN2 = r; stepMulD2 = s;
+      if (gcd(p, s) > 1 || gcd(r, q) > 1) {
+        stepPhase = 'mul-reduce';
+      } else {
+        stepPhase = 'result';
+        stepRaw2 = { whole: 0, num: p * r, den: q * s };
+      }
+    } else if (isLv2Mul) {
+      stepPhase = 'imp';
+    } else if (isLv1Div) {
+      stepPhase = 'div-to-mul';
+    } else if (isLv2Div) {
+      stepPhase = 'imp';
+    } else {
+      stepPhase = null;
+    }
+
+    renderQuestionBox();
+    setupPhaseUI(skipFocus);
+    startTimer();
+  }
+
+  // ── Kroki: konfiguracja UI dla bieżącej fazy ─────
+  function setupPhaseUI(skipFocus) {
+    feedbackEl.className = 'feedback empty';
+    feedbackEl.textContent = '';
+
+    clearInputs();
+    wholeEl.disabled = false;
+    mulReduceSection.style.display = 'none';
+    impSection.style.display = 'none';
+    answerRowEl.style.display = '';
+
+    forfeitBtn.style.display = stepActive ? '' : 'none';
+    forfeitBtn.disabled = false;
+
+    if (!stepActive) {
+      stepInfoEl.style.display = 'none';
+      inputsBEl.style.display = 'none';
+      stepOpSymbolEl.style.display = 'none';
+      stepStaticBEl.style.display = 'none';
+      answerRowEl.classList.remove('common-mode');
+      submitBtn.textContent = 'Sprawdź';
+      submitBtn.disabled = true;
+      if (!skipFocus) wholeEl.focus();
+      return;
+    }
+
+    inputsBEl.style.display = 'none';
+    stepOpSymbolEl.style.display = 'none';
+    stepStaticBEl.style.display = 'none';
+    answerRowEl.classList.remove('common-mode');
+    stepInfoEl.style.display = '';
+
+    if (stepPhase === 'div-to-mul') {
+      stepInfoEl.textContent = 'Krok: zamień dzielenie na mnożenie przez odwrotność';
+      answerRowEl.style.display = 'none';
+      impSection.style.display = '';
+      impOpSymbol.textContent = '·';
+      submitBtn.textContent = 'Dalej';
+      submitBtn.disabled = true;
+      if (!skipFocus) ipn1El.focus();
+      return;
+    }
+
+    if (stepPhase === 'imp') {
+      stepInfoEl.textContent = 'Krok: zamień na ułamki niewłaściwe';
+      answerRowEl.style.display = 'none';
+      impSection.style.display = '';
+      impOpSymbol.textContent = currentModule === 'div' ? ':' : '·';
+      submitBtn.textContent = 'Dalej';
+      submitBtn.disabled = true;
+      if (!skipFocus) ipn1El.focus();
+      return;
+    }
+
+    if (stepPhase === 'mul-reduce') {
+      stepInfoEl.textContent = 'Skróć ułamki — wpisz nowe liczby po skróceniu w kratki';
+      answerRowEl.style.display = 'none';
+      mulReduceSection.style.display = '';
+      mrOldN1El.textContent = stepMulN1;
+      mrOldD1El.textContent = stepMulD1;
+      mrOldN2El.textContent = stepMulN2;
+      mrOldD2El.textContent = stepMulD2;
+      submitBtn.textContent = 'Dalej';
+      submitBtn.disabled = true;
+      if (!skipFocus) mrn1El.focus();
+      return;
+    }
+
+    if (stepPhase === 'common') {
+      stepInfoEl.textContent = 'Krok: sprowadź obie liczby do wspólnego mianownika';
+      answerRowEl.classList.add('common-mode');
+      stepOpSymbolEl.style.display = '';
+      stepOpSymbolEl.textContent = getOpSymbol();
+      inputsBEl.style.display = '';
+      submitBtn.textContent = 'Dalej';
+    } else if (stepPhase === 'borrow') {
+      stepInfoEl.textContent = 'Krok: pożycz całość i rozmień ją na część ułamkową';
+      stepOpSymbolEl.style.display = '';
+      stepOpSymbolEl.textContent = getOpSymbol();
+      stepStaticBEl.style.display = '';
+      stepStaticBEl.innerHTML = renderMixedHTML(
+        (currentLevel === 'lvl2' && stepBRewrite) ? stepBRewrite : bOperand
+      );
+      submitBtn.textContent = 'Dalej';
+    } else if (stepPhase === 'result') {
+      stepInfoEl.textContent = 'Krok: oblicz wynik działania';
+      submitBtn.textContent = 'Sprawdź';
+    } else if (stepPhase === 'extract') {
+      stepInfoEl.textContent = 'Krok: wyłącz całość z ułamka niewłaściwego';
+      submitBtn.textContent = 'Dalej';
+    } else if (stepPhase === 'reduce') {
+      stepInfoEl.textContent = 'Krok: skróć ułamek do postaci nieskracalnej';
+      wholeEl.value = stepFixedWhole;
+      wholeEl.disabled = true;
+      submitBtn.textContent = 'Sprawdź';
+    }
+
+    submitBtn.disabled = true;
+    if (!skipFocus) wholeEl.focus();
+  }
+
+  // ── Timer ───────────────────────────────────────
+  function startTimer() {
+    stopTimer();
+    timerStart = Date.now();
+    timerEl.textContent = '0 s';
+    timerInterval = setInterval(() => {
+      timerEl.textContent = `${Math.floor((Date.now() - timerStart) / 1000)} s`;
+    }, 1000);
+  }
+  function stopTimer() { clearInterval(timerInterval); timerInterval = null; }
+
+  // ── Odczyt ułamka z pól (pusty licznik/mianownik = 0) ──
+  function readFraction(suffix) {
+    const wEl = document.getElementById('whole' + suffix);
+    const nEl = document.getElementById('num' + suffix);
+    const dEl = document.getElementById('den' + suffix);
+    const whole = wEl.value === '' ? 0 : Number(wEl.value);
+    const num   = nEl.value === '' ? 0 : Number(nEl.value);
+    const den   = (num === 0) ? 1 : (dEl.value === '' ? NaN : Number(dEl.value));
+    return { whole, num, den };
+  }
+
+  function readAnswer() { return readFraction(''); }
+
+  function fracIncomplete(suffix) {
+    const numVal = document.getElementById('num' + suffix).value;
+    const denVal = document.getElementById('den' + suffix).value;
+    const numFilled = numVal !== '' && Number(numVal) !== 0;
+    return numFilled && denVal === '';
+  }
+
+  function computeSubmitDisabled() {
+    if (stepActive && (stepPhase === 'imp' || stepPhase === 'div-to-mul')) {
+      return !(ipn1El.value && ipd1El.value && ipn2El.value && ipd2El.value);
+    }
+    if (stepActive && stepPhase === 'mul-reduce') {
+      return false;
+    }
+    const nothingEntered = wholeEl.value === '' && numEl.value === '' && denEl.value === '';
+    if (nothingEntered) return true;
+    if (fracIncomplete('')) return true;
+    if (stepActive && stepPhase === 'common') {
+      const nothing2 = whole2El.value === '' && num2El.value === '' && den2El.value === '';
+      if (nothing2) return true;
+      if (fracIncomplete('2')) return true;
+    }
+    return false;
+  }
+
+  // ── Check answer (Lv1 / Mnożenie / Dzielenie) ──
+  function checkAnswer() {
+    if (mode !== 'ask') return;
+    mode = 'next';
+
+    const ans = readAnswer();
+    const isCorrect = ans.whole === target.whole && ans.num === target.num && ans.den === target.den;
+
+    totalCount++;
+
+    if (isCorrect) {
+      correctCount++;
+      feedbackEl.className = 'feedback good';
+      feedbackEl.innerHTML = `✅ Brawo! ${renderRecapHTML()}`;
+      playCorrectAnim(target);
+    } else {
+      feedbackEl.className = 'feedback bad';
+      feedbackEl.innerHTML = `❌ Źle! ${buildWorkedSolutionHTML()}`;
+      playWrongAnim(submitBtn);
+    }
+
+    scoreEl.textContent = `${correctCount} / ${totalCount}`;
+    updateResetBtn();
+  }
+
+  // ── Kroki: sprawdzanie odpowiedzi krok po kroku ──
+  function checkStepAnswer() {
+    if (mode !== 'ask') return;
+
+    if (stepPhase === 'div-to-mul') {
+      const n1 = Number(ipn1El.value), d1 = Number(ipd1El.value);
+      const n2 = Number(ipn2El.value), d2 = Number(ipd2El.value);
+      // Lv1: whole=0 więc aOperand.num=toImproper(a); Lv2: stepMulN1/D1/N2/D2 ustawione z kroku 'imp'
+      const cn1 = currentLevel === 'lvl2' ? stepMulN1 : aOperand.num;
+      const cd1 = currentLevel === 'lvl2' ? stepMulD1 : aOperand.den;
+      const cn2 = currentLevel === 'lvl2' ? stepMulD2 : bOperand.den; // odwrócony: b.den
+      const cd2 = currentLevel === 'lvl2' ? stepMulN2 : bOperand.num; // odwrócony: bImp
+      if (n1 !== cn1 || d1 !== cd1 || n2 !== cn2 || d2 !== cd2) {
+        stepWrongRetry('❌ Niepoprawna zamiana. Pamiętaj o odwróceniu drugiego ułamka.');
+        return;
+      }
+      stepMulN1 = n1; stepMulD1 = d1; stepMulN2 = n2; stepMulD2 = d2;
+      const f1 = `<span class="frac-box"><span class="num">${n1}</span><span class="den">${d1}</span></span>`;
+      const f2 = `<span class="frac-box"><span class="num">${n2}</span><span class="den">${d2}</span></span>`;
+      equationSteps.push(`${f1}<span class="op-symbol">·</span>${f2}`);
+      renderQuestionBox();
+      if (gcd(n1, d2) > 1 || gcd(n2, d1) > 1) {
+        stepPhase = 'mul-reduce';
+      } else {
+        stepRaw2 = { whole: 0, num: n1 * n2, den: d1 * d2 };
+        stepPhase = 'result';
+      }
+      showStepSuccessThenAdvance();
+      return;
+    }
+
+    if (stepPhase === 'imp') {
+      const n1 = Number(ipn1El.value), d1 = Number(ipd1El.value);
+      const n2 = Number(ipn2El.value), d2 = Number(ipd2El.value);
+      const cn1 = toImproper(aOperand), cd1 = aOperand.den;
+      const cn2 = toImproper(bOperand), cd2 = bOperand.den;
+      if (n1 !== cn1 || d1 !== cd1 || n2 !== cn2 || d2 !== cd2) {
+        stepWrongRetry('❌ Niepoprawna zamiana na ułamki niewłaściwe.');
+        return;
+      }
+      stepMulN1 = n1; stepMulD1 = d1; stepMulN2 = n2; stepMulD2 = d2;
+      const f1 = `<span class="frac-box"><span class="num">${n1}</span><span class="den">${d1}</span></span>`;
+      const f2 = `<span class="frac-box"><span class="num">${n2}</span><span class="den">${d2}</span></span>`;
+      const impOp = currentModule === 'div' ? ':' : '·';
+      equationSteps.push(`${f1}<span class="op-symbol">${impOp}</span>${f2}`);
+      renderQuestionBox();
+      if (currentModule === 'div') {
+        stepPhase = 'div-to-mul';
+      } else if (gcd(n1, d2) > 1 || gcd(n2, d1) > 1) {
+        stepPhase = 'mul-reduce';
+      } else {
+        stepRaw2 = { whole: 0, num: n1 * n2, den: d1 * d2 };
+        stepPhase = 'result';
+      }
+      showStepSuccessThenAdvance();
+      return;
+    }
+
+    if (stepPhase === 'mul-reduce') {
+      const n1 = mrn1El.value !== '' ? Number(mrn1El.value) : stepMulN1;
+      const d1 = mrd1El.value !== '' ? Number(mrd1El.value) : stepMulD1;
+      const n2 = mrn2El.value !== '' ? Number(mrn2El.value) : stepMulN2;
+      const d2 = mrd2El.value !== '' ? Number(mrd2El.value) : stepMulD2;
+      if (n1 <= 0 || d1 <= 0 || n2 <= 0 || d2 <= 0) {
+        stepWrongRetry('❌ Wpisz poprawne wartości (liczby całkowite dodatnie).');
+        return;
+      }
+      if (n1 * n2 * stepMulD1 * stepMulD2 !== stepMulN1 * stepMulN2 * d1 * d2) {
+        stepWrongRetry('❌ Wartość iloczynu się zmieniła. Skróć poprawnie.');
+        return;
+      }
+      const allUnchanged = n1 === stepMulN1 && d1 === stepMulD1 && n2 === stepMulN2 && d2 === stepMulD2;
+      if (allUnchanged) {
+        stepWrongRetry('❌ Skróć ułamki — wpisz nowe wartości po skróceniu.');
+        return;
+      }
+      stepMulN1 = n1; stepMulD1 = d1; stepMulN2 = n2; stepMulD2 = d2;
+      const f1 = `<span class="frac-box"><span class="num">${n1}</span><span class="den">${d1}</span></span>`;
+      const f2 = `<span class="frac-box"><span class="num">${n2}</span><span class="den">${d2}</span></span>`;
+      equationSteps.push(`${f1}<span class="op-symbol">·</span>${f2}`);
+      renderQuestionBox();
+      const canStill = gcd(n1,d1)>1 || gcd(n2,d2)>1 || gcd(n1,d2)>1 || gcd(n2,d1)>1;
+      if (canStill) {
+        showStepSuccessThenAdvance('✅ Dobrze! Możesz skrócić jeszcze bardziej.');
+      } else {
+        stepRaw2 = { whole: 0, num: n1 * n2, den: d1 * d2 };
+        stepPhase = 'result';
+        showStepSuccessThenAdvance();
+      }
+      return;
+    }
+
+    if (stepPhase === 'common') {
+      const a = readFraction('');
+      const b = readFraction('2');
+      const aValid = a.den > 0 && a.whole === aOperand.whole && aOperand.num * a.den === a.num * aOperand.den;
+      const bValid = b.den > 0 && b.whole === bOperand.whole && bOperand.num * b.den === b.num * bOperand.den;
+      const commonOk = a.den === b.den;
+
+      if (aValid && bValid && commonOk) {
+        stepCommonDen = a.den;
+        stepARewrite = a; stepBRewrite = b;
+        equationSteps.push(`${renderMixedHTML(a)}<span class="op-symbol">${getOpSymbol()}</span>${renderMixedHTML(b)}`);
+        renderQuestionBox();
+        if (currentModule === 'sub' && b.num > a.num) {
+          stepPhase = 'borrow';
+        } else {
+          stepRaw2 = computeRaw2();
+          stepPhase = 'result';
+        }
+        showStepSuccessThenAdvance();
+      } else {
+        stepWrongRetry('❌ To nie jest poprawny zapis ze wspólnym mianownikiem. Spróbuj ponownie.');
+      }
+      return;
+    }
+
+    if (stepPhase === 'borrow') {
+      const entered = readAnswer();
+      const isLv2Borrow = currentLevel === 'lvl2' && stepARewrite !== null;
+      const srcA   = isLv2Borrow ? stepARewrite : aOperand;
+      const srcDen = isLv2Borrow ? stepCommonDen : aOperand.den;
+      const bShow  = isLv2Borrow ? stepBRewrite  : bOperand;
+      const expected = { whole: srcA.whole - 1, num: srcA.num + srcDen, den: srcDen };
+      if (entered.whole === expected.whole && entered.num === expected.num && entered.den === expected.den) {
+        stepBorrowedA = entered;
+        equationSteps.push(`${renderMixedHTML(entered)}<span class="op-symbol">${getOpSymbol()}</span>${renderMixedHTML(bShow)}`);
+        renderQuestionBox();
+        if (isLv2Borrow) {
+          stepRaw2 = { whole: entered.whole - stepBRewrite.whole, num: entered.num - stepBRewrite.num, den: stepCommonDen };
+        } else {
+          stepRaw2 = computeLv1SubRaw(entered);
+        }
+        stepPhase = 'result';
+        showStepSuccessThenAdvance();
+      } else {
+        stepWrongRetry('❌ To nie jest poprawne rozmienienie całości na część ułamkową. Spróbuj ponownie.');
+      }
+      return;
+    }
+
+    const entered = readAnswer();
+
+    // Skrót: jeśli wpisano od razu poprawny wynik końcowy — zadanie zaliczone.
+    if (entered.whole === target.whole && entered.num === target.num && entered.den === target.den) {
+      equationSteps.push(renderMixedHTML(entered));
+      renderQuestionBox();
+      finishQuestionCorrect();
+      return;
+    }
+
+    if (stepPhase === 'result') {
+      if (entered.whole === stepRaw2.whole && entered.num === stepRaw2.num && entered.den === stepRaw2.den) {
+        equationSteps.push(renderMixedHTML(entered));
+        renderQuestionBox();
+        if (stepRaw2.num < stepRaw2.den) {
+          stepFixedWhole = stepRaw2.whole;
+          stepPhase = 'reduce';
+        } else {
+          stepRaw3 = {
+            whole: stepRaw2.whole + Math.floor(stepRaw2.num / stepRaw2.den),
+            num:   stepRaw2.num % stepRaw2.den,
+            den:   stepRaw2.den
+          };
+          stepPhase = 'extract';
+        }
+        showStepSuccessThenAdvance();
+      } else {
+        stepWrongRetry('❌ To nie jest poprawny wynik działania. Spróbuj ponownie.');
+      }
+      return;
+    }
+
+    if (stepPhase === 'extract') {
+      if (entered.whole === stepRaw3.whole && entered.num === stepRaw3.num && entered.den === stepRaw3.den) {
+        equationSteps.push(renderMixedHTML(entered));
+        renderQuestionBox();
+        stepFixedWhole = stepRaw3.whole;
+        stepPhase = 'reduce';
+        showStepSuccessThenAdvance();
+      } else {
+        stepWrongRetry('❌ Całość została wyłączona niepoprawnie. Spróbuj ponownie.');
+      }
+      return;
+    }
+
+    if (stepPhase === 'reduce') {
+      if (entered.num === target.num && entered.den === target.den) {
+        equationSteps.push(renderMixedHTML({ whole: stepFixedWhole, num: entered.num, den: entered.den }));
+        renderQuestionBox();
+        finishQuestionCorrect();
+      } else {
+        stepWrongRetry('❌ Ułamek nie jest jeszcze skrócony do końca. Spróbuj ponownie.');
+      }
+    }
+  }
+
+  function showStepSuccessThenAdvance(msg) {
+    mode = 'transition';
+    feedbackEl.className = 'feedback good';
+    feedbackEl.textContent = msg || '✅ Dobrze! Przechodzimy dalej.';
+    submitBtn.disabled = true;
+    setTimeout(() => {
+      mode = 'ask';
+      setupPhaseUI(false);
+    }, 1000);
+  }
+
+  function stepWrongRetry(message) {
+    feedbackEl.className = 'feedback bad';
+    feedbackEl.textContent = message;
+    playStepWrongFlash();
+    submitBtn.disabled = true;
+    setTimeout(() => {
+      submitBtn.disabled = computeSubmitDisabled();
+    }, 1300);
+  }
+
+  function finishQuestionCorrect() {
+    mode = 'next';
+    totalCount++; correctCount++;
+    feedbackEl.className = 'feedback good';
+    feedbackEl.innerHTML = `✅ Brawo! Zadanie rozwiązane. ${renderRecapHTML()}`;
+    playCorrectAnim(target);
+    scoreEl.textContent = `${correctCount} / ${totalCount}`;
+    updateResetBtn();
+  }
+
+  function forfeitQuestion() {
+    if (mode !== 'ask' && mode !== 'transition') return;
+    clearTimeout(autoAdvanceTimeout);
+    mode = 'next';
+    totalCount++;
+    feedbackEl.className = 'feedback bad';
+    feedbackEl.innerHTML = `🏳️ Poddano się. ${buildWorkedSolutionHTML()}`;
+    playStepWrongFlash();
+    scoreEl.textContent = `${correctCount} / ${totalCount}`;
+    updateResetBtn();
+    submitBtn.textContent = 'Dalej';
+    submitBtn.disabled = false;
+    forfeitBtn.disabled = true;
+  }
+
+  // ── Animations ─────────────────────────────────
+  function playCorrectAnim(answer) {
+    animLayer.innerHTML = '';
+    const flash = document.createElement('div');
+    flash.className = 'correct-flash';
+    animLayer.appendChild(flash);
+    const num = document.createElement('div');
+    num.className = 'anim-correct-num';
+    num.innerHTML = renderMixedHTML(answer);
+    animLayer.appendChild(num);
+    const symbols = ['+','−','·',':','★','✦','✧','◆'];
+    for (let i = 0; i < 14; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.textContent = symbols[i % symbols.length];
+      const angle = (360 / 14) * i;
+      const dist  = 110 + Math.random() * 80;
+      const rad   = angle * Math.PI / 180;
+      p.style.setProperty('--tx', `translate(${Math.cos(rad)*dist}px,${Math.sin(rad)*dist}px)`);
+      p.style.animationDelay = `${Math.random() * 0.12}s`;
+      p.style.fontSize = `${1.2 + Math.random() * 1.2}rem`;
+      animLayer.appendChild(p);
+    }
+    setTimeout(() => { animLayer.innerHTML = ''; }, 1400);
+    autoAdvanceTimeout = setTimeout(() => newQuestion(false), 1900);
+  }
+
+  function playWrongAnim(btn = null) {
+    animLayer.innerHTML = '';
+    const flash = document.createElement('div');
+    flash.className = 'wrong-flash';
+    animLayer.appendChild(flash);
+    const x = document.createElement('div');
+    x.className = 'anim-big-x';
+    x.textContent = '✗';
+    animLayer.appendChild(x);
+    if (btn) {
+      setTimeout(() => {
+        animLayer.innerHTML = '';
+        btn.textContent = 'Dalej →';
+        btn.disabled = false;
+      }, 1300);
+    } else {
+      setTimeout(() => { animLayer.innerHTML = ''; }, 1300);
+      autoAdvanceTimeout = setTimeout(() => newQuestion(false), 1900);
+    }
+  }
+
+  function playStepWrongFlash() {
+    animLayer.innerHTML = '';
+    const flash = document.createElement('div');
+    flash.className = 'wrong-flash';
+    animLayer.appendChild(flash);
+    const x = document.createElement('div');
+    x.className = 'anim-big-x';
+    x.textContent = '✗';
+    animLayer.appendChild(x);
+    setTimeout(() => { animLayer.innerHTML = ''; }, 1300);
+  }
+
+  // ── Form submit handler ─────────────────────────
+  document.getElementById('mainForm').addEventListener('submit', e => {
+    e.preventDefault();
+    if (mode === 'ask') {
+      if (computeSubmitDisabled()) return;
+      if (stepActive) checkStepAnswer(); else checkAnswer();
+    } else if (mode === 'next') {
+      newQuestion();
+    }
+  });
+
+  forfeitBtn.addEventListener('click', forfeitQuestion);
+
+  // ── Reset button ────────────────────────────────
+  resetBtn.addEventListener('click', () => {
+    correctCount = 0; totalCount = 0;
+    scoreEl.textContent = '0 / 0';
+    clearTimeout(autoAdvanceTimeout);
+    mode = 'ask';
+    newQuestion(true);
+    updateResetBtn();
+  });
+
+  // ── Helpers ────────────────────────────────────
+  function updateResetBtn() {
+    resetBtn.disabled = (totalCount === 0);
+  }
+
+  function wireSubmitToggle() {
+    const toggle = () => {
+      if (mode === 'ask') submitBtn.disabled = computeSubmitDisabled();
+    };
+    ['whole', 'num', 'den', 'whole2', 'num2', 'den2', 'mrn1', 'mrd1', 'mrn2', 'mrd2', 'ipn1', 'ipd1', 'ipn2', 'ipd2'].forEach(id => {
+      document.getElementById(id).addEventListener('input', toggle);
+    });
+  }
+  wireSubmitToggle();
+
+  // ── Init ───────────────────────────────────────
+  new ResizeObserver(() => requestAnimationFrame(addLineBreakEquals))
+    .observe(document.querySelector('.card'));
+
+  newQuestion(true);
+</script>
+</body>
+</html>
