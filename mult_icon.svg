@@ -1,0 +1,23 @@
+<svg viewBox="0 0 397 280" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0d47a1"/>
+      <stop offset="100%" stop-color="#64b5f6"/>
+    </linearGradient>
+  </defs>
+  <rect width="397" height="280" fill="url(#bg)"/>
+  <!-- watermark × -->
+  <text x="200" y="195" font-size="230" fill="rgba(255,255,255,0.08)"
+        text-anchor="middle" font-family="Georgia, serif" font-weight="bold">×</text>
+  <!-- multiplication examples -->
+  <g font-family="'Courier New', monospace" font-weight="bold" fill="white">
+    <text x="50"  y="70"  font-size="28">2 × 3 = 6</text>
+    <text x="210" y="70"  font-size="28">4 × 5 = 20</text>
+    <text x="50"  y="120" font-size="28">6 × 7 = 42</text>
+    <text x="210" y="120" font-size="28">8 × 9 = 72</text>
+    <text x="50"  y="170" font-size="28">3 × 8 = 24</text>
+    <text x="210" y="170" font-size="28">7 × 6 = 42</text>
+    <text x="50"  y="220" font-size="28">9 × 9 = 81</text>
+    <text x="210" y="220" font-size="28">5 × 7 = 35</text>
+  </g>
+</svg>

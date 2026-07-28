@@ -1,0 +1,32 @@
+<svg viewBox="0 0 397 280" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#bf360c"/>
+      <stop offset="100%" stop-color="#ffcc80"/>
+    </linearGradient>
+  </defs>
+  <rect width="397" height="280" fill="url(#bg)"/>
+  <!-- watermark + - -->
+  <text x="105" y="220" font-size="260" fill="rgba(255,255,255,0.08)"
+        text-anchor="middle" font-family="Georgia, serif" font-weight="bold">+</text>
+  <text x="300" y="220" font-size="260" fill="rgba(255,255,255,0.08)"
+        text-anchor="middle" font-family="Georgia, serif" font-weight="bold">−</text>
+  <!-- divider -->
+  <line x1="198" y1="20" x2="198" y2="250" stroke="rgba(255,255,255,0.3)" stroke-width="2" stroke-dasharray="6,4"/>
+  <!-- addition examples -->
+  <g font-family="'Courier New', monospace" font-weight="bold" fill="white" text-anchor="middle">
+    <text x="100" y="55" font-size="22" fill="rgba(255,255,255,0.7)">dodawanie</text>
+    <text x="100" y="95"  font-size="26">3 + 5 = 8</text>
+    <text x="100" y="140" font-size="26">7 + 8 = 15</text>
+    <text x="100" y="185" font-size="26">12 + 9 = 21</text>
+    <text x="100" y="230" font-size="26">25 + 17 = 42</text>
+  </g>
+  <!-- subtraction examples -->
+  <g font-family="'Courier New', monospace" font-weight="bold" fill="white" text-anchor="middle">
+    <text x="298" y="55" font-size="22" fill="rgba(255,255,255,0.7)">odejmowanie</text>
+    <text x="298" y="95"  font-size="26">8 − 5 = 3</text>
+    <text x="298" y="140" font-size="26">15 − 8 = 7</text>
+    <text x="298" y="185" font-size="26">21 − 9 = 12</text>
+    <text x="298" y="230" font-size="26">42 − 17 = 25</text>
+  </g>
+</svg>

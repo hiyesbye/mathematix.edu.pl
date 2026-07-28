@@ -1,0 +1,32 @@
+<svg viewBox="0 0 397 280" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4a148c"/>
+      <stop offset="100%" stop-color="#ce93d8"/>
+    </linearGradient>
+  </defs>
+  <rect width="397" height="280" fill="url(#bg)"/>
+  <!-- watermark square and cube -->
+  <text x="200" y="190" font-size="180" fill="rgba(255,255,255,0.07)"
+        text-anchor="middle" font-family="Georgia, serif">n²</text>
+  <!-- divider line -->
+  <line x1="198" y1="20" x2="198" y2="250" stroke="rgba(255,255,255,0.3)" stroke-width="2" stroke-dasharray="6,4"/>
+  <!-- powers of 2 column -->
+  <g font-family="'Courier New', monospace" font-weight="bold" fill="white" text-anchor="middle">
+    <text x="100" y="55" font-size="22" fill="rgba(255,255,255,0.7)">kwadraty</text>
+    <text x="100" y="90"  font-size="26">2² = 4</text>
+    <text x="100" y="130" font-size="26">3² = 9</text>
+    <text x="100" y="170" font-size="26">4² = 16</text>
+    <text x="100" y="210" font-size="26">5² = 25</text>
+    <text x="100" y="250" font-size="26">6² = 36</text>
+  </g>
+  <!-- powers of 3 column -->
+  <g font-family="'Courier New', monospace" font-weight="bold" fill="white" text-anchor="middle">
+    <text x="298" y="55" font-size="22" fill="rgba(255,255,255,0.7)">sześciany</text>
+    <text x="298" y="90"  font-size="26">2³ = 8</text>
+    <text x="298" y="130" font-size="26">3³ = 27</text>
+    <text x="298" y="170" font-size="26">4³ = 64</text>
+    <text x="298" y="210" font-size="26">5³ = 125</text>
+    <text x="298" y="250" font-size="26">6³ = 216</text>
+  </g>
+</svg>
