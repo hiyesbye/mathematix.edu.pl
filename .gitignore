@@ -1,0 +1,6 @@
+# PHP backend - nie potrzebny dla statycznej strony
+includes/
+*.php
+
+# Konfiguracja lokalna
+.claude/

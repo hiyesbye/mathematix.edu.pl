@@ -1,13 +1,13 @@
-<br />
-<b>Warning</b>:  Unknown: Input variables exceeded 1000. To increase the limit change max_input_vars in php.ini. in <b>Unknown</b> on line <b>0</b><br />
 body{
     background-image: url('tlo2.jpg');
 }
+
 h2 {
     color: black !important;
     /*width: fit-content;*/
     display: table;
     padding: 1% 2%;
+    cursor: pointer;
 }
 
 .jeden, .dwa, .trzy{
@@ -15,7 +15,6 @@ h2 {
     border: 5px solid black;
     border-radius: 20px;
     text-align: center;
-
 }
 .jeden{
     background: linear-gradient(180deg, rgb(214, 197, 102) 0%, rgb(168, 167, 104) 25%,
@@ -29,6 +28,7 @@ h2 {
     background: linear-gradient(180deg, rgb(159, 253, 255) 0%, rgb(115, 217, 235) 25%,
     rgb(87, 159, 187) 50%, rgb(115, 217, 235) 75%, rgb(159, 253, 255) 100%)
 }
+
 iframe {
     display: none;
 }
@@ -36,14 +36,7 @@ iframe {
     display: block;
 }
 
-
-h2 {
-  cursor:pointer;
-    }
 h2:hover {
     background: linear-gradient(180deg, rgb(214, 102, 102) 0%, rgb(212, 117, 117) 25%,
     rgb(255, 95, 95) 50%,  rgb(212, 117, 117) 75%,  rgb(214, 102, 102) 100%);
-    }
-.taskowe a:hover {
-        background: linear-gradient(180deg, rgb(214, 102, 102) 0%, rgb(212, 117, 117) 25%,
-        rgb(255, 95, 95) 50%,  rgb
+}

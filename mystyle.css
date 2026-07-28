@@ -1,33 +1,9 @@
-<br />
-<b>Warning</b>:  Unknown: Input variables exceeded 1000. To increase the limit change max_input_vars in php.ini. in <b>Unknown</b> on line <b>0</b><br />
 * {
     margin: 0;
 }
 
 iframe {
     display: none;
-}
-
-.button {
-    background-color: #e04f4f;
-    border: 10px double rgb(0, 0, 0);
-    border-radius: 10px;
-    color: black;
-    padding:121px 149px;
-    background-size: cover;
-    text-align: center;
-    text-decoration: none;
-    transition-duration: 0.4s;
-    margin: 4px 2px;
-    cursor: pointer;
-    position: absolute;
-    top:-4px;
-    left: 27px;
-  }
-
-.button:hover{
-    color: white;
-    background-color: #b10e0e;
 }
 
 body{
@@ -46,7 +22,7 @@ body{
 .container a {
     text-decoration: none;
     }
-    
+
 .centered{
     position: relative;
     background-color:rgba(255, 255, 255, 0.4);
@@ -63,7 +39,6 @@ body{
     }
 
 .obrazek{
-    
     background-size: cover;
     width:397px;
     height:280px;
@@ -73,6 +48,8 @@ body{
     font-size:0;
     position: relative;
     width:100%;
+    height:280px;
+    overflow:hidden;
     }
 
 .centered3{
@@ -85,19 +62,6 @@ body{
   color: rgb(2, 2, 85);
   text-shadow: 6px 6px 21px yellow;
 }
-
-/* .centered2{
-    display:inline-block;
-    min-width:600px;
-    text-shadow: 6px 6px 21px yellow;
-    font-size: 160px;
-    text-align: center;
-    margin-top:35px;
-    width:100%;
-    font-family: math;
-    color: rgb(2, 2, 85);
-
-} */
 
 ul {
     display: inline-block;
@@ -156,16 +120,10 @@ li.dropdown{
     display: block;
   }
 
-.sticky{
-    position: fixed;
-    top:0;
-    width: 100%;
-}
-
 .pusty{
-    float:left; 
+    float:left;
     width: 15%;
-    
+
     /* background-color: rgb(2, 2, 85, 0.3); */
 }
 
@@ -205,7 +163,6 @@ li.dropdown{
     box-sizing: border-box;
     background-color: rgba(90, 191, 250, 0.397);
     overflow-wrap: break-word;
-
 }
 
 .duzaramka_oceny{
@@ -214,24 +171,23 @@ li.dropdown{
     font-family: monospace, "Courier New", "Lucida Console";
     font-size: 2vw;
     padding: 1% 2%;
-    font-weight: bolder;    
+    font-weight: bolder;
     border: 2px solid rgba(20, 0, 133, 0.788);
     border-top: 0;
     text-align: center;
     box-sizing: border-box;
     background-color: rgba(90, 191, 250, 0.397);
     overflow-wrap: break-word;
-
 }
 
 .duzaramka_profil{
     font-family: monospace, "Courier New", "Lucida Console";
-    font-size: max(100%);
+    font-size: 2vw;
     border: 2px solid rgba(20, 0, 133, 0.788);
     border-top: 0;
-    font-size: 2vw;
     padding: 1% 2%;
     text-align: center;
     box-sizing: border-box;
     background-color: rgba(90, 191, 250, 0.397);
-    over
+    overflow-wrap: break-word;
+}
