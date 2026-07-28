@@ -17,6 +17,8 @@ body{
     border-radius: 10px;
     position: relative;
     text-align: center;
+    content-visibility: auto;
+    contain-intrinsic-size: 397px 300px;
     }
 
 .container a {
