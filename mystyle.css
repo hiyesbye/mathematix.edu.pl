@@ -191,3 +191,18 @@ li.dropdown{
     background-color: rgba(90, 191, 250, 0.397);
     overflow-wrap: break-word;
 }
+
+.powrot {
+    display: inline-block;
+    padding: 12px 35px;
+    background-color: #333;
+    color: white;
+    text-decoration: none;
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: bold;
+    font-size: 18px;
+    border-radius: 6px;
+}
+.powrot:hover {
+    background-color: rgb(11, 105, 148);
+}
