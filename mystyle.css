@@ -24,10 +24,15 @@ body{
     }
 
 .centered{
-    position: relative;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
     background-color:rgba(255, 255, 255, 0.4);
     text-align: center;
-    bottom: -243px;
+    padding: 6px 4px;
+    box-sizing: border-box;
+    font-size: clamp(12px, 1.6vw, 20px);
     }
 
 .contbtn {
@@ -42,6 +47,8 @@ body{
     background-size: cover;
     width:397px;
     height:280px;
+    position: relative;
+    overflow: hidden;
     }
 
 .obrazek2{
@@ -210,6 +217,8 @@ li.dropdown{
 .obrazek-kolor {
     width: 397px;
     height: 280px;
+    position: relative;
+    overflow: hidden;
     transition: filter 0.25s ease, transform 0.2s ease;
 }
 .container:hover .obrazek-kolor {
