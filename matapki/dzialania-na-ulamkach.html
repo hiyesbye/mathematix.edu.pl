@@ -469,7 +469,7 @@
   let equationSteps = [];     // segmenty HTML doklejane po kolejnych "="
   let stepMulN1 = 0, stepMulD1 = 1, stepMulN2 = 0, stepMulD2 = 1; // skracanie wzajemne
   let mrSelPos = null;
-  let mrPairActive = false, mrPairA = null, mrPairB = null;
+  let mrPairs = []; // [{A:'n1', B:'d2'}, ...]
 
   // ── Math helpers ────────────────────────────────
   function gcd(a, b) {
@@ -490,6 +490,23 @@
   function generateOperand(maxDen, maxWhole, mixedProb = 0.5, sharedDen = null) {
     const den = sharedDen !== null ? sharedDen : (2 + Math.floor(Math.random() * (maxDen - 1)));
     const num = coprimeNumerator(den);
+    const whole = (maxWhole > 0 && Math.random() < mixedProb) ? 1 + Math.floor(Math.random() * maxWhole) : 0;
+    return { whole, num, den };
+  }
+
+  // Generuje ułamek z gcd(num,den) > 1 (niezredukowany — umożliwia skracanie w obrębie ułamka)
+  function generateNonCoprimeOperand(maxDen, maxWhole, mixedProb = 0) {
+    let num = 0, den = 1, tries = 0;
+    do {
+      tries++;
+      const f = 2 + Math.floor(Math.random() * 3); // wspólny dzielnik: 2, 3 lub 4
+      const maxM = Math.floor(maxDen / f);
+      if (maxM < 2) continue;
+      const m = 2 + Math.floor(Math.random() * (maxM - 1));
+      den = f * m;
+      const k = 1 + Math.floor(Math.random() * (m - 1));
+      num = f * k;
+    } while (tries < 100 && (gcd(num, den) === 1 || num <= 0 || num >= den));
     const whole = (maxWhole > 0 && Math.random() < mixedProb) ? 1 + Math.floor(Math.random() * maxWhole) : 0;
     return { whole, num, den };
   }
@@ -522,9 +539,9 @@
 
     if (isMulDiv) {
       if (currentLevel === 'lvl1' && currentModule === 'mul') {
-        if (Math.random() < 0.6) {
-          // Duży zakres (do 40), ułamki właściwe i niewłaściwe, wymuszamy skracanie wzajemne
-          // Wykluczamy liczby pierwsze > 11 (13,17,19,23,29,31,37)
+        const r = Math.random();
+        if (r < 0.45) {
+          // Cross-cancel: licznik jednego z mianownikiem drugiego (duży zakres, bez dużych liczb pierwszych)
           const bigPrimes = new Set([13, 17, 19, 23, 29, 31, 37]);
           const rndDen = () => { let v; do { v = 2 + Math.floor(Math.random() * 29); } while (bigPrimes.has(v)); return v; };
           const rndNum = () => { let v; do { v = 1 + Math.floor(Math.random() * 30); } while (bigPrimes.has(v)); return v; };
@@ -538,57 +555,114 @@
             bOperand = { whole: 0, num: nB, den: dB };
             tries++;
           } while (tries < 100 && gcd(aOperand.num, bOperand.den) === 1 && gcd(bOperand.num, aOperand.den) === 1);
+        } else if (r < 0.55) {
+          // Within-fraction: co najmniej jeden ułamek niezredukowany
+          if (Math.random() < 0.5) {
+            aOperand = generateNonCoprimeOperand(maxDen, 0);
+            bOperand = generateOperand(maxDen, 0);
+          } else {
+            aOperand = generateOperand(maxDen, 0);
+            bOperand = generateNonCoprimeOperand(maxDen, 0);
+          }
         } else {
-          // Mały zakres, ułamki właściwe (bez skracania wzajemnego)
           aOperand = generateOperand(maxDen, 0);
           bOperand = generateOperand(maxDen, 0);
         }
       } else if (currentLevel === 'lvl1') {
-        // Lv1 Dzielenie: ułamki zwykłe, bias 60% w kierunku skracania po odwróceniu
-        if (Math.random() < 0.6) {
+        // Lv1 Dzielenie: po zamianie a.num/a.den · b.den/b.num
+        const r = Math.random();
+        if (r < 0.45) {
+          // Cross-cancel: GCD(a.num,b.num)>1 lub GCD(b.den,a.den)>1
           let tries = 0;
           do {
             aOperand = generateOperand(maxDen, 0);
             bOperand = generateOperand(maxDen, 0);
             tries++;
-            // po zamianie: a.num/a.den · b.den/b.num — skracanie: GCD(a.num,b.num)>1 lub GCD(b.den,a.den)>1
           } while (tries < 100 &&
                    gcd(aOperand.num, bOperand.num) === 1 &&
                    gcd(bOperand.den, aOperand.den) === 1);
+        } else if (r < 0.55) {
+          // Within-fraction: GCD(a.num,a.den)>1 lub GCD(b.num,b.den)>1
+          if (Math.random() < 0.5) {
+            aOperand = generateNonCoprimeOperand(maxDen, 0);
+            bOperand = generateOperand(maxDen, 0);
+          } else {
+            aOperand = generateOperand(maxDen, 0);
+            bOperand = generateNonCoprimeOperand(maxDen, 0);
+          }
         } else {
           aOperand = generateOperand(maxDen, 0);
           bOperand = generateOperand(maxDen, 0);
         }
       } else if (currentModule === 'mul') {
-        // Lv2 Mnożenie: bias 70% w kierunku skracania wzajemnego po zamianie na ułamki niewłaściwe
-        if (Math.random() < 0.7) {
+        // Lv2 Mnożenie: po zamianie aImp/a.den · bImp/b.den
+        const r = Math.random();
+        if (r < 0.50) {
+          // Cross-cancel po zamianie na ułamki niewłaściwe
           let tries = 0;
           do {
             aOperand = generateOperand(maxDen, maxWhole, 0.75);
             bOperand = generateOperand(maxDen, maxWhole, 0.75);
             tries++;
           } while (tries < 100 &&
-                   gcd(toImproper(aOperand), bOperand.den) === 1 &&
-                   gcd(toImproper(bOperand), aOperand.den) === 1);
+                   (gcd(toImproper(aOperand), bOperand.den) === 1 &&
+                    gcd(toImproper(bOperand), aOperand.den) === 1 ||
+                    aOperand.whole === 0 && bOperand.whole === 0));
+        } else if (r < 0.60) {
+          // Within-fraction: GCD(a.num,a.den)>1 → GCD(aImp,a.den)>1
+          let tries = 0;
+          do {
+            if (Math.random() < 0.5) {
+              aOperand = generateNonCoprimeOperand(maxDen, maxWhole, 0.75);
+              bOperand = generateOperand(maxDen, maxWhole, 0.75);
+            } else {
+              aOperand = generateOperand(maxDen, maxWhole, 0.75);
+              bOperand = generateNonCoprimeOperand(maxDen, maxWhole, 0.75);
+            }
+            tries++;
+          } while (tries < 50 && aOperand.whole === 0 && bOperand.whole === 0);
         } else {
-          aOperand = generateOperand(maxDen, maxWhole, 0.75);
-          bOperand = generateOperand(maxDen, maxWhole, 0.75);
+          let tries = 0;
+          do {
+            aOperand = generateOperand(maxDen, maxWhole, 0.75);
+            bOperand = generateOperand(maxDen, maxWhole, 0.75);
+            tries++;
+          } while (tries < 50 && aOperand.whole === 0 && bOperand.whole === 0);
         }
       } else if (currentModule === 'div') {
-        // Lv2 Dzielenie: bias 70% w kierunku skracania po zamianie na imp i odwróceniu
-        // po zamianie: aImp/a.den · b.den/bImp — skracanie: GCD(aImp,bImp)>1 lub GCD(b.den,a.den)>1
-        if (Math.random() < 0.7) {
+        // Lv2 Dzielenie: po zamianie aImp/a.den · b.den/bImp
+        const r = Math.random();
+        if (r < 0.50) {
+          // Cross-cancel po zamianie na imp i odwróceniu b
           let tries = 0;
           do {
             aOperand = generateOperand(maxDen, maxWhole, 0.75);
             bOperand = generateOperand(maxDen, maxWhole, 0.75);
             tries++;
           } while (tries < 100 &&
-                   gcd(toImproper(aOperand), toImproper(bOperand)) === 1 &&
-                   gcd(bOperand.den, aOperand.den) === 1);
+                   (gcd(toImproper(aOperand), toImproper(bOperand)) === 1 &&
+                    gcd(bOperand.den, aOperand.den) === 1 ||
+                    aOperand.whole === 0 && bOperand.whole === 0));
+        } else if (r < 0.60) {
+          // Within-fraction: GCD(a.num,a.den)>1 lub GCD(b.num,b.den)>1
+          let tries = 0;
+          do {
+            if (Math.random() < 0.5) {
+              aOperand = generateNonCoprimeOperand(maxDen, maxWhole, 0.75);
+              bOperand = generateOperand(maxDen, maxWhole, 0.75);
+            } else {
+              aOperand = generateOperand(maxDen, maxWhole, 0.75);
+              bOperand = generateNonCoprimeOperand(maxDen, maxWhole, 0.75);
+            }
+            tries++;
+          } while (tries < 50 && aOperand.whole === 0 && bOperand.whole === 0);
         } else {
-          aOperand = generateOperand(maxDen, maxWhole, 0.75);
-          bOperand = generateOperand(maxDen, maxWhole, 0.75);
+          let tries = 0;
+          do {
+            aOperand = generateOperand(maxDen, maxWhole, 0.75);
+            bOperand = generateOperand(maxDen, maxWhole, 0.75);
+            tries++;
+          } while (tries < 50 && aOperand.whole === 0 && bOperand.whole === 0);
         }
       } else {
         // Pozostałe
@@ -640,8 +714,13 @@
             tries++;
           } while (tries < 200 && (aOperand.den === bOperand.den || wantBorrow !== hasBorrow));
         } else {
-          aOperand = generateOperand(maxDen, maxWhole);
-          bOperand = generateOperand(maxDen, maxWhole);
+          // Add Lv2: eliminuj te same mianowniki
+          let tries = 0;
+          do {
+            aOperand = generateOperand(maxDen, maxWhole);
+            bOperand = generateOperand(maxDen, maxWhole);
+            tries++;
+          } while (tries < 50 && aOperand.den === bOperand.den);
         }
       }
     }
@@ -775,15 +854,15 @@
     if (currentLevel === 'lvl2' || aOperand.whole !== 0 || bOperand.whole !== 0) {
       segments.push(`${renderMixedHTML({whole:0,num:n1,den:d1})}<span class="op-symbol">·</span>${renderMixedHTML({whole:0,num:n2,den:d2})}`);
     }
-    // Krok skracania wzajemnego (Lv1 i Lv2): iteracyjnie aż do pełnego skrócenia
+    // Krok skracania (Lv1 i Lv2): wzajemne i w obrębie ułamka, iteracyjnie
     {
       let anyCancel = false, changed = true;
       while (changed) {
         changed = false;
-        const ga = gcd(n1, d2);
-        if (ga > 1) { n1 /= ga; d2 /= ga; changed = anyCancel = true; }
-        const gb = gcd(n2, d1);
-        if (gb > 1) { n2 /= gb; d1 /= gb; changed = anyCancel = true; }
+        const ga = gcd(n1, d2); if (ga > 1) { n1 /= ga; d2 /= ga; changed = anyCancel = true; }
+        const gb = gcd(n2, d1); if (gb > 1) { n2 /= gb; d1 /= gb; changed = anyCancel = true; }
+        const gc = gcd(n1, d1); if (gc > 1) { n1 /= gc; d1 /= gc; changed = anyCancel = true; }
+        const gd = gcd(n2, d2); if (gd > 1) { n2 /= gd; d2 /= gd; changed = anyCancel = true; }
       }
       if (anyCancel) {
         segments.push(`${renderMixedHTML({whole:0,num:n1,den:d1})}<span class="op-symbol">·</span>${renderMixedHTML({whole:0,num:n2,den:d2})}`);
@@ -814,16 +893,16 @@
       segments.push(`${renderMixedHTML(aImpFrac)}<span class="op-symbol">:</span>${renderMixedHTML(bImpFrac)}`);
     }
     segments.push(`${renderMixedHTML(aImpFrac)}<span class="op-symbol">·</span>${renderMixedHTML(bReciprocal)}`);
-    // Skracanie wzajemne (Lv1 i Lv2): iteracyjnie aż do pełnego skrócenia
+    // Skracanie (Lv1 i Lv2): wzajemne i w obrębie ułamka, iteracyjnie
     let cn1 = aImp, cd1 = aOperand.den, cn2 = bOperand.den, cd2 = bImp;
     {
       let anyCancel = false, changed = true;
       while (changed) {
         changed = false;
-        const ga = gcd(cn1, cd2);
-        if (ga > 1) { cn1 /= ga; cd2 /= ga; changed = anyCancel = true; }
-        const gb = gcd(cn2, cd1);
-        if (gb > 1) { cn2 /= gb; cd1 /= gb; changed = anyCancel = true; }
+        const ga = gcd(cn1, cd2); if (ga > 1) { cn1 /= ga; cd2 /= ga; changed = anyCancel = true; }
+        const gb = gcd(cn2, cd1); if (gb > 1) { cn2 /= gb; cd1 /= gb; changed = anyCancel = true; }
+        const gc = gcd(cn1, cd1); if (gc > 1) { cn1 /= gc; cd1 /= gc; changed = anyCancel = true; }
+        const gd = gcd(cn2, cd2); if (gd > 1) { cn2 /= gd; cd2 /= gd; changed = anyCancel = true; }
       }
       if (anyCancel) {
         segments.push(`${renderMixedHTML({whole:0,num:cn1,den:cd1})}<span class="op-symbol">·</span>${renderMixedHTML({whole:0,num:cn2,den:cd2})}`);
@@ -929,7 +1008,7 @@
     } else if (isLv1Mul) {
       const p = aOperand.num, q = aOperand.den, r = bOperand.num, s = bOperand.den;
       stepMulN1 = p; stepMulD1 = q; stepMulN2 = r; stepMulD2 = s;
-      if (gcd(p, s) > 1 || gcd(r, q) > 1) {
+      if (gcd(p, s) > 1 || gcd(r, q) > 1 || gcd(p, q) > 1 || gcd(r, s) > 1) {
         stepPhase = 'mul-reduce';
       } else {
         stepPhase = 'result';
@@ -952,7 +1031,7 @@
 
   // ── Skracanie wzajemne – klik-mechanika ───────────
   function mrReset() {
-    mrSelPos = null; mrPairActive = false; mrPairA = null; mrPairB = null;
+    mrSelPos = null; mrPairs = [];
     [mrClickN1, mrClickD1, mrClickN2, mrClickD2].forEach(el => { el.className = 'mr-clickable'; });
     [mrSlotN1, mrSlotD1, mrSlotN2, mrSlotD2].forEach(el => { el.innerHTML = ''; });
   }
@@ -977,10 +1056,12 @@
   }
 
   function mrHandleClick(pos) {
-    if (mrPairActive) return;
     const elMap  = { n1: mrClickN1, d1: mrClickD1, n2: mrClickN2, d2: mrClickD2 };
     const slotMap = { n1: mrSlotN1, d1: mrSlotD1, n2: mrSlotN2, d2: mrSlotD2 };
     const valMap  = { n1: stepMulN1, d1: stepMulD1, n2: stepMulN2, d2: stepMulD2 };
+
+    // Nie klikaj liczb już przekreślonych
+    if (elMap[pos].classList.contains('cancelled')) return;
 
     if (mrSelPos === null) {
       mrSelPos = pos;
@@ -994,10 +1075,11 @@
     }
 
     const A = mrSelPos, B = pos;
-    const validPairs = new Set(['n1:d2', 'd2:n1', 'n2:d1', 'd1:n2']);
+    // Dozwolone pary: licznik z mianownikiem (tego samego lub innego ułamka)
+    const validPairs = new Set(['n1:d1','d1:n1','n1:d2','d2:n1','n2:d1','d1:n2','n2:d2','d2:n2']);
     if (!validPairs.has(A + ':' + B)) {
       mrShake([A, B]);
-      mrShowInfo('ℹ️ Skracaj licznik jednego ułamka z mianownikiem drugiego.', false);
+      mrShowInfo('❌ Ten licznik i mianownik nie skrócą się.', true);
       return;
     }
 
@@ -1006,12 +1088,13 @@
       elMap[A].classList.remove('mr-selecting');
       mrSelPos = null;
       mrShake([A, B]);
-      mrShowInfo('❌ Nie da się skrócić tych liczb — nie mają wspólnego dzielnika.', true);
+      mrShowInfo('❌ Ten licznik i mianownik nie skrócą się.', true);
       return;
     }
 
-    // Poprawna para — aktywuj
-    mrPairActive = true; mrPairA = A; mrPairB = B; mrSelPos = null;
+    // Poprawna para — aktywuj, zostaw możliwość wyboru kolejnej pary
+    mrPairs.push({ A, B });
+    mrSelPos = null;
     elMap[A].classList.remove('mr-selecting');
     elMap[A].classList.add('cancelled');
     elMap[B].classList.add('cancelled');
@@ -1168,10 +1251,12 @@
       return !(ipn1El.value && ipd1El.value && ipn2El.value && ipd2El.value);
     }
     if (stepActive && stepPhase === 'mul-reduce') {
-      if (!mrPairActive) return true;
-      const inpA = document.getElementById('mrDynInp_' + mrPairA);
-      const inpB = document.getElementById('mrDynInp_' + mrPairB);
-      return !(inpA && inpA.value && inpB && inpB.value);
+      if (mrPairs.length === 0) return true;
+      return mrPairs.some(({A, B}) => {
+        const inpA = document.getElementById('mrDynInp_' + A);
+        const inpB = document.getElementById('mrDynInp_' + B);
+        return !(inpA && inpA.value && inpB && inpB.value);
+      });
     }
     const nothingEntered = wholeEl.value === '' && numEl.value === '' && denEl.value === '';
     if (nothingEntered) return true;
@@ -1230,7 +1315,7 @@
       const f2 = `<span class="frac-box"><span class="num">${n2}</span><span class="den">${d2}</span></span>`;
       equationSteps.push(`${f1}<span class="op-symbol">·</span>${f2}`);
       renderQuestionBox();
-      if (gcd(n1, d2) > 1 || gcd(n2, d1) > 1) {
+      if (gcd(n1, d2) > 1 || gcd(n2, d1) > 1 || gcd(n1, d1) > 1 || gcd(n2, d2) > 1) {
         stepPhase = 'mul-reduce';
       } else {
         stepRaw2 = { whole: 0, num: n1 * n2, den: d1 * d2 };
@@ -1257,7 +1342,7 @@
       renderQuestionBox();
       if (currentModule === 'div') {
         stepPhase = 'div-to-mul';
-      } else if (gcd(n1, d2) > 1 || gcd(n2, d1) > 1) {
+      } else if (gcd(n1, d2) > 1 || gcd(n2, d1) > 1 || gcd(n1, d1) > 1 || gcd(n2, d2) > 1) {
         stepPhase = 'mul-reduce';
       } else {
         stepRaw2 = { whole: 0, num: n1 * n2, den: d1 * d2 };
@@ -1268,16 +1353,18 @@
     }
 
     if (stepPhase === 'mul-reduce') {
-      const inpA = document.getElementById('mrDynInp_' + mrPairA);
-      const inpB = document.getElementById('mrDynInp_' + mrPairB);
-      const newA = Number(inpA.value), newB = Number(inpB.value);
-      if (newA <= 0 || newB <= 0) {
-        stepWrongRetry('❌ Wpisz poprawne wartości (liczby całkowite dodatnie).');
-        return;
-      }
       let n1 = stepMulN1, d1 = stepMulD1, n2 = stepMulN2, d2 = stepMulD2;
       const setVal = (p, v) => { if(p==='n1')n1=v; else if(p==='d1')d1=v; else if(p==='n2')n2=v; else d2=v; };
-      setVal(mrPairA, newA); setVal(mrPairB, newB);
+      for (const {A, B} of mrPairs) {
+        const inpA = document.getElementById('mrDynInp_' + A);
+        const inpB = document.getElementById('mrDynInp_' + B);
+        const newA = Number(inpA.value), newB = Number(inpB.value);
+        if (newA <= 0 || newB <= 0) {
+          stepWrongRetry('❌ Wpisz poprawne wartości (liczby całkowite dodatnie).');
+          return;
+        }
+        setVal(A, newA); setVal(B, newB);
+      }
       if (n1 * n2 * stepMulD1 * stepMulD2 !== stepMulN1 * stepMulN2 * d1 * d2) {
         stepWrongRetry('❌ Wartość iloczynu się zmieniła. Skróć poprawnie.');
         return;
