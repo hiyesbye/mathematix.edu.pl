@@ -1,0 +1,28 @@
+<svg viewBox="0 0 397 280" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a0050"/>
+      <stop offset="100%" stop-color="#7c4cf7"/>
+    </linearGradient>
+  </defs>
+  <rect width="397" height="280" fill="url(#bg)"/>
+
+  <line x1="30" y1="136" x2="367" y2="136"
+        stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-dasharray="8,4"/>
+
+  <!-- label 1 -->
+  <text x="198" y="24" font-family="'Courier New',monospace" font-size="13"
+        fill="rgba(255,255,255,0.55)" text-anchor="middle" font-style="italic">największy wspólny dzielnik</text>
+
+  <!-- NWD example: NWD(36, 48) = 12 -->
+  <text x="198" y="92" font-family="Georgia,'Times New Roman',serif"
+        font-size="42" fill="white" text-anchor="middle" font-weight="bold">NWD(36, 48) = 12</text>
+
+  <!-- label 2 -->
+  <text x="198" y="157" font-family="'Courier New',monospace" font-size="13"
+        fill="rgba(255,255,255,0.55)" text-anchor="middle" font-style="italic">najmniejsza wspólna wielokrotność</text>
+
+  <!-- NWW example: NWW(4, 6) = 12 -->
+  <text x="198" y="218" font-family="Georgia,'Times New Roman',serif"
+        font-size="42" fill="white" text-anchor="middle" font-weight="bold">NWW(4, 6) = 12</text>
+</svg>

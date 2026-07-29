@@ -1,0 +1,2022 @@
+﻿<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f0eefe">
+<title>NWD i NWW</title>
+<style>
+  :root {
+    --bg:        #f0eefe;
+    --card:      #ffffff;
+    --primary:   #7c4cf7;
+    --good:      #1e9e5a;
+    --bad:       #d64040;
+    --text:      #1e2340;
+
+    --score-bg:  #d6f5e6; --score-text: #1a7a44; --score-bdr: #a8e8c8;
+    --timer-bg:  #fff4d6; --timer-text: #b86b00; --timer-bdr: #ffd98a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg);
+    font-family: "Segoe UI", Verdana, Arial, sans-serif; color: var(--text); }
+  body { display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; padding: 16px; }
+
+  .card {
+    background: var(--card); width: 100%; max-width: 460px;
+    border-radius: 24px; box-shadow: 0 12px 36px rgba(60,30,120,.14);
+    padding: 28px 24px 32px; text-align: center;
+    position: relative; overflow: hidden;
+  }
+  h1 {
+    font-size: 1.55rem; font-weight: 900; letter-spacing: -0.2px;
+    margin: 0 0 16px; padding: 13px 20px;
+    background: linear-gradient(135deg, #d6eaff, #70b8ff);
+    border: 2px solid #80b0f0; border-radius: 16px; color: #003080;
+  }
+
+  .mode-row {
+    display: flex; align-items: center; background: #eeeafb;
+    border-radius: 14px; padding: 4px; gap: 4px; margin-bottom: 20px;
+  }
+  .mode-title {
+    flex: 0 0 auto; display: flex; align-items: center;
+    padding: 4px 9px; border-radius: 9px; background: #c8bfee; color: #3d3470;
+    font-size: .78rem; font-weight: 700; white-space: nowrap;
+    cursor: default; user-select: none;
+  }
+  .tab {
+    flex: 1; border: none; background: transparent; border-radius: 11px;
+    padding: 10px 6px; font-size: .88rem; font-weight: 700; color: #6672a8;
+    cursor: pointer; transition: background .18s, color .18s, box-shadow .18s;
+    line-height: 1.3; box-shadow: none; white-space: nowrap;
+  }
+  .tab:not(.active-n):not(.active-t):not(.active-r):hover { background: #dfe2f5; color: var(--text); }
+  .tab.active-n { background: linear-gradient(135deg,#8b6fff,#6a3de8); color:#fff; box-shadow:0 3px 10px rgba(107,74,247,.35); }
+  .tab.active-t { background: linear-gradient(135deg,#e8604a,#f5a623); color:#fff; box-shadow:0 3px 10px rgba(232,96,74,.35); }
+  .tab.active-r { background: linear-gradient(135deg,#0a9e8a,#15ceb0); color:#fff; box-shadow:0 3px 10px rgba(10,158,138,.35); }
+  button:disabled, button:disabled:hover { opacity: 0.42; cursor: not-allowed; transform: none !important; box-shadow: none !important; filter: none !important; }
+
+  .stats { display: flex; gap: 10px; margin-bottom: 20px; }
+  .stat-box { flex: 1; border-radius: 14px; padding: 10px 6px; font-weight: 700; }
+  .stat-label { font-size: .7rem; text-transform: uppercase; letter-spacing: .8px; opacity: .7; margin-bottom: 2px; }
+  .stat-value { font-size: 1.35rem; }
+  .score-box { background: var(--score-bg); color: var(--score-text); border: 2px solid var(--score-bdr); }
+  .timer-box { background: var(--timer-bg); color: var(--timer-text); border: 2px solid var(--timer-bdr); }
+
+  .question-box {
+    background: linear-gradient(145deg,#5a1eb5,#9b4de8); color: #fff;
+    border-radius: 18px; padding: 24px 16px; margin-bottom: 20px;
+    box-shadow: 0 6px 22px rgba(90,30,181,.38);
+  }
+  .question-box.teal {
+    background: linear-gradient(145deg,#0a6e7a,#12a0b0);
+    box-shadow: 0 6px 22px rgba(10,110,122,.38);
+  }
+  .question {
+    font-family: "Bahnschrift","DIN Alternate","Arial Rounded MT Bold","Trebuchet MS",sans-serif;
+    font-size: clamp(1.5rem, 6.5vw, 2.8rem); font-weight: 700;
+    letter-spacing: 1px; line-height: 1.2; white-space: nowrap;
+    text-shadow: 0 2px 8px rgba(0,0,0,.18);
+  }
+
+  form { display: flex; flex-direction: column; gap: 12px; margin-bottom: 14px; }
+  input[type="number"] { touch-action: manipulation;
+    width: 100%; font-size: 1.6rem; text-align: center; padding: 12px 8px;
+    border: 2px solid #cdbff7; border-radius: 14px; outline: none;
+    -moz-appearance: textfield; transition: border-color .15s;
+  }
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button { touch-action: manipulation; -webkit-appearance:none; margin:0; }
+  input[type="number"]:focus { border-color: var(--primary); }
+
+  button {
+    width: 100%; font-size: 1.1rem; font-weight: 700; padding: 13px 20px;
+    border: none; border-radius: 14px;
+    background: linear-gradient(135deg,#8b6fff,#6a3de8); color: white;
+    cursor: pointer; transition: filter .15s, transform .06s;
+    letter-spacing: .3px; box-shadow: 0 4px 14px rgba(107,74,247,.35);
+  }
+  button:hover  { filter: brightness(1.08); }
+  button:active { transform: scale(.97); }
+  button.secondary {
+    background: transparent; border: 2px solid #d0d6f5;
+    color: #6672a8; font-weight: 600; box-shadow: none; margin-top: 2px;
+  }
+  button.secondary:hover { background: #f2f4fd; filter: none; }
+
+  .feedback {
+    min-height: 66px; font-size: 1.05rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 14px; padding: 10px 14px; margin-bottom: 10px; line-height: 1.4;
+  }
+  .feedback.good  { background: #d6f5e6; color: var(--good); border: 2px solid #a8e8c8; }
+  .feedback.bad   { background: #fde8e8; color: var(--bad);  border: 2px solid #f4b8b8; }
+  .feedback.empty { visibility: hidden; }
+
+  #animLayer {
+    position: absolute; inset: 0; pointer-events: none; z-index: 100;
+    border-radius: 24px; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .anim-correct-num {
+    font-family: "Bahnschrift","DIN Alternate","Arial Rounded MT Bold",sans-serif;
+    font-size: 9rem; font-weight: 900; color: #fff; line-height: 1; letter-spacing: 2px;
+    text-shadow: 0 0 10px #7fffb0,0 0 25px #50ff80,0 0 55px #20e860,0 0 100px #00c840;
+    animation: correctPop 1.3s cubic-bezier(.22,1,.36,1) forwards;
+    position: relative; z-index: 2;
+  }
+  @keyframes correctPop {
+    0%   { opacity:0; transform:scale(.2) rotate(-8deg); }
+    28%  { opacity:1; transform:scale(1.18) rotate(2deg); }
+    50%  { transform:scale(.94) rotate(-1deg); }
+    68%  { opacity:1; transform:scale(1.04) rotate(.5deg); }
+    85%  { opacity:1; transform:scale(1); }
+    100% { opacity:0; transform:scale(1.4); }
+  }
+  .particle {
+    position: absolute; z-index: 3; font-size: 1.8rem; font-weight: 900; color: #fff;
+    pointer-events: none; animation: particleFly 1s ease-out forwards;
+    text-shadow: 0 0 8px rgba(80,255,140,.9),0 0 18px rgba(80,255,140,.5);
+  }
+  @keyframes particleFly {
+    0%   { opacity:1; transform:translate(0,0) scale(1.1); }
+    100% { opacity:0; transform:var(--tx) scale(.2); }
+  }
+  .correct-flash {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center,rgba(40,220,100,.45) 0%,rgba(40,220,100,0) 70%);
+    animation: flashFade 1.3s ease-out forwards;
+  }
+  @keyframes flashFade { 0%{opacity:0;} 15%{opacity:1;} 100%{opacity:0;} }
+  .anim-wrong-x {
+    font-size: 11rem; font-weight: 900; color: #ff1a1a; line-height: 1;
+    animation: wrongGlow 1.2s ease-out forwards; position: relative; z-index: 2;
+  }
+  @keyframes wrongGlow {
+    0%   { opacity:0; transform:scale(.4); text-shadow:0 0 8px #f00,0 0 16px #f00; }
+    18%  { opacity:1; transform:scale(1.12); text-shadow:0 0 8px #f00,0 0 20px #f00,0 0 40px #f22,0 0 80px #f44,0 0 130px #f00,0 0 200px #c00; }
+    40%  { transform:scale(1); text-shadow:0 0 4px #f00,0 0 14px #f00,0 0 30px #f22,0 0 60px #f44,0 0 100px #f00; }
+    65%  { opacity:1; transform:scale(1.06); text-shadow:0 0 12px #f00,0 0 28px #f00,0 0 55px #f22,0 0 110px #f44,0 0 180px #c00,0 0 250px #800; }
+    100% { opacity:0; transform:scale(1.25); text-shadow:0 0 30px #f00,0 0 70px #f22,0 0 140px #f00; }
+  }
+  .wrong-flash {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center,rgba(220,0,0,.4) 0%,rgba(220,0,0,0) 70%);
+    animation: flashFade 1.2s ease-out forwards;
+  }
+
+  /* --- Factor tree (drzewko) --- */
+  .tree-box {
+    display: flex; justify-content: center; gap: 24px;
+    margin-bottom: 16px; flex-wrap: wrap;
+  }
+  .tree-wrap { display: flex; flex-direction: column; align-items: center; width: fit-content; }
+  .tree-label {
+    font-size: .78rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .6px; color: var(--primary); margin-bottom: 8px;
+  }
+  .tree-ladder { display: flex; flex-direction: column; width: fit-content; }
+  .tree-row { display: flex; align-items: stretch; min-height: 38px; width: fit-content; }
+  .tree-num {
+    width: 54px; display: flex; align-items: center; justify-content: flex-end;
+    font-size: 1.15rem; font-weight: 700; font-family: "Bahnschrift","Segoe UI",sans-serif;
+    padding: 0 8px 0 4px; border-right: 3px solid #444; color: var(--text);
+    box-sizing: border-box; flex-shrink: 0;
+  }
+  .tree-num.last { color: var(--primary); }
+  .tree-divisor-side {
+    display: flex; align-items: center; padding-left: 8px; gap: 5px; flex-shrink: 0;
+  }
+  input.tree-input {
+    width: 48px; font-size: 1.05rem; font-weight: 700; text-align: center;
+    border: 2px solid #cdbff7; border-radius: 8px; padding: 4px 2px;
+    outline: none; -moz-appearance: textfield;
+    transition: border-color .15s, background .15s; color: var(--text);
+  }
+  input.tree-input::-webkit-outer-spin-button,
+  input.tree-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  input.tree-input:focus { border-color: var(--primary); }
+  input.tree-input.ok  { border-color: var(--good); background: #eafff3; color: var(--good); }
+  input.tree-input.err { border-color: var(--bad); animation: treeShake .3s ease; }
+  @keyframes treeShake {
+    0%,100% { transform: translateX(0); }
+    25%      { transform: translateX(-4px); }
+    75%      { transform: translateX(4px); }
+  }
+  .tree-hint {
+    font-size: .68rem; color: var(--bad); font-weight: 700;
+    max-width: 76px; line-height: 1.2;
+  }
+  .tree-btn {
+    background: linear-gradient(135deg,#8b6fff,#6a3de8); color: #fff;
+    border: none; border-radius: 6px; width: 30px; height: 30px; padding: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .9rem; font-weight: 700; cursor: pointer;
+    transition: filter .15s; flex-shrink: 0; line-height: 1;
+  }
+  .tree-btn:hover  { filter: brightness(1.1); }
+  .tree-btn:active { transform: scale(.93); }
+
+  .tree-task-label {
+    font-size: .82rem; font-weight: 700; color: #6672a8;
+    margin-bottom: 12px; text-align: center; letter-spacing: .2px;
+  }
+  .factor-result {
+    background: #f0eefe; border-radius: 12px;
+    padding: 10px 14px; margin-bottom: 14px; text-align: left;
+  }
+  .factor-line {
+    font-family: "Bahnschrift","Segoe UI",monospace;
+    font-size: .95rem; font-weight: 700; color: var(--text); padding: 2px 0;
+  }
+
+  .factor-chip {
+    display: inline-flex; align-items: center; justify-content: center;
+    font-family: inherit; font-size: inherit; font-weight: 700; color: var(--text);
+    background: #e8e4fc; border: 2px solid #cdbff7;
+    border-radius: 7px; padding: 1px 6px; cursor: pointer;
+    transition: background .12s, border-color .12s, color .12s, transform .08s;
+    user-select: none;
+  }
+  .factor-chip:hover:not(.factor-chip-paired):not(.factor-chip-crossed) {
+    background: #d5ccf8; border-color: var(--primary); transform: scale(1.08);
+  }
+  .factor-chip-selected {
+    background: var(--primary) !important; color: #fff !important;
+    border-color: var(--primary) !important;
+    animation: chipPulse .9s ease-in-out infinite;
+  }
+  @keyframes chipPulse {
+    0%,100% { box-shadow: 0 0 0 3px rgba(124,76,247,.25); }
+    50%      { box-shadow: 0 0 0 5px rgba(124,76,247,.45); }
+  }
+  .factor-chip-paired { cursor: pointer; }
+  .factor-chip-crossed {
+    text-decoration: line-through; color: #aaa !important;
+    background: #e2e2e2 !important; border-color: #ccc !important;
+  }
+  .factor-chip-err { animation: treeShake .3s ease; }
+
+  .lt-num-label {
+    cursor: pointer; font-weight: 700; color: var(--primary);
+    text-decoration: underline dotted; text-underline-offset: 3px;
+    border-radius: 4px; padding: 0 2px;
+    transition: background .12s, color .12s;
+  }
+  .lt-num-label:hover { background: #ede9fc; }
+  .lt-num-crossed {
+    text-decoration: line-through; color: #aaa !important;
+    pointer-events: none; cursor: default !important;
+  }
+  .lt-phase-label {
+    font-size: .8rem; font-weight: 700; color: #6672a8;
+    text-align: center; margin-bottom: 8px;
+  }
+
+  .lt-answer-area {
+    background: #e8f9f4; border: 2px solid #3cbf94;
+    border-radius: 10px; padding: 10px 14px; margin-bottom: 12px;
+  }
+  .lt-answer-row {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+  }
+  .lt-formula-prefix { font-weight: 700; font-size: 1rem; color: var(--text); }
+  .lt-answer-auto {
+    display: inline-flex; align-items: center; justify-content: center;
+    background: #d0f0e2; border: 2px solid #3cbf94;
+    border-radius: 7px; padding: 2px 10px; font-weight: 700; font-size: 1rem;
+    min-width: 36px;
+  }
+  .lt-factor-cell { display: inline-flex; align-items: center; gap: 3px; }
+  .lt-factor-cell.cell-crossed {
+    opacity: .4; pointer-events: none;
+    text-decoration: line-through; color: #aaa;
+  }
+  input.lt-factor-input {
+    width: 44px; height: 34px; text-align: center; font-weight: 700;
+    border: 2px solid #b0ccc4; border-radius: 7px; font-size: 1rem;
+    padding: 0; background: #fff; transition: border-color .15s;
+    -moz-appearance: textfield;
+  }
+  input.lt-factor-input:focus { border-color: #3cbf94; outline: none; }
+  input.lt-factor-input::-webkit-outer-spin-button,
+  input.lt-factor-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .lt-formula-display { font-weight: 700; font-size: 1rem; color: var(--text); }
+  .input-err { animation: treeShake .3s ease; }
+
+  .placeholder {
+    padding: 40px 20px; color: #9090c0;
+    font-size: 1rem; font-style: italic;
+  }
+  .question-box.orange {
+    background: linear-gradient(145deg,#b56b00,#e8922a);
+    box-shadow: 0 6px 22px rgba(181,107,0,.38);
+  }
+  .ro-power-cell { display: inline-flex; align-items: flex-start; gap: 0; }
+  .ro-caret { font-size: .8rem; font-weight: 700; margin: 5px 1px 0; }
+  input.ro-exp-inp {
+    width: 26px; height: 22px; text-align: center; font-weight: 700;
+    border: 2px solid #b0ccc4; border-radius: 5px; font-size: .75rem;
+    padding: 0; background: #fff; transition: border-color .15s;
+    -moz-appearance: textfield;
+  }
+  input.ro-exp-inp::-webkit-outer-spin-button,
+  input.ro-exp-inp::-webkit-inner-spin-button { -webkit-appearance: none; }
+  input.ro-exp-inp:focus { border-color: #3cbf94; outline: none; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div id="animLayer"></div>
+  <h1>NWD i NWW</h1>
+
+  <div class="mode-row" style="margin-bottom:8px">
+    <span class="mode-title">Moduł:</span>
+    <button class="tab"          id="moduleBtnFactor" onclick="switchModule('factor')">Rozk&#322;ad</button>
+    <button class="tab active-n" id="moduleBtnGcd" onclick="switchModule('gcd')">NWD</button>
+    <button class="tab"          id="moduleBtnLcm" onclick="switchModule('lcm')">NWW</button>
+    <button class="tab"          id="moduleBtnGcdLcm" onclick="switchModule('gcdlcm')">NWD i NWW</button>
+  </div>
+  <div class="mode-row" id="modeRow">
+    <span class="mode-title">Tryb:</span>
+    <button class="tab active-n" id="modeBtnMemory" onclick="switchMode('memory')">W pamięci</button>
+    <button class="tab"          id="modeBtnTree"   onclick="switchMode('tree')">Z drzewkiem</button>
+  </div>
+
+  <div id="panelGcdMemory">
+    <div class="stats">
+      <div class="stat-box score-box">
+        <div class="stat-label">Wynik</div>
+        <div class="stat-value" id="gmScore">0 / 0</div>
+      </div>
+      <div class="stat-box timer-box">
+        <div class="stat-label">Czas</div>
+        <div class="stat-value" id="gmTimer">0 s</div>
+      </div>
+    </div>
+    <div id="gmInstruction" style="display:none;background:linear-gradient(145deg,#5a1eb5,#9b4de8);color:#fff;border-radius:12px;padding:7px 16px;margin-bottom:8px;font-size:.85rem;font-weight:700;letter-spacing:.3px;text-align:center;box-shadow:0 4px 14px rgba(90,30,181,.22);max-width:70%;margin-left:auto;margin-right:auto"></div>
+    <div class="question-box">
+      <div class="question" id="gmQuestion">NWD(?, ?)</div>
+    </div>
+    <form id="gmForm" autocomplete="off">
+      <input type="number" id="gmInput" inputmode="numeric" placeholder="Twoja odpowiedź" required>
+      <button type="submit" id="gmSubmitBtn" disabled>Sprawdź</button>
+    </form>
+    <div class="feedback empty" id="gmFeedback"></div>
+    <button type="button" id="gmReset" class="secondary" disabled>Resetuj wynik</button>
+  </div>
+  <div id="gmNwdResult" style="display:none;background:#d6f5e6;border:2px solid #a8e8c8;border-radius:12px;padding:8px 16px;margin-bottom:12px;font-weight:700;font-size:1rem;color:#1e9e5a;text-align:center"></div>
+  <div id="panelLcmMemory" style="display:none">
+    <div class="stats">
+      <div class="stat-box score-box">
+        <div class="stat-label">Wynik</div>
+        <div class="stat-value" id="lmScore">0 / 0</div>
+      </div>
+      <div class="stat-box timer-box">
+        <div class="stat-label">Czas</div>
+        <div class="stat-value" id="lmTimer">0 s</div>
+      </div>
+    </div>
+    <div id="lmInstruction" style="display:none;background:linear-gradient(145deg,#5a1eb5,#9b4de8);color:#fff;border-radius:12px;padding:7px 16px;margin-bottom:8px;font-size:.85rem;font-weight:700;letter-spacing:.3px;text-align:center;box-shadow:0 4px 14px rgba(90,30,181,.22);max-width:70%;margin-left:auto;margin-right:auto"></div>
+    <div id="lmNwdResult" style="display:none;background:#d6f5e6;border:2px solid #a8e8c8;border-radius:12px;padding:8px 16px;margin-bottom:12px;font-weight:700;font-size:1rem;color:#1e9e5a;text-align:center"></div>
+    <div class="question-box teal">
+      <div class="question" id="lmQuestion">NWW(?, ?)</div>
+    </div>
+    <form id="lmForm" autocomplete="off">
+      <input type="number" id="lmInput" inputmode="numeric" placeholder="Twoja odpowiedź" required>
+      <button type="submit" id="lmSubmitBtn" disabled>Sprawdź</button>
+    </form>
+    <div class="feedback empty" id="lmFeedback"></div>
+    <button type="button" id="lmReset" class="secondary" disabled>Resetuj wynik</button>
+  </div>
+  <div id="panelGcdTree" style="display:none">
+    <div class="stats">
+      <div class="stat-box score-box">
+        <div class="stat-label">Wynik</div>
+        <div class="stat-value" id="gtScore">0 / 0</div>
+      </div>
+      <div class="stat-box timer-box">
+        <div class="stat-label">Czas</div>
+        <div class="stat-value" id="gtTimer">0 s</div>
+      </div>
+    </div>
+    <div id="gtInstruction" style="display:none;background:linear-gradient(145deg,#5a1eb5,#9b4de8);color:#fff;border-radius:12px;padding:7px 16px;margin-bottom:8px;font-size:.85rem;font-weight:700;letter-spacing:.3px;text-align:center;box-shadow:0 4px 14px rgba(90,30,181,.22);align-self:center;max-width:70%;margin-left:auto;margin-right:auto"></div>
+    <div class="question-box">
+      <div class="question" id="gtQuestion">NWD(?, ?)</div>
+    </div>
+    <div id="gtNwdResult" style="display:none;background:#d6f5e6;border:2px solid #a8e8c8;border-radius:12px;padding:8px 16px;margin-bottom:12px;font-weight:700;font-size:1rem;color:#1e9e5a;text-align:center"></div>
+    <div class="tree-task-label">Rozłóż obie liczby na czynniki pierwsze:</div>
+    <div class="tree-box">
+      <div class="tree-wrap">
+        <div class="tree-label" id="gtLabelA">?</div>
+        <div class="tree-ladder" id="gtTreeA"></div>
+      </div>
+      <div class="tree-wrap">
+        <div class="tree-label" id="gtLabelB">?</div>
+        <div class="tree-ladder" id="gtTreeB"></div>
+      </div>
+    </div>
+    <div class="factor-result" id="gtFactors" style="display:none"></div>
+    <div id="gtAnswerArea" style="display:none"></div>
+    <form id="gtForm" autocomplete="off" style="display:none">
+      <span id="gtFormLabel" class="lt-formula-prefix"></span>
+      <input type="number" id="gtInput" inputmode="numeric" placeholder="?" required>
+      <button type="submit" id="gtSubmitBtn" disabled>Sprawdź</button>
+    </form>
+    <div class="feedback empty" id="gtFeedback"></div>
+    <button type="button" id="gtReset" class="secondary" disabled>Resetuj wynik</button>
+  </div>
+  <div id="panelLcmTree" style="display:none">
+    <div class="stats" id="ltStats">
+      <div class="stat-box score-box">
+        <div class="stat-label">Wynik</div>
+        <div class="stat-value" id="ltScore">0 / 0</div>
+      </div>
+      <div class="stat-box timer-box">
+        <div class="stat-label">Czas</div>
+        <div class="stat-value" id="ltTimer">0 s</div>
+      </div>
+    </div>
+    <div id="ltInstruction" style="display:none;background:linear-gradient(145deg,#5a1eb5,#9b4de8);color:#fff;border-radius:12px;padding:7px 16px;margin-bottom:8px;font-size:.85rem;font-weight:700;letter-spacing:.3px;text-align:center;box-shadow:0 4px 14px rgba(90,30,181,.22);max-width:70%;margin-left:auto;margin-right:auto"></div>
+    <div class="question-box teal" id="ltQuestionBox">
+      <div class="question" id="ltQuestion">NWW(?, ?)</div>
+    </div>
+    <div id="ltNwdResult" style="display:none;background:#d6f5e6;border:2px solid #a8e8c8;border-radius:12px;padding:8px 16px;margin-bottom:12px;font-weight:700;font-size:1rem;color:#1e9e5a;text-align:center"></div>
+    <div class="tree-task-label" id="ltTreeLabel">Rozłóż obie liczby na czynniki pierwsze:</div>
+    <div class="tree-box" id="ltTreeBox">
+      <div class="tree-wrap">
+        <div class="tree-label" id="ltLabelA">?</div>
+        <div class="tree-ladder" id="ltTreeA"></div>
+      </div>
+      <div class="tree-wrap">
+        <div class="tree-label" id="ltLabelB">?</div>
+        <div class="tree-ladder" id="ltTreeB"></div>
+      </div>
+    </div>
+    <div class="factor-result" id="ltFactors" style="display:none"></div>
+    <div id="ltAnswerArea" style="display:none"></div>
+    <form id="ltForm" autocomplete="off" style="display:none">
+      <span id="ltFormLabel" class="lt-formula-prefix"></span>
+      <input type="number" id="ltInput" inputmode="numeric" placeholder="?" required>
+      <button type="submit" id="ltSubmitBtn" disabled>Sprawdź</button>
+    </form>
+    <div class="feedback empty" id="ltFeedback"></div>
+    <button type="button" id="ltReset" class="secondary" disabled>Resetuj wynik</button>
+  </div>
+  <button type="button" id="forfeitBtn" style="display:none;margin-top:8px;background:linear-gradient(135deg,#d64040,#a01818)">Forfeit</button>
+  <div id="panelFactor" style="display:none">
+    <div class="stats">
+      <div class="stat-box score-box">
+        <div class="stat-label">Wynik</div>
+        <div class="stat-value" id="roScore">0 / 0</div>
+      </div>
+      <div class="stat-box timer-box">
+        <div class="stat-label">Czas</div>
+        <div class="stat-value" id="roTimer">0 s</div>
+      </div>
+    </div>
+    <div class="question-box orange">
+      <div class="tree-task-label" style="color:rgba(255,255,255,.85);margin-bottom:6px">Rozk&#322;ad na czynniki pierwsze:</div>
+      <div class="question" id="roQuestion">?</div>
+    </div>
+    <div class="tree-box">
+      <div class="tree-wrap">
+        <div class="tree-ladder" id="roTree"></div>
+      </div>
+    </div>
+    <div id="roAnswerArea" style="display:none"></div>
+    <div class="feedback empty" id="roFeedback"></div>
+    <button type="button" id="roReset" class="secondary" disabled>Resetuj wynik</button>
+  </div>
+</div>
+
+<script>
+  // --- DOM refs ---
+  const animLayer     = document.getElementById('animLayer');
+  const moduleBtnGcd  = document.getElementById('moduleBtnGcd');
+  const moduleBtnLcm  = document.getElementById('moduleBtnLcm');
+  const modeBtnMemory = document.getElementById('modeBtnMemory');
+  const modeBtnTree   = document.getElementById('modeBtnTree');
+
+  const panelGcdMemory = document.getElementById('panelGcdMemory');
+  const panelLcmMemory = document.getElementById('panelLcmMemory');
+  const panelGcdTree   = document.getElementById('panelGcdTree');
+  const panelLcmTree   = document.getElementById('panelLcmTree');
+
+  // --- Global state ---
+  let currentModule = 'gcd';
+  let currentMode   = 'memory';
+  let questionMode  = 'ask'; // 'ask' | 'next'
+  let autoAdvanceTimeout = null;
+
+  // --- Math helpers ---
+  function gcd(a, b) { while (b) { [a, b] = [b, a % b]; } return a; }
+
+  function isPrime(n) {
+    if (n < 2) return false;
+    if (n === 2) return true;
+    if (n % 2 === 0) return false;
+    for (let i = 3; i * i <= n; i += 2) if (n % i === 0) return false;
+    return true;
+  }
+
+  function generateGcdPair() {
+    const r = Math.random();
+    if (r < 0.04) {
+      for (let i = 0; i < 300; i++) {
+        const p = [23, 29][Math.floor(Math.random() * 2)];
+        const a = p * (1 + Math.floor(Math.random() * Math.floor(60 / p)));
+        const b = 2 + Math.floor(Math.random() * 59);
+        if (a >= 2 && a <= 60 && b >= 2 && b <= 60 && a !== b) return { a, b, ans: gcd(a, b) };
+      }
+    } else if (r < 0.12) {
+      for (let i = 0; i < 300; i++) {
+        const p = [13, 17, 19][Math.floor(Math.random() * 3)];
+        const a = p * (1 + Math.floor(Math.random() * Math.floor(60 / p)));
+        const b = 2 + Math.floor(Math.random() * 59);
+        if (a >= 2 && a <= 60 && b >= 2 && b <= 60 && a !== b) return { a, b, ans: gcd(a, b) };
+      }
+    }
+    const divisors  = [2, 3, 4, 5, 6, 8, 9, 10, 12, 15, 18, 20];
+    const coprimes  = [[1,2],[1,3],[1,4],[1,5],[1,6],[1,7],[2,3],[2,5],[2,7],[3,4],[3,5],[3,7],[4,5],[4,7],[5,6],[5,7]];
+    if (Math.random() < 0.70) {
+      for (let i = 0; i < 200; i++) {
+        const g         = divisors[Math.floor(Math.random() * divisors.length)];
+        const [m1, m2]  = coprimes[Math.floor(Math.random() * coprimes.length)];
+        const a = g * m1, b = g * m2;
+        if (a >= 2 && b >= 2 && a <= 60 && b <= 60) return { a, b, ans: g };
+      }
+    }
+    let a, b, tries = 0;
+    do {
+      a = 2 + Math.floor(Math.random() * 49);
+      b = 2 + Math.floor(Math.random() * 49);
+      tries++;
+    } while (a === b && tries < 100);
+    return { a, b, ans: gcd(a, b) };
+  }
+
+  function generateLcmPair() {
+    let a, b, lcmVal, tries = 0;
+    do {
+      a = 2 + Math.floor(Math.random() * 19); // 2..20
+      b = 2 + Math.floor(Math.random() * 19);
+      const g = gcd(a, b);
+      lcmVal = (a * b) / g;
+      tries++;
+    } while (tries < 200 && (a === b || lcmVal > 120 || lcmVal < 6));
+    return { a, b, ans: lcmVal };
+  }
+
+  function generateTreePair() {
+    const divisors = [2, 3, 4, 5, 6, 8, 9, 10, 12, 15];
+    const coprimes = [[2,3],[2,5],[2,7],[2,9],[3,4],[3,5],[3,7],[4,5],[4,7],[5,6],[5,7],[5,8],[5,9],[6,7],[7,9]];
+    for (let i = 0; i < 500; i++) {
+      const g      = divisors[Math.floor(Math.random() * divisors.length)];
+      const [m1, m2] = coprimes[Math.floor(Math.random() * coprimes.length)];
+      const a = g * m1, b = g * m2;
+      if (a >= 4 && b >= 4 && a <= 60 && b <= 60 && a !== b && !isPrime(a) && !isPrime(b))
+        return { a, b, ans: g };
+    }
+    return { a: 12, b: 18, ans: 6 };
+  }
+
+  function generateLcmTreePair() {
+    const okFactor = n => !isPrime(n) || n <= 25;
+    for (let attempt = 0; attempt < 2000; attempt++) {
+      const g = 2 + Math.floor(Math.random() * 24);   // 2..25
+      if (!okFactor(g)) continue;
+      const maxM = Math.floor(150 / g);
+      if (maxM < 3) continue;
+      const m1 = 2 + Math.floor(Math.random() * (maxM - 1));
+      const m2 = 2 + Math.floor(Math.random() * (maxM - 1));
+      if (!okFactor(m1) || !okFactor(m2)) continue;
+      if (gcd(m1, m2) !== 1) continue;
+      const a = g * m1, b = g * m2;
+      if (a < 10 || b < 10 || a > 150 || b > 150 || a === b) continue;
+      if (isPrime(a) || isPrime(b)) continue;
+      return { a, b, ans: g };
+    }
+    return { a: 12, b: 30, ans: 6 };
+  }
+
+  function generateGcdTreePair() {
+    const r = Math.random();
+    const specialPrimes = r < 0.04 ? [23, 29] : (r < 0.12 ? [13, 17, 19] : null);
+    if (specialPrimes) {
+      for (let i = 0; i < 500; i++) {
+        const p = specialPrimes[Math.floor(Math.random() * specialPrimes.length)];
+        const maxK = Math.floor(150 / (p * 2));
+        if (maxK < 1) continue;
+        const a = p * 2 * (1 + Math.floor(Math.random() * maxK));
+        if (a < 10 || a > 150) continue;
+        const b = 2 * (5 + Math.floor(Math.random() * 71));
+        if (b < 10 || b > 150 || b === a || isPrime(b)) continue;
+        return { a, b, ans: gcd(a, b) };
+      }
+    }
+    const okFactor = n => !isPrime(n) || n <= 25;
+    for (let attempt = 0; attempt < 2000; attempt++) {
+      const g = 2 + Math.floor(Math.random() * 24);   // 2..25
+      if (isPrime(g) || !okFactor(g)) continue;       // g must be composite -> >= 2 pairs
+      const maxM = Math.floor(150 / g);
+      if (maxM < 3) continue;
+      const m1 = 2 + Math.floor(Math.random() * (maxM - 1));
+      const m2 = 2 + Math.floor(Math.random() * (maxM - 1));
+      if (!okFactor(m1) || !okFactor(m2)) continue;
+      if (gcd(m1, m2) !== 1) continue;
+      const a = g * m1, b = g * m2;
+      if (a < 10 || b < 10 || a > 150 || b > 150 || a === b) continue;
+      if (isPrime(a) || isPrime(b)) continue;
+      return { a, b, ans: g };
+    }
+    return { a: 12, b: 30, ans: 6 };
+  }
+
+  // --- FactorTree widget ---
+  class FactorTree {
+    constructor(number, container, onComplete) {
+      this.current    = number;
+      this.factors    = [];
+      this.container  = container;
+      this.onComplete = onComplete;
+      this.done       = false;
+      this._addRow(number);
+    }
+
+    _addRow(num) {
+      const row   = document.createElement('div');  row.className = 'tree-row';
+      const numEl = document.createElement('div');  numEl.className = 'tree-num';
+      numEl.textContent = num;
+      const side  = document.createElement('div');  side.className = 'tree-divisor-side';
+      const input = document.createElement('input');
+      input.type = 'number'; input.className = 'tree-input';
+      input.min = '2'; input.placeholder = '?';
+      input.setAttribute('inputmode', 'numeric');
+      const btn  = document.createElement('button'); btn.type = 'button';
+      btn.className = 'tree-btn'; btn.textContent = '↵';
+      const hint = document.createElement('span');  hint.className = 'tree-hint';
+
+      side.appendChild(input); side.appendChild(btn); side.appendChild(hint);
+      row.appendChild(numEl);  row.appendChild(side);
+      this.container.appendChild(row);
+      setTimeout(() => { if (!this.done) input.focus(); }, 30);
+
+      const submit = () => {
+        if (this.done) return;
+        const val = parseInt(input.value, 10);
+        hint.textContent = ''; input.classList.remove('err');
+
+        if (!val || val < 2)       { hint.textContent = 'Wpisz ≥ 2';    input.classList.add('err'); return; }
+        if (!isPrime(val))          { hint.textContent = 'Nie pierwsza!'; input.classList.add('err'); return; }
+        if (num % val !== 0)        { hint.textContent = `${val} ∤ ${num}`; input.classList.add('err'); return; }
+
+        input.disabled = true; input.classList.add('ok');
+        btn.disabled = true;
+        this.factors.push(val);
+        const quot = num / val;
+
+        if (quot === 1) {
+          const lastRow = document.createElement('div'); lastRow.className = 'tree-row';
+          const lastNum = document.createElement('div'); lastNum.className = 'tree-num last';
+          lastNum.textContent = '1';
+          lastRow.appendChild(lastNum);
+          this.container.appendChild(lastRow);
+          this.done = true;
+          if (this.onComplete) this.onComplete([...this.factors]);
+        } else {
+          this._addRow(quot);
+        }
+      };
+
+      input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); submit(); } });
+      input.addEventListener('input',   ()  => { hint.textContent = ''; input.classList.remove('err'); });
+      btn.addEventListener('click', submit);
+      input._submit = submit;
+    }
+
+    getFactors() { return [...this.factors]; }
+    isDone()     { return this.done; }
+  }
+
+  // --- GCD Memory panel ---
+  const gmScoreEl    = document.getElementById('gmScore');
+  const gmTimerEl    = document.getElementById('gmTimer');
+  const gmQuestionEl = document.getElementById('gmQuestion');
+  const gmForm       = document.getElementById('gmForm');
+  const gmInput      = document.getElementById('gmInput');
+  const gmSubmitBtn  = document.getElementById('gmSubmitBtn');
+  const gmFeedback   = document.getElementById('gmFeedback');
+  const gmReset      = document.getElementById('gmReset');
+
+  let gmA, gmB, gmAns;
+  let gmCorrect = 0, gmTotal = 0;
+  let gmInterval = null, gmStart = 0;
+  const gmHistory = [];
+
+  function newGcdMemoryQuestion(skipFocus = false) {
+    clearAll();
+    gmSubmitBtn.textContent = 'Sprawdź';
+    gmSubmitBtn.disabled = true;
+    let pair, tries = 0;
+    do { pair = generateGcdPair(); tries++; }
+    while (tries < 50 && gmHistory.some(([a, b]) => a === pair.a && b === pair.b));
+    gmA = pair.a; gmB = pair.b; gmAns = pair.ans;
+    gmHistory.push([gmA, gmB]);
+    if (gmHistory.length > 8) gmHistory.shift();
+
+    const _gmInstr2 = document.getElementById('gmInstruction');
+    if (_gmInstr2) _gmInstr2.style.display = 'none';
+    gmQuestionEl.textContent = `NWD(${gmA}, ${gmB})`;
+    gmInput.value = '';
+    gmFeedback.textContent = ''; gmFeedback.className = 'feedback empty';
+    if (!skipFocus) gmInput.focus();
+    gmStart = Date.now();
+    gmTimerEl.textContent = '0 s';
+    gmInterval = setInterval(() => {
+      gmTimerEl.textContent = `${Math.floor((Date.now() - gmStart) / 1000)} s`;
+    }, 1000);
+    questionMode = 'ask';
+  }
+
+  function checkGcdMemoryAnswer() {
+    if (questionMode !== 'ask') return;
+    const ans = Number(gmInput.value);
+    if (ans === gmAns) {
+      questionMode = 'next';
+      clearInterval(gmInterval);
+      gmTimerEl.textContent = Math.floor((Date.now() - gmStart) / 1000) + ' s';
+      gmCorrect++; gmTotal++;
+      gmFeedback.textContent = '✅ Brawo! NWD(' + gmA + ', ' + gmB + ') = ' + gmAns + '.';
+      gmFeedback.className = 'feedback good';
+      playCorrectAnim(String(gmAns));
+      if (currentModule === 'gcdlcm') {
+        const _gmRes = document.getElementById('gmNwdResult');
+        if (_gmRes) { _gmRes.textContent = 'NWD(' + gmA + ', ' + gmB + ') = ' + gmAns; _gmRes.style.display = ''; }
+        autoAdvanceTimeout = setTimeout(() => startGcdLcmMemoryNww(), 1900);
+      } else autoAdvanceTimeout = setTimeout(() => newGcdMemoryQuestion(), 1900);
+      gmScoreEl.textContent = gmCorrect + ' / ' + gmTotal;
+      gmInput.blur(); gmReset.disabled = false;
+    } else if (currentModule === 'gcdlcm') {
+      playWrongAnim(() => {
+        gmInput.value = ''; gmSubmitBtn.disabled = true;
+        gmFeedback.textContent = ''; gmFeedback.className = 'feedback empty';
+        gmInput.focus();
+      });
+    } else {
+      questionMode = 'next';
+      clearInterval(gmInterval);
+      gmTimerEl.textContent = Math.floor((Date.now() - gmStart) / 1000) + ' s';
+      gmTotal++;
+      gmFeedback.textContent = '❌ Niepoprawnie. NWD(' + gmA + ', ' + gmB + ') = ' + gmAns + '.';
+      gmFeedback.className = 'feedback bad';
+      playWrongAnim(() => { gmSubmitBtn.disabled = false; gmSubmitBtn.textContent = 'Dalej'; });
+      gmScoreEl.textContent = gmCorrect + ' / ' + gmTotal;
+      gmInput.blur(); gmReset.disabled = false;
+    }
+  }
+
+  gmForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (questionMode === 'ask' && gmInput.value !== '') checkGcdMemoryAnswer();
+    else if (questionMode === 'next') { if (currentModule === 'gcdlcm') newGcdLcmMemoryQuestion(); else newGcdMemoryQuestion(); }
+  });
+
+  gmInput.addEventListener('input', () => {
+    if (questionMode === 'ask') gmSubmitBtn.disabled = gmInput.value === '';
+  });
+
+  gmReset.addEventListener('click', () => {
+    gmCorrect = 0; gmTotal = 0;
+    gmScoreEl.textContent = '0 / 0';
+    gmReset.disabled = true;
+    document.activeElement.blur();
+    newGcdMemoryQuestion(true);
+  });
+
+  // --- LCM Memory panel ---
+  const lmScoreEl    = document.getElementById('lmScore');
+  const lmTimerEl    = document.getElementById('lmTimer');
+  const lmQuestionEl = document.getElementById('lmQuestion');
+  const lmForm       = document.getElementById('lmForm');
+  const lmInput      = document.getElementById('lmInput');
+  const lmSubmitBtn  = document.getElementById('lmSubmitBtn');
+  const lmFeedback   = document.getElementById('lmFeedback');
+  const lmReset      = document.getElementById('lmReset');
+
+  let lmA, lmB, lmAns;
+  let lmCorrect = 0, lmTotal = 0;
+  let lmInterval = null, lmStart = 0;
+  const lmHistory = [];
+
+  function newLcmMemoryQuestion(skipFocus = false) {
+    clearAll();
+    lmSubmitBtn.textContent = 'Sprawdź';
+    lmSubmitBtn.disabled = true;
+    let pair, tries = 0;
+    do { pair = generateLcmPair(); tries++; }
+    while (tries < 50 && lmHistory.some(([a, b]) => a === pair.a && b === pair.b));
+    lmA = pair.a; lmB = pair.b; lmAns = pair.ans;
+    lmHistory.push([lmA, lmB]);
+    if (lmHistory.length > 8) lmHistory.shift();
+
+    const _lmInstr2 = document.getElementById('lmInstruction');
+    if (_lmInstr2) _lmInstr2.style.display = 'none';
+    const _lmNwdRes2 = document.getElementById('lmNwdResult');
+    if (_lmNwdRes2) _lmNwdRes2.style.display = 'none';
+    lmQuestionEl.textContent = `NWW(${lmA}, ${lmB})`;
+    lmInput.value = '';
+    lmFeedback.textContent = ''; lmFeedback.className = 'feedback empty';
+    if (!skipFocus) lmInput.focus();
+    lmStart = Date.now();
+    lmTimerEl.textContent = '0 s';
+    lmInterval = setInterval(() => {
+      lmTimerEl.textContent = `${Math.floor((Date.now() - lmStart) / 1000)} s`;
+    }, 1000);
+    questionMode = 'ask';
+  }
+
+  function checkLcmMemoryAnswer() {
+    if (questionMode !== 'ask') return;
+    const ans = Number(lmInput.value);
+    if (ans === lmAns) {
+      questionMode = 'next';
+      clearInterval(lmInterval);
+      lmTimerEl.textContent = `${Math.floor((Date.now() - lmStart) / 1000)} s`;
+      lmCorrect++; lmTotal++;
+      lmFeedback.textContent = `✅ Brawo! NWW(${lmA}, ${lmB}) = ${lmAns}.`;
+      lmFeedback.className = 'feedback good';
+      playCorrectAnim(String(lmAns));
+      if (currentModule === 'gcdlcm') autoAdvanceTimeout = setTimeout(() => newGcdLcmMemoryQuestion(), 1900);
+      else autoAdvanceTimeout = setTimeout(() => newLcmMemoryQuestion(), 1900);
+      lmScoreEl.textContent = `${lmCorrect} / ${lmTotal}`;
+      lmInput.blur(); lmReset.disabled = false;
+    } else if (currentModule === 'gcdlcm') {
+      playWrongAnim(() => {
+        lmInput.value = ''; lmSubmitBtn.disabled = true;
+        lmFeedback.textContent = ''; lmFeedback.className = 'feedback empty';
+        lmInput.focus();
+      });
+    } else {
+      questionMode = 'next';
+      clearInterval(lmInterval);
+      lmTimerEl.textContent = `${Math.floor((Date.now() - lmStart) / 1000)} s`;
+      lmTotal++;
+      lmFeedback.textContent = `❌ Niepoprawnie. NWW(${lmA}, ${lmB}) = ${lmAns}.`;
+      lmFeedback.className = 'feedback bad';
+      playWrongAnim(() => { lmSubmitBtn.disabled = false; lmSubmitBtn.textContent = 'Dalej'; });
+      lmScoreEl.textContent = `${lmCorrect} / ${lmTotal}`;
+      lmInput.blur(); lmReset.disabled = false;
+    }
+  }
+
+  lmForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (questionMode === 'ask' && lmInput.value !== '') checkLcmMemoryAnswer();
+    else if (questionMode === 'next') { if (currentModule === 'gcdlcm') newGcdLcmMemoryQuestion(); else newLcmMemoryQuestion(); }
+  });
+
+  lmInput.addEventListener('input', () => {
+    if (questionMode === 'ask') lmSubmitBtn.disabled = lmInput.value === '';
+  });
+
+  lmReset.addEventListener('click', () => {
+    lmCorrect = 0; lmTotal = 0;
+    lmScoreEl.textContent = '0 / 0';
+    lmReset.disabled = true;
+    document.activeElement.blur();
+    newLcmMemoryQuestion(true);
+  });
+
+  // --- Factor chip helpers ---
+  const GT_PAIR_COLORS = ['#2a9e6a','#1a72c2','#c86400','#8a18b0','#c02222'];
+  let gtPairSel = null;
+  let ltCrossId = 0;
+  let ltPhase = 'select-base'; // 'select-base' | 'cross-repeats'
+  let ltBaseTree = null;       // 'A' | 'B'
+
+  function buildFactorLine(num, factors, tree, clickFn) {
+    const div = document.createElement('div');
+    div.className = 'factor-line';
+    div.appendChild(document.createTextNode(`${num} = `));
+    factors.forEach((f, i) => {
+      if (i > 0) div.appendChild(document.createTextNode(' × '));
+      const chip = document.createElement('span');
+      chip.className = 'factor-chip';
+      chip.textContent = f;
+      chip.dataset.tree = tree;
+      chip.dataset.val = String(f);
+      chip.addEventListener('click', () => clickFn(chip));
+      div.appendChild(chip);
+    });
+    return div;
+  }
+
+  function buildLcmFactorLine(num, factors, tree) {
+    const div = document.createElement('div');
+    div.className = 'factor-line';
+    const numSpan = document.createElement('span');
+    numSpan.className = 'lt-num-label';
+    numSpan.textContent = num;
+    numSpan.dataset.tree = tree;
+    numSpan.addEventListener('click', () => ltSelectBase(tree));
+    div.appendChild(numSpan);
+    div.appendChild(document.createTextNode(' = '));
+    factors.forEach((f, i) => {
+      if (i > 0) div.appendChild(document.createTextNode(' × '));
+      const chip = document.createElement('span');
+      chip.className = 'factor-chip';
+      chip.textContent = f;
+      chip.dataset.tree = tree;
+      chip.dataset.val = String(f);
+      chip.dataset.factorIdx = String(i);
+      chip.addEventListener('click', () => ltChipClick(chip));
+      div.appendChild(chip);
+    });
+    return div;
+  }
+
+  // --- GCD Tree panel ---
+  const gtScoreEl   = document.getElementById('gtScore');
+  const gtTimerEl   = document.getElementById('gtTimer');
+  const gtQuestionEl = document.getElementById('gtQuestion');
+  const gtLabelA    = document.getElementById('gtLabelA');
+  const gtLabelB    = document.getElementById('gtLabelB');
+  const gtTreeA     = document.getElementById('gtTreeA');
+  const gtTreeB     = document.getElementById('gtTreeB');
+  const gtFactorsEl = document.getElementById('gtFactors');
+  const gtAnswerEl  = document.getElementById('gtAnswerArea');
+  const gtForm      = document.getElementById('gtForm');
+  const gtInput     = document.getElementById('gtInput');
+  const gtSubmitBtn = document.getElementById('gtSubmitBtn');
+  const gtFeedback  = document.getElementById('gtFeedback');
+  const gtReset     = document.getElementById('gtReset');
+
+  let gtA, gtB, gtAns, gtFactorsA, gtFactorsB;
+  let gtCorrect = 0, gtTotal = 0;
+  let gtInterval = null, gtStart = 0;
+  const gtHistory = [];
+
+  function newGcdTreeQuestion(skipFocus = false) {
+    clearAll();
+    gtForm.style.display = 'none';
+    gtFactorsEl.style.display = 'none';
+    gtAnswerEl.style.display = 'none'; gtAnswerEl.innerHTML = '';
+    gtFeedback.textContent = ''; gtFeedback.className = 'feedback empty';
+    gtSubmitBtn.textContent = 'Sprawdź'; gtSubmitBtn.disabled = true;
+
+    let pair, tries = 0;
+    do { pair = generateGcdTreePair(); tries++; }
+    while (tries < 50 && gtHistory.some(([a, b]) => a === pair.a && b === pair.b));
+    gtA = pair.a; gtB = pair.b; gtAns = pair.ans;
+    gtHistory.push([gtA, gtB]);
+    if (gtHistory.length > 8) gtHistory.shift();
+
+    const _gtInstr = document.getElementById('gtInstruction');
+    if (_gtInstr) {
+      if (currentModule === 'gcdlcm') {
+        _gtInstr.textContent = 'Oblicz NWD i NWW liczb: ' + gtA + ' i ' + gtB;
+        _gtInstr.style.display = '';
+      } else {
+        _gtInstr.style.display = 'none';
+      }
+    }
+    gtQuestionEl.textContent = 'NWD(' + gtA + ', ' + gtB + ')';
+    const _nwdResEl = document.getElementById('gtNwdResult');
+    if (_nwdResEl) _nwdResEl.style.display = 'none';
+    gtLabelA.textContent = String(gtA);
+    gtLabelB.textContent = String(gtB);
+    gtFactorsA = null; gtFactorsB = null;
+    gtTreeA.innerHTML = ''; gtTreeB.innerHTML = '';
+
+    new FactorTree(gtA, gtTreeA, (f) => { gtFactorsA = f; gtBothDone(); });
+    new FactorTree(gtB, gtTreeB, (f) => { gtFactorsB = f; gtBothDone(); });
+
+    gtStart = Date.now(); gtTimerEl.textContent = '0 s';
+    gtInterval = setInterval(() => {
+      gtTimerEl.textContent = `${Math.floor((Date.now() - gtStart) / 1000)} s`;
+    }, 1000);
+    questionMode = 'ask';
+  }
+
+  function gtBothDone() {
+    if (!gtFactorsA || !gtFactorsB) return;
+    gtPairSel = null;
+    gtFactorsEl.innerHTML = '';
+    const lbl = document.createElement('div');
+    lbl.className = 'lt-phase-label';
+    lbl.textContent = 'Zaznacz pary takich samych czynników z obu rozkładów:';
+    gtFactorsEl.appendChild(lbl);
+    gtFactorsEl.appendChild(buildFactorLine(gtA, gtFactorsA, 'A', gtChipClick));
+    gtFactorsEl.appendChild(buildFactorLine(gtB, gtFactorsB, 'B', gtChipClick));
+    gtFactorsEl.style.display = '';
+    gtAnswerEl.innerHTML = '';
+    gtAnswerEl.style.display = 'none';
+    gtInput.value = ''; gtSubmitBtn.disabled = true;
+    gtForm.style.display = 'none';
+  }
+
+  function gtChipClick(chip) {
+    if (chip.classList.contains('factor-chip-paired')) {
+      const idx = chip.dataset.pairIdx;
+      gtFactorsEl.querySelectorAll('.factor-chip').forEach(c => {
+        if (c.dataset.pairIdx === idx) {
+          delete c.dataset.pairIdx;
+          c.className = 'factor-chip';
+          c.removeAttribute('style');
+        }
+      });
+      gtUpdateAnswerArea();
+      return;
+    }
+    if (chip.classList.contains('factor-chip-selected')) {
+      chip.className = 'factor-chip'; gtPairSel = null; return;
+    }
+    if (!gtPairSel) {
+      chip.classList.add('factor-chip-selected'); gtPairSel = chip; return;
+    }
+    if (gtPairSel.dataset.tree === chip.dataset.tree) {
+      gtPairSel.className = 'factor-chip';
+      chip.classList.add('factor-chip-selected'); gtPairSel = chip; return;
+    }
+    if (gtPairSel.dataset.val !== chip.dataset.val) {
+      chip.classList.add('factor-chip-err');
+      setTimeout(() => chip.classList.remove('factor-chip-err'), 400); return;
+    }
+    const usedIdxs = new Set(
+      Array.from(gtFactorsEl.querySelectorAll('.factor-chip-paired')).map(c => c.dataset.pairIdx)
+    );
+    let newIdx = 0;
+    while (usedIdxs.has(String(newIdx))) newIdx++;
+    const color = GT_PAIR_COLORS[newIdx % GT_PAIR_COLORS.length];
+    [gtPairSel, chip].forEach(c => {
+      c.className = 'factor-chip factor-chip-paired';
+      c.style.background = color;
+      c.style.borderColor = color;
+      c.style.color = '#fff';
+      c.dataset.pairIdx = String(newIdx);
+    });
+    gtPairSel = null;
+    gtUpdateAnswerArea();
+  }
+
+  function gtUpdateAnswerArea() {
+    const savedVals = {};
+    document.querySelectorAll('#gtAnswerArea .lt-factor-input').forEach(inp => {
+      savedVals[inp.dataset.pairIdx] = inp.value;
+    });
+    const pairMap = {};
+    gtFactorsEl.querySelectorAll('.factor-chip-paired[data-tree="A"]').forEach(c => {
+      pairMap[c.dataset.pairIdx] = Number(c.dataset.val);
+    });
+    const pairs = Object.entries(pairMap).sort(([a], [b]) => Number(a) - Number(b));
+    gtAnswerEl.innerHTML = '';
+    if (pairs.length === 0) {
+      gtAnswerEl.style.display = 'none';
+      gtForm.style.display = 'none'; gtInput.value = '';
+      return;
+    }
+    if (pairs.length === 1 && currentModule !== 'gcdlcm') {
+      gtForm.style.display = 'none';
+      gtShowFinalStep([pairs[0][1]]);
+      return;
+    }
+    gtForm.style.display = 'none';
+    gtAnswerEl.className = 'lt-answer-area';
+    gtAnswerEl.style.display = '';
+    const row = document.createElement('div');
+    row.className = 'lt-answer-row';
+    const prefix = document.createElement('span');
+    prefix.className = 'lt-formula-prefix';
+    prefix.textContent = 'NWD(' + gtA + ', ' + gtB + ') = ';
+    row.appendChild(prefix);
+    pairs.forEach(([pidx], i) => {
+      if (i > 0) row.appendChild(document.createTextNode(' × '));
+      const inp = document.createElement('input');
+      inp.type = 'number'; inp.className = 'lt-factor-input';
+      inp.dataset.pairIdx = pidx; inp.min = '1'; inp.inputMode = 'numeric';
+      if (savedVals[pidx]) inp.value = savedVals[pidx];
+      inp.addEventListener('input', gtUpdateGcdCheckBtn);
+      row.appendChild(inp);
+    });
+    const btn = document.createElement('button');
+    btn.type = 'button'; btn.id = 'gtFactorCheckBtn';
+    btn.className = 'submit-btn'; btn.textContent = 'Sprawdź'; btn.disabled = true;
+    btn.addEventListener('click', gtCheckFactors);
+    row.appendChild(btn);
+    gtAnswerEl.appendChild(row);
+    gtUpdateGcdCheckBtn();
+  }
+
+  function gcdlcmNwdConfirmed(product) {
+    if (product !== gtAns) {
+      document.querySelectorAll('#gtAnswerArea .lt-factor-input').forEach(inp => {
+        inp.classList.add('input-err');
+        setTimeout(() => inp.classList.remove('input-err'), 400);
+      });
+      return;
+    }
+    questionMode = 'next';
+    clearInterval(gtInterval);
+    gtTimerEl.textContent = Math.floor((Date.now() - gtStart) / 1000) + ' s';
+    gtCorrect++; gtTotal++;
+    gtScoreEl.textContent = gtCorrect + ' / ' + gtTotal;
+    gtReset.disabled = false;
+    const nwdResEl = document.getElementById('gtNwdResult');
+    if (nwdResEl) { nwdResEl.textContent = 'NWD(' + gtA + ', ' + gtB + ') = ' + gtAns; nwdResEl.style.display = ''; }
+    playCorrectAnim(String(gtAns));
+    autoAdvanceTimeout = setTimeout(() => startGcdLcmInlineNww(), 1500);
+  }
+
+  function gtUpdateGcdCheckBtn() {
+    const btn = document.getElementById('gtFactorCheckBtn');
+    if (!btn) return;
+    btn.disabled = !Array.from(document.querySelectorAll('#gtAnswerArea .lt-factor-input'))
+      .every(inp => inp.value.trim() !== '');
+  }
+
+  function gtCheckFactors() {
+    const pairMap = {};
+    gtFactorsEl.querySelectorAll('.factor-chip-paired[data-tree="A"]').forEach(c => {
+      pairMap[c.dataset.pairIdx] = Number(c.dataset.val);
+    });
+    const correct = Object.values(pairMap).sort((a, b) => a - b);
+    const entered = Array.from(document.querySelectorAll('#gtAnswerArea .lt-factor-input'))
+      .map(inp => Number(inp.value)).sort((a, b) => a - b);
+    const ok = correct.length === entered.length && correct.every((v, i) => v === entered[i]);
+    if (!ok) {
+      document.querySelectorAll('#gtAnswerArea .lt-factor-input').forEach(inp => {
+        inp.classList.add('input-err');
+        setTimeout(() => inp.classList.remove('input-err'), 400);
+      });
+      return;
+    }
+    if (currentModule === 'gcdlcm') {
+      if (correct.length === 1) {
+        gcdlcmNwdConfirmed(correct[0]);
+      } else {
+        gtShowFinalStep(correct);
+      }
+    } else if (correct.length === 1) {
+      gtInput.value = String(correct[0]);
+      checkGcdTreeAnswer();
+    } else {
+      gtShowFinalStep(correct);
+    }
+  }
+
+  function gtShowFinalStep(factors) {
+    const fmlaStr = `NWD(${gtA}, ${gtB}) = ` + factors.join(' × ') + ' = ';
+    gtAnswerEl.innerHTML = '';
+    const row = document.createElement('div');
+    row.className = 'lt-answer-row';
+    const fmla = document.createElement('span');
+    fmla.className = 'lt-formula-display'; fmla.textContent = fmlaStr;
+    row.appendChild(fmla);
+    gtAnswerEl.appendChild(row);
+    document.getElementById('gtFormLabel').textContent = 'NWD(' + gtA + ', ' + gtB + ') = ';
+    gtInput.value = ''; gtSubmitBtn.disabled = true;
+    gtInput.placeholder = '?';
+    gtForm.style.display = '';
+    gtInput.focus();
+  }
+
+  function checkGcdTreeAnswer() {
+    if (questionMode !== 'ask') return;
+    const ans = Number(gtInput.value);
+    if (ans === gtAns) {
+      questionMode = 'next';
+      clearInterval(gtInterval);
+      gtCorrect++; gtTotal++;
+      if (currentModule !== 'gcdlcm') {
+        gtFeedback.textContent = '✅ Brawo! NWD(' + gtA + ', ' + gtB + ') = ' + gtAns + '.';
+        gtFeedback.className = 'feedback good';
+      }
+      playCorrectAnim(String(gtAns));
+      if (currentModule === 'gcdlcm') {
+        const nwdResEl = document.getElementById('gtNwdResult');
+        if (nwdResEl) { nwdResEl.textContent = 'NWD(' + gtA + ', ' + gtB + ') = ' + gtAns; nwdResEl.style.display = ''; }
+        autoAdvanceTimeout = setTimeout(() => startGcdLcmInlineNww(), 1900);
+      } else {
+        autoAdvanceTimeout = setTimeout(() => newGcdTreeQuestion(), 1900);
+      }
+      gtScoreEl.textContent = gtCorrect + ' / ' + gtTotal;
+      gtInput.blur(); gtReset.disabled = false;
+    } else if (currentModule === 'gcdlcm') {
+      playWrongAnim(() => {
+        gtInput.value = ''; gtSubmitBtn.disabled = true;
+        gtFeedback.textContent = ''; gtFeedback.className = 'feedback empty';
+        gtInput.focus();
+      });
+    } else {
+      questionMode = 'next';
+      clearInterval(gtInterval);
+      gtTotal++;
+      gtFeedback.textContent = '❌ Niepoprawnie. NWD(' + gtA + ', ' + gtB + ') = ' + gtAns + '.';
+      gtFeedback.className = 'feedback bad';
+      playWrongAnim(() => { gtSubmitBtn.disabled = false; gtSubmitBtn.textContent = 'Dalej'; });
+      gtScoreEl.textContent = gtCorrect + ' / ' + gtTotal;
+      gtInput.blur(); gtReset.disabled = false;
+    }
+  }
+
+  gtForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (questionMode === 'ask' && gtInput.value !== '') checkGcdTreeAnswer();
+    else if (questionMode === 'next' && currentModule !== 'gcdlcm') newGcdTreeQuestion();
+  });
+  gtInput.addEventListener('input', () => {
+    if (questionMode === 'ask') gtSubmitBtn.disabled = gtInput.value === '';
+  });
+  gtReset.addEventListener('click', () => {
+    gtCorrect = 0; gtTotal = 0; gtScoreEl.textContent = '0 / 0';
+    gtReset.disabled = true; document.activeElement.blur();
+    newGcdTreeQuestion(true);
+  });
+
+  // --- LCM Tree panel ---
+  const ltScoreEl   = document.getElementById('ltScore');
+  const ltTimerEl   = document.getElementById('ltTimer');
+  const ltQuestionEl = document.getElementById('ltQuestion');
+  const ltLabelA    = document.getElementById('ltLabelA');
+  const ltLabelB    = document.getElementById('ltLabelB');
+  const ltTreeA     = document.getElementById('ltTreeA');
+  const ltTreeB     = document.getElementById('ltTreeB');
+  const ltFactorsEl = document.getElementById('ltFactors');
+  const ltAnswerEl  = document.getElementById('ltAnswerArea');
+  const ltForm      = document.getElementById('ltForm');
+  const ltInput     = document.getElementById('ltInput');
+  const ltSubmitBtn = document.getElementById('ltSubmitBtn');
+  const ltFeedback  = document.getElementById('ltFeedback');
+  const ltReset     = document.getElementById('ltReset');
+
+  let ltA, ltB, ltAns, ltFactorsA, ltFactorsB;
+  let ltCorrect = 0, ltTotal = 0;
+  let ltInterval = null, ltStart = 0;
+  const ltHistory = [];
+
+  function newLcmTreeQuestion(skipFocus = false) {
+    clearAll();
+    document.getElementById('ltStats').style.display = '';
+    document.getElementById('ltTreeLabel').style.display = '';
+    document.getElementById('ltTreeBox').style.display = '';
+    const _ltNwdRes = document.getElementById('ltNwdResult');
+    if (_ltNwdRes) _ltNwdRes.style.display = 'none';
+    const _ltInstr = document.getElementById('ltInstruction');
+    if (_ltInstr) _ltInstr.style.display = 'none';
+    ltReset.style.display = '';
+    ltForm.style.display = 'none';
+    ltFactorsEl.style.display = 'none';
+    ltAnswerEl.style.display = 'none'; ltAnswerEl.innerHTML = '';
+    ltFeedback.textContent = ''; ltFeedback.className = 'feedback empty';
+    ltSubmitBtn.textContent = 'Sprawdź'; ltSubmitBtn.disabled = true;
+
+    let pair, tries = 0;
+    do { pair = generateLcmTreePair(); tries++; }
+    while (tries < 50 && ltHistory.some(([a, b]) => a === pair.a && b === pair.b));
+    ltA = pair.a; ltB = pair.b;
+    ltAns = (ltA * ltB) / pair.ans; // NWW = a×b / NWD
+    ltHistory.push([ltA, ltB]);
+    if (ltHistory.length > 8) ltHistory.shift();
+
+    ltQuestionEl.textContent = `NWW(${ltA}, ${ltB})`;
+    ltLabelA.textContent = String(ltA);
+    ltLabelB.textContent = String(ltB);
+    ltFactorsA = null; ltFactorsB = null;
+    ltTreeA.innerHTML = ''; ltTreeB.innerHTML = '';
+
+    new FactorTree(ltA, ltTreeA, (f) => { ltFactorsA = f; ltBothDone(); });
+    new FactorTree(ltB, ltTreeB, (f) => { ltFactorsB = f; ltBothDone(); });
+
+    ltStart = Date.now(); ltTimerEl.textContent = '0 s';
+    ltInterval = setInterval(() => {
+      ltTimerEl.textContent = `${Math.floor((Date.now() - ltStart) / 1000)} s`;
+    }, 1000);
+    questionMode = 'ask';
+  }
+
+  function ltBothDone() {
+    if (!ltFactorsA || !ltFactorsB) return;
+    ltPhase = 'select-base'; ltBaseTree = null;
+    ltFactorsEl.innerHTML = '';
+    const instrEl = document.createElement('div');
+    instrEl.className = 'lt-phase-label'; instrEl.id = 'ltPhaseLabel';
+    instrEl.textContent = 'Kliknij jedną z liczb, aby przekreślić ją w całości:';
+    ltFactorsEl.appendChild(instrEl);
+    ltFactorsEl.appendChild(buildLcmFactorLine(ltA, ltFactorsA, 'A'));
+    ltFactorsEl.appendChild(buildLcmFactorLine(ltB, ltFactorsB, 'B'));
+    ltFactorsEl.style.display = '';
+    ltAnswerEl.style.display = 'none'; ltAnswerEl.innerHTML = '';
+    ltForm.style.display = 'none';
+    document.getElementById('ltFormLabel').textContent = 'NWW(' + ltA + ', ' + ltB + ') = ';
+    ltInput.value = ''; ltSubmitBtn.disabled = true;
+  }
+
+  function ltSelectBase(tree) {
+    if (ltPhase !== 'select-base') return;
+    ltPhase = 'cross-repeats'; ltBaseTree = tree;
+    ltFactorsEl.querySelectorAll(`.factor-chip[data-tree="${tree}"]`).forEach(c => {
+      c.classList.add('factor-chip-crossed');
+      c.style.pointerEvents = 'none'; c.style.cursor = 'default';
+    });
+    ltFactorsEl.querySelectorAll(`.lt-num-label[data-tree="${tree}"]`).forEach(n => {
+      n.classList.add('lt-num-crossed');
+    });
+    const lbl = document.getElementById('ltPhaseLabel');
+    if (lbl) lbl.textContent = 'Kliknij powtarzające się czynniki drugiej liczby do wykreślenia:';
+    ltBuildAnswerPhase1();
+  }
+
+  function ltChipClick(chip) {
+    if (ltPhase !== 'cross-repeats') return;
+    if (chip.dataset.tree === ltBaseTree) return;
+    const crossed = chip.classList.toggle('factor-chip-crossed');
+    const cell = document.getElementById(`ltCell_${chip.dataset.factorIdx}`);
+    if (cell) cell.classList.toggle('cell-crossed', crossed);
+    ltUpdateFactorCheckBtn();
+  }
+
+  function ltBuildAnswerPhase1() {
+    const baseNum        = ltBaseTree === 'A' ? ltA : ltB;
+    const nonBaseFactors = ltBaseTree === 'A' ? ltFactorsB : ltFactorsA;
+    ltAnswerEl.innerHTML = '';
+    ltAnswerEl.className = 'lt-answer-area';
+    const row = document.createElement('div');
+    row.className = 'lt-answer-row';
+    const prefix = document.createElement('span');
+    prefix.className = 'lt-formula-prefix'; prefix.textContent = 'NWW(' + ltA + ', ' + ltB + ') = ';
+    row.appendChild(prefix);
+    const badge = document.createElement('span');
+    badge.className = 'lt-answer-auto'; badge.textContent = String(baseNum);
+    row.appendChild(badge);
+    nonBaseFactors.forEach((f, i) => {
+      const cell = document.createElement('span');
+      cell.className = 'lt-factor-cell'; cell.id = `ltCell_${i}`;
+      cell.appendChild(document.createTextNode(' × '));
+      const inp = document.createElement('input');
+      inp.type = 'number'; inp.className = 'lt-factor-input';
+      inp.dataset.idx = String(i); inp.min = '1'; inp.inputMode = 'numeric';
+      inp.addEventListener('input', ltUpdateFactorCheckBtn);
+      cell.appendChild(inp);
+      row.appendChild(cell);
+    });
+    const btn = document.createElement('button');
+    btn.type = 'button'; btn.id = 'ltFactorCheckBtn';
+    btn.className = 'submit-btn'; btn.textContent = 'Sprawdź'; btn.disabled = true;
+    btn.addEventListener('click', ltCheckFactors);
+    row.appendChild(btn);
+    ltAnswerEl.appendChild(row);
+    ltAnswerEl.style.display = '';
+  }
+
+  function ltUpdateFactorCheckBtn() {
+    const btn = document.getElementById('ltFactorCheckBtn');
+    if (!btn) return;
+    const allFilled = Array.from(document.querySelectorAll('#ltAnswerArea .lt-factor-cell:not(.cell-crossed) .lt-factor-input'))
+      .every(inp => inp.value.trim() !== '');
+    btn.disabled = !allFilled;
+  }
+
+  function ltCheckFactors() {
+    const nonBaseTree = ltBaseTree === 'A' ? 'B' : 'A';
+    const uncrossed = Array.from(ltFactorsEl.querySelectorAll(`.factor-chip[data-tree="${nonBaseTree}"]:not(.factor-chip-crossed)`))
+      .map(c => Number(c.dataset.val)).sort((a, b) => a - b);
+    const entered = Array.from(document.querySelectorAll('#ltAnswerArea .lt-factor-cell:not(.cell-crossed) .lt-factor-input'))
+      .map(inp => Number(inp.value)).sort((a, b) => a - b);
+    const ok = uncrossed.length === entered.length && uncrossed.every((v, i) => v === entered[i]);
+    if (!ok) {
+      document.querySelectorAll('#ltAnswerArea .lt-factor-cell:not(.cell-crossed) .lt-factor-input').forEach(inp => {
+        inp.classList.add('input-err');
+        setTimeout(() => inp.classList.remove('input-err'), 400);
+      });
+      return;
+    }
+    ltShowFinalStep(uncrossed);
+  }
+
+  function ltShowFinalStep(uncrossedFactors) {
+    const baseNum = ltBaseTree === 'A' ? ltA : ltB;
+    const parts   = [baseNum, ...uncrossedFactors];
+    const fmlaStr = 'NWW(' + ltA + ', ' + ltB + ') = ' + parts.join(' × ') + ' = ';
+    ltAnswerEl.innerHTML = '';
+    const row = document.createElement('div');
+    row.className = 'lt-answer-row';
+    const fmla = document.createElement('span');
+    fmla.className = 'lt-formula-display'; fmla.textContent = fmlaStr;
+    row.appendChild(fmla);
+    ltAnswerEl.appendChild(row);
+    document.getElementById('ltFormLabel').textContent = 'NWW(' + ltA + ', ' + ltB + ') = ';
+    ltInput.value = ''; ltSubmitBtn.disabled = true;
+    ltInput.placeholder = '?';
+    ltForm.style.display = '';
+    ltInput.focus();
+  }
+
+  function checkLcmTreeAnswer() {
+    if (questionMode !== 'ask') return;
+    const ans = Number(ltInput.value);
+    if (ans === ltAns) {
+      questionMode = 'next';
+      clearInterval(ltInterval);
+      ltCorrect++; ltTotal++;
+      ltFeedback.textContent = `✅ Brawo! NWW(${ltA}, ${ltB}) = ${ltAns}.`;
+      ltFeedback.className = 'feedback good';
+      playCorrectAnim(String(ltAns));
+      if (currentModule === 'gcdlcm') autoAdvanceTimeout = setTimeout(() => startGcdLcmQuestion(), 1900);
+      else autoAdvanceTimeout = setTimeout(() => newLcmTreeQuestion(), 1900);
+      ltScoreEl.textContent = `${ltCorrect} / ${ltTotal}`;
+      ltInput.blur(); ltReset.disabled = false;
+    } else if (currentModule === 'gcdlcm') {
+      playWrongAnim(() => {
+        ltInput.value = ''; ltSubmitBtn.disabled = true;
+        ltFeedback.textContent = ''; ltFeedback.className = 'feedback empty';
+        ltInput.focus();
+      });
+    } else {
+      questionMode = 'next';
+      clearInterval(ltInterval);
+      ltTotal++;
+      ltFeedback.textContent = `❌ Niepoprawnie. NWW(${ltA}, ${ltB}) = ${ltAns}.`;
+      ltFeedback.className = 'feedback bad';
+      playWrongAnim(() => { ltSubmitBtn.disabled = false; ltSubmitBtn.textContent = 'Dalej'; });
+      ltScoreEl.textContent = `${ltCorrect} / ${ltTotal}`;
+      ltInput.blur(); ltReset.disabled = false;
+    }
+  }
+
+  ltForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (questionMode === 'ask' && ltInput.value !== '') checkLcmTreeAnswer();
+    else if (questionMode === 'next') {
+      if (currentModule === 'gcdlcm') startGcdLcmQuestion();
+      else newLcmTreeQuestion();
+    }
+  });
+  ltInput.addEventListener('input', () => {
+    if (questionMode === 'ask') ltSubmitBtn.disabled = ltInput.value === '';
+  });
+  ltReset.addEventListener('click', () => {
+    ltCorrect = 0; ltTotal = 0; ltScoreEl.textContent = '0 / 0';
+    ltReset.disabled = true; document.activeElement.blur();
+    if (currentModule === 'gcdlcm') startGcdLcmQuestion();
+    else newLcmTreeQuestion(true);
+  });
+
+  // --- Shared ---
+  function clearAll() {
+    clearInterval(gmInterval);
+    clearInterval(lmInterval);
+    clearInterval(gtInterval);
+    clearInterval(ltInterval);
+    clearInterval(roInterval);
+    clearTimeout(autoAdvanceTimeout);
+    animLayer.innerHTML = '';
+    questionMode = 'ask';
+  }
+  let roInterval = null;
+
+  function switchModule(mod) {
+    currentModule = mod;
+    moduleBtnGcd.className    = 'tab' + (mod === 'gcd'    ? ' active-n' : '');
+    moduleBtnLcm.className    = 'tab' + (mod === 'lcm'    ? ' active-r' : '');
+    moduleBtnFactor.className = 'tab' + (mod === 'factor' ? ' active-t' : '');
+    moduleBtnGcdLcm.className = 'tab' + (mod === 'gcdlcm' ? ' active-n' : '');
+    modeRowEl.style.display   = (mod === 'factor') ? 'none' : '';
+    forfeitBtn.style.display  = (mod === 'gcdlcm') ? '' : 'none';
+    updateView();
+  }
+
+  function switchMode(m) {
+    currentMode = m;
+    modeBtnMemory.className = 'tab' + (m === 'memory' ? ' active-n' : '');
+    modeBtnTree.className   = 'tab' + (m === 'tree'   ? ' active-t' : '');
+    updateView();
+  }
+
+  function updateView() {
+    clearAll();
+    panelGcdMemory.style.display = 'none';
+    panelLcmMemory.style.display = 'none';
+    panelGcdTree.style.display   = 'none';
+    panelLcmTree.style.display   = 'none';
+    panelFactor.style.display    = 'none';
+
+    if (currentModule === 'gcd' && currentMode === 'memory') {
+      panelGcdMemory.style.display = '';
+      newGcdMemoryQuestion();
+    }
+    if (currentModule === 'lcm' && currentMode === 'memory') {
+      panelLcmMemory.style.display = '';
+      newLcmMemoryQuestion();
+    }
+    if (currentModule === 'gcd' && currentMode === 'tree') {
+      panelGcdTree.style.display = '';
+      newGcdTreeQuestion();
+    }
+    if (currentModule === 'lcm' && currentMode === 'tree') {
+      panelLcmTree.style.display = '';
+      newLcmTreeQuestion();
+    }
+    if (currentModule === 'factor') {
+      panelFactor.style.display = '';
+      newFactorQuestion();
+    }
+    if (currentModule === 'gcdlcm' && currentMode === 'memory') { panelGcdMemory.style.display = ''; newGcdLcmMemoryQuestion(); }
+    if (currentModule === 'gcdlcm' && currentMode === 'tree') { startGcdLcmQuestion(); }
+  }
+
+  function playCorrectAnim(label) {
+    animLayer.innerHTML = '';
+    const flash = document.createElement('div');
+    flash.className = 'correct-flash';
+    animLayer.appendChild(flash);
+    const num = document.createElement('div');
+    num.className = 'anim-correct-num';
+    num.textContent = '✔';
+    animLayer.appendChild(num);
+    const symbols = ['✓', '★', '✦', '✧', '◆', '='];
+    for (let i = 0; i < 14; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.textContent = symbols[i % symbols.length];
+      const angle = (360 / 14) * i;
+      const dist  = 110 + Math.random() * 80;
+      const rad   = angle * Math.PI / 180;
+      p.style.setProperty('--tx', `translate(${Math.cos(rad)*dist}px,${Math.sin(rad)*dist}px)`);
+      p.style.animationDelay = `${Math.random() * 0.12}s`;
+      p.style.fontSize = `${1.2 + Math.random() * 1.2}rem`;
+      animLayer.appendChild(p);
+    }
+    setTimeout(() => { animLayer.innerHTML = ''; }, 1400);
+  }
+
+  function playWrongAnim(onDone) {
+    animLayer.innerHTML = '';
+    const flash = document.createElement('div');
+    flash.className = 'wrong-flash';
+    animLayer.appendChild(flash);
+    const x = document.createElement('div');
+    x.className = 'anim-wrong-x';
+    x.textContent = '✕';
+    animLayer.appendChild(x);
+    setTimeout(() => {
+      animLayer.innerHTML = '';
+      if (onDone) onDone();
+    }, 1300);
+  }
+
+  newGcdMemoryQuestion();
+  // --- Factor decomposition (Rozklad) ---
+  const panelFactor     = document.getElementById('panelFactor');
+  const moduleBtnFactor = document.getElementById('moduleBtnFactor');
+  const moduleBtnGcdLcm = document.getElementById('moduleBtnGcdLcm');
+  const modeRowEl       = document.getElementById('modeRow');
+  const forfeitBtn      = document.getElementById('forfeitBtn');
+  const roScoreEl       = document.getElementById('roScore');
+  const roTimerEl       = document.getElementById('roTimer');
+  const roQuestionEl    = document.getElementById('roQuestion');
+  const roTreeCont      = document.getElementById('roTree');
+  const roAnswerEl      = document.getElementById('roAnswerArea');
+  const roFeedback      = document.getElementById('roFeedback');
+  const roReset         = document.getElementById('roReset');
+
+  let roNumber, roFactors, roPhase;
+  let roCorrect = 0, roTotal = 0;
+  let roStart = 0;
+  const roHistory = [];
+
+  function generateFactorNumber() {
+    const primes = [2, 3, 5, 7, 11, 13];
+    const smallPrimes = [2, 3, 5, 7];
+    for (let attempt = 0; attempt < 3000; attempt++) {
+      let n = 1, ok = true;
+      if (Math.random() < 0.70) {
+        // Force at least one repeated prime (70% of cases)
+        const p = smallPrimes[Math.floor(Math.random() * smallPrimes.length)];
+        const reps = 2 + Math.floor(Math.random() * 2); // 2 or 3 times
+        for (let i = 0; i < reps; i++) {
+          n *= p; if (n > 1000) { ok = false; break; }
+        }
+        if (ok) {
+          const extra = Math.floor(Math.random() * 3); // 0-2 extra factors
+          for (let i = 0; i < extra; i++) {
+            n *= primes[Math.floor(Math.random() * primes.length)];
+            if (n > 1000) { ok = false; break; }
+          }
+        }
+      } else {
+        const count = 2 + Math.floor(Math.random() * 4);
+        for (let i = 0; i < count; i++) {
+          n *= primes[Math.floor(Math.random() * primes.length)];
+          if (n > 1000) { ok = false; break; }
+        }
+      }
+      if (ok && n >= 20 && n <= 1000 && !isPrime(n)) return n;
+    }
+    return 60;
+  }
+
+  function newFactorQuestion(skipFocus = false) {
+    clearAll();
+    roAnswerEl.innerHTML = ''; roAnswerEl.style.display = 'none';
+    roFeedback.textContent = ''; roFeedback.className = 'feedback empty';
+    roPhase = 'tree';
+    let n, tries = 0;
+    do { n = generateFactorNumber(); tries++; }
+    while (tries < 50 && roHistory.includes(n));
+    roNumber = n; roHistory.push(n);
+    if (roHistory.length > 10) roHistory.shift();
+    roQuestionEl.textContent = String(roNumber);
+    roTreeCont.innerHTML = '';
+    new FactorTree(roNumber, roTreeCont, (f) => { roFactors = f; roTreeDone(); });
+    roStart = Date.now(); roTimerEl.textContent = '0 s';
+    roInterval = setInterval(() => {
+      roTimerEl.textContent = Math.floor((Date.now() - roStart) / 1000) + ' s';
+    }, 1000);
+    questionMode = 'ask';
+  }
+
+  function roTreeDone() {
+    roPhase = 'factors';
+    roAnswerEl.innerHTML = '';
+    roAnswerEl.className = 'lt-answer-area';
+    const lbl = document.createElement('div');
+    lbl.className = 'lt-phase-label';
+    lbl.textContent = 'Wpisz czynniki pierwsze z drzewka:';
+    roAnswerEl.appendChild(lbl);
+    const row = document.createElement('div');
+    row.className = 'lt-answer-row';
+    const prefix = document.createElement('span');
+    prefix.className = 'lt-formula-prefix';
+    prefix.textContent = roNumber + ' = ';
+    row.appendChild(prefix);
+    roFactors.forEach((f, i) => {
+      if (i > 0) row.appendChild(document.createTextNode(' \u00d7 '));
+      const inp = document.createElement('input');
+      inp.type = 'number'; inp.className = 'lt-factor-input';
+      inp.dataset.idx = i; inp.min = '2'; inp.inputMode = 'numeric';
+      inp.addEventListener('input', roUpdateFactorBtn);
+      row.appendChild(inp);
+    });
+    const btn = document.createElement('button');
+    btn.type = 'button'; btn.id = 'roFactorBtn';
+    btn.className = 'submit-btn'; btn.textContent = 'Sprawd\u017a'; btn.disabled = true;
+    btn.addEventListener('click', roCheckFactors);
+    row.appendChild(btn);
+    roAnswerEl.appendChild(row);
+    roAnswerEl.style.display = '';
+  }
+
+  function roUpdateFactorBtn() {
+    const btn = document.getElementById('roFactorBtn');
+    if (!btn) return;
+    btn.disabled = !Array.from(roAnswerEl.querySelectorAll('.lt-factor-input'))
+      .every(inp => inp.value.trim() !== '');
+  }
+
+  function roCheckFactors() {
+    const inputs = Array.from(roAnswerEl.querySelectorAll('.lt-factor-input'));
+    const entered = inputs.map(inp => Number(inp.value)).sort((a,b) => a-b);
+    const expected = [...roFactors].sort((a,b) => a-b);
+    const ok = entered.length === expected.length && entered.every((v,i) => v === expected[i]);
+    if (!ok) {
+      inputs.forEach(inp => {
+        inp.classList.add('input-err');
+        setTimeout(() => inp.classList.remove('input-err'), 400);
+      });
+      return;
+    }
+    const allDistinct = new Set(roFactors).size === roFactors.length;
+    if (allDistinct) {
+      clearInterval(roInterval);
+      roCorrect++; roTotal++;
+      roScoreEl.textContent = roCorrect + ' / ' + roTotal;
+      const sorted = [...roFactors].sort((a,b) => a-b);
+      roFeedback.textContent = '✅ Brawo! ' + roNumber + ' = ' + sorted.join(' × ');
+      roFeedback.className = 'feedback good';
+      playCorrectAnim();
+      questionMode = 'next'; roReset.disabled = false;
+      autoAdvanceTimeout = setTimeout(() => newFactorQuestion(), 2000);
+      return;
+    }
+    roShowPowerPhase();
+  }
+
+  function roShowPowerPhase() {
+    roPhase = 'powers';
+    const sorted = [...roFactors].sort((a,b) => a-b);
+    const powerMap = {};
+    sorted.forEach(f => { powerMap[f] = (powerMap[f] || 0) + 1; });
+    const primes = Object.keys(powerMap).map(Number).sort((a,b) => a-b);
+    roAnswerEl.innerHTML = '';
+    const resultRow = document.createElement('div');
+    resultRow.className = 'lt-answer-row';
+    const resultFmla = document.createElement('span');
+    resultFmla.className = 'lt-formula-display';
+    resultFmla.textContent = roNumber + ' = ' + sorted.join(' \u00d7 ');
+    resultRow.appendChild(resultFmla);
+    roAnswerEl.appendChild(resultRow);
+    const lbl = document.createElement('div');
+    lbl.className = 'lt-phase-label'; lbl.style.marginTop = '8px';
+    lbl.textContent = 'Zapisz jako iloczyn pot\u0119g liczb pierwszych:';
+    roAnswerEl.appendChild(lbl);
+    const powerRow = document.createElement('div');
+    powerRow.className = 'lt-answer-row';
+    const powerPrefix = document.createElement('span');
+    powerPrefix.className = 'lt-formula-prefix';
+    powerPrefix.textContent = roNumber + ' = ';
+    powerRow.appendChild(powerPrefix);
+    primes.forEach((p, i) => {
+      if (i > 0) {
+        const mul = document.createElement('span');
+        mul.className = 'lt-formula-prefix'; mul.textContent = ' \u00d7 ';
+        powerRow.appendChild(mul);
+      }
+      const cell = document.createElement('span'); cell.className = 'ro-power-cell';
+      const baseInp = document.createElement('input');
+      baseInp.type = 'number'; baseInp.className = 'lt-factor-input ro-base-inp';
+      baseInp.dataset.prime = p; baseInp.dataset.exp = powerMap[p];
+      baseInp.min = '2'; baseInp.placeholder = '?'; baseInp.inputMode = 'numeric';
+      baseInp.addEventListener('input', roUpdatePowerBtn);
+      const caret = document.createElement('span');
+      caret.className = 'ro-caret'; caret.textContent = '^';
+      const expInp = document.createElement('input');
+      expInp.type = 'number'; expInp.className = 'ro-exp-inp';
+      expInp.dataset.prime = p; expInp.dataset.exp = powerMap[p];
+      expInp.min = '1'; expInp.placeholder = '?'; expInp.inputMode = 'numeric';
+      expInp.addEventListener('input', roUpdatePowerBtn);
+      cell.appendChild(baseInp); cell.appendChild(caret); cell.appendChild(expInp);
+      powerRow.appendChild(cell);
+    });
+    const btn = document.createElement('button');
+    btn.type = 'button'; btn.id = 'roPowerBtn';
+    btn.className = 'submit-btn'; btn.textContent = 'Sprawd\u017a'; btn.disabled = true;
+    btn.addEventListener('click', roCheckPowers);
+    powerRow.appendChild(btn);
+    roAnswerEl.appendChild(powerRow);
+  }
+
+  function roUpdatePowerBtn() {
+    const btn = document.getElementById('roPowerBtn');
+    if (!btn) return;
+    btn.disabled = !Array.from(roAnswerEl.querySelectorAll('.ro-base-inp'))
+      .every(inp => inp.value.trim() !== '');
+  }
+
+  function roCheckPowers() {
+    const cells = Array.from(roAnswerEl.querySelectorAll('.ro-power-cell'));
+    // Per-cell: exp from sibling exp-input, or 1 if absent (primes with exp=1 have no exp field)
+    const entered  = cells.map(cell => {
+      const expInp = cell.querySelector('.ro-exp-inp');
+      const exp = expInp && expInp.value.trim() !== '' ? Number(expInp.value) : 1;
+      return { base: Number(cell.querySelector('.ro-base-inp').value), exp };
+    }).sort((a, b) => a.base - b.base);
+    const expected = cells.map(cell => {
+      const b = cell.querySelector('.ro-base-inp');
+      return { base: Number(b.dataset.prime), exp: Number(b.dataset.exp) };
+    }).sort((a, b) => a.base - b.base);
+    const ok = entered.every((e, i) => e.base === expected[i].base && e.exp === expected[i].exp);
+    if (!ok) {
+      cells.forEach(cell => {
+        [cell.querySelector('.ro-base-inp'), cell.querySelector('.ro-exp-inp')].forEach(inp => {
+          if (inp) { inp.classList.add('input-err'); setTimeout(() => inp.classList.remove('input-err'), 400); }
+        });
+      });
+      roTotal++;
+      roScoreEl.textContent = roCorrect + ' / ' + roTotal;
+      playWrongAnim(() => { autoAdvanceTimeout = setTimeout(() => newFactorQuestion(), 1200); });
+      return;
+    }
+    clearInterval(roInterval);
+    roCorrect++; roTotal++;
+    roScoreEl.textContent = roCorrect + ' / ' + roTotal;
+    const parts = cells.map(cell => {
+      const base = cell.querySelector('.ro-base-inp').value;
+      const expInp = cell.querySelector('.ro-exp-inp');
+      const exp = expInp && expInp.value.trim() !== '' ? expInp.value : '1';
+      return exp === '1' ? base : base + '^' + exp;
+    }).join(' \u00d7 ');
+    roFeedback.textContent = '\u2705 Brawo! ' + roNumber + ' = ' + parts;
+    roFeedback.className = 'feedback good';
+    playCorrectAnim(String(roNumber));
+    questionMode = 'next'; roReset.disabled = false;
+    autoAdvanceTimeout = setTimeout(() => newFactorQuestion(), 2000);
+  }
+
+  roReset.addEventListener('click', () => {
+    roCorrect = 0; roTotal = 0; roScoreEl.textContent = '0 / 0';
+    roReset.disabled = true; document.activeElement.blur();
+    newFactorQuestion(true);
+  });
+
+  // --- NWD+NWW combined ---
+  function startLcmWithPair(a, b) {
+    panelGcdTree.style.display = 'none';
+    panelLcmTree.style.display = '';
+    clearAll();
+    ltForm.style.display = 'none';
+    ltFactorsEl.style.display = 'none';
+    ltAnswerEl.style.display = 'none'; ltAnswerEl.innerHTML = '';
+    ltFeedback.textContent = ''; ltFeedback.className = 'feedback empty';
+    ltSubmitBtn.textContent = 'Sprawd\u017a'; ltSubmitBtn.disabled = true;
+    ltA = a; ltB = b;
+    ltAns = (ltA * ltB) / gcd(ltA, ltB);
+    ltQuestionEl.textContent = 'NWW(' + ltA + ', ' + ltB + ')';
+    ltLabelA.textContent = String(ltA);
+    ltLabelB.textContent = String(ltB);
+    ltFactorsA = null; ltFactorsB = null;
+    ltTreeA.innerHTML = ''; ltTreeB.innerHTML = '';
+    new FactorTree(ltA, ltTreeA, (f) => { ltFactorsA = f; ltBothDone(); });
+    new FactorTree(ltB, ltTreeB, (f) => { ltFactorsB = f; ltBothDone(); });
+    ltStart = Date.now(); ltTimerEl.textContent = '0 s';
+    ltInterval = setInterval(() => {
+      ltTimerEl.textContent = Math.floor((Date.now() - ltStart) / 1000) + ' s';
+    }, 1000);
+    questionMode = 'ask';
+  }
+
+  function startGcdLcmQuestion() {
+    glForfeitMode = false; forfeitBtn.textContent = 'Forfeit';
+    glPhase = 'gcd-tree';
+    const _gmRes = document.getElementById('gmNwdResult');
+    if (_gmRes) _gmRes.style.display = 'none';
+    const _ltNwdRes = document.getElementById('ltNwdResult');
+    if (_ltNwdRes) _ltNwdRes.style.display = 'none';
+    panelGcdMemory.style.display = 'none';
+    panelLcmMemory.style.display = 'none';
+    const ltStatsEl = document.getElementById('ltStats');
+    const ltTreeLabelEl = document.getElementById('ltTreeLabel');
+    const ltTreeBoxEl = document.getElementById('ltTreeBox');
+    if (ltStatsEl) ltStatsEl.style.display = '';
+    if (ltTreeLabelEl) ltTreeLabelEl.style.display = '';
+    if (ltTreeBoxEl) ltTreeBoxEl.style.display = '';
+    ltReset.style.display = '';
+    panelLcmTree.style.display = 'none';
+    panelGcdTree.style.display = '';
+    const _r = document.getElementById('gtNwdResult');
+    if (_r) _r.style.display = 'none';
+    newGcdTreeQuestion();
+  }
+
+  // --- NWD i NWW combined state ---
+  let glA, glB, glNwdAns, glNwwAns;
+  let glPhase = ''; // 'gcd-mem' | 'lcm-mem' | 'gcd-tree' | 'lcm-tree'
+  const glMemHistory = [];
+
+  function newGcdLcmMemoryQuestion() {
+    clearAll();
+    glForfeitMode = false; forfeitBtn.textContent = 'Forfeit';
+    glPhase = 'gcd-mem';
+    const _gmRes = document.getElementById('gmNwdResult');
+    if (_gmRes) _gmRes.style.display = 'none';
+    panelGcdTree.style.display   = 'none';
+    panelLcmTree.style.display   = 'none';
+    panelLcmMemory.style.display = 'none';
+    panelGcdMemory.style.display = '';
+    let pair, tries = 0;
+    do { pair = generateGcdPair(); tries++; }
+    while (tries < 50 && glMemHistory.some(([a, b]) => a === pair.a && b === pair.b));
+    glA = pair.a; glB = pair.b; glNwdAns = pair.ans;
+    glNwwAns = Math.round((glA * glB) / glNwdAns);
+    glMemHistory.push([glA, glB]);
+    if (glMemHistory.length > 8) glMemHistory.shift();
+    gmA = glA; gmB = glB; gmAns = glNwdAns;
+    const _gmInstr = document.getElementById('gmInstruction');
+    if (_gmInstr) { _gmInstr.textContent = 'Oblicz NWD i NWW liczb: ' + glA + ' i ' + glB; _gmInstr.style.display = ''; }
+    gmQuestionEl.textContent = 'NWD(' + glA + ', ' + glB + ')';
+    gmInput.value = ''; gmSubmitBtn.disabled = true; gmSubmitBtn.textContent = 'Sprawd\u017a';
+    gmFeedback.textContent = ''; gmFeedback.className = 'feedback empty';
+    gmInput.focus();
+    gmStart = Date.now(); gmTimerEl.textContent = '0 s';
+    gmInterval = setInterval(() => {
+      gmTimerEl.textContent = Math.floor((Date.now() - gmStart) / 1000) + ' s';
+    }, 1000);
+    questionMode = 'ask';
+  }
+
+  function startGcdLcmMemoryNww() {
+    clearAll();
+    glPhase = 'lcm-mem';
+    panelGcdTree.style.display   = 'none';
+    panelLcmTree.style.display   = 'none';
+    panelGcdMemory.style.display = 'none';
+    panelLcmMemory.style.display = '';
+    const _gmResHide = document.getElementById('gmNwdResult');
+    if (_gmResHide) _gmResHide.style.display = 'none';
+    lmA = glA; lmB = glB; lmAns = glNwwAns;
+    const _lmInstr = document.getElementById('lmInstruction');
+    if (_lmInstr) { _lmInstr.textContent = 'Oblicz NWD i NWW liczb: ' + lmA + ' i ' + lmB; _lmInstr.style.display = ''; }
+    const _lmNwdRes = document.getElementById('lmNwdResult');
+    if (_lmNwdRes) { _lmNwdRes.textContent = 'NWD(' + lmA + ', ' + lmB + ') = ' + glNwdAns; _lmNwdRes.style.display = ''; }
+    lmQuestionEl.textContent = 'NWW(' + lmA + ', ' + lmB + ')';
+    lmInput.value = ''; lmSubmitBtn.disabled = true; lmSubmitBtn.textContent = 'Sprawd\u017a';
+    lmFeedback.textContent = ''; lmFeedback.className = 'feedback empty';
+    lmInput.focus();
+    lmStart = Date.now(); lmTimerEl.textContent = '0 s';
+    lmInterval = setInterval(() => {
+      lmTimerEl.textContent = Math.floor((Date.now() - lmStart) / 1000) + ' s';
+    }, 1000);
+    questionMode = 'ask';
+  }
+
+  function startGcdLcmInlineNww() {
+    clearAll();
+    glPhase = 'lcm-tree';
+    document.getElementById('ltStats').style.display = 'none';
+    ltReset.style.display = 'none';
+    panelGcdTree.style.display = 'none';
+    panelLcmTree.style.display = '';
+    ltForm.style.display = 'none';
+    ltFactorsEl.style.display = 'none';
+    ltAnswerEl.style.display = 'none'; ltAnswerEl.innerHTML = '';
+    ltFeedback.textContent = ''; ltFeedback.className = 'feedback empty';
+    ltSubmitBtn.disabled = true;
+    ltA = gtA; ltB = gtB;
+    ltAns = Math.round((ltA * ltB) / gcd(ltA, ltB));
+    ltFactorsA = [...gtFactorsA]; ltFactorsB = [...gtFactorsB];
+    const ltNwdResEl = document.getElementById('ltNwdResult');
+    if (ltNwdResEl) { ltNwdResEl.textContent = 'NWD(' + ltA + ', ' + ltB + ') = ' + gcd(ltA, ltB); ltNwdResEl.style.display = ''; }
+    const _ltInstr = document.getElementById('ltInstruction');
+    if (_ltInstr) { _ltInstr.textContent = 'Oblicz NWD i NWW liczb: ' + ltA + ' i ' + ltB; _ltInstr.style.display = ''; }
+    ltQuestionEl.textContent = 'NWW(' + ltA + ', ' + ltB + ')';
+    document.getElementById('ltTreeLabel').style.display = '';
+    document.getElementById('ltTreeBox').style.display = '';
+    ltLabelA.textContent = String(ltA);
+    ltLabelB.textContent = String(ltB);
+    ltTreeA.innerHTML = gtTreeA.innerHTML;
+    ltTreeB.innerHTML = gtTreeB.innerHTML;
+    ltStart = Date.now(); ltTimerEl.textContent = '0 s';
+    ltInterval = setInterval(() => {
+      ltTimerEl.textContent = Math.floor((Date.now() - ltStart) / 1000) + ' s';
+    }, 1000);
+    questionMode = 'ask';
+    ltBothDone();
+  }
+
+  let glForfeitMode = false;
+
+  function handleForfeit() {
+    if (currentModule !== 'gcdlcm' || questionMode !== 'ask') return;
+    clearTimeout(autoAdvanceTimeout);
+    clearInterval(gmInterval); clearInterval(lmInterval);
+    clearInterval(gtInterval); clearInterval(ltInterval);
+    questionMode = 'next';
+    if (glPhase === 'gcd-mem') {
+      gmTotal++;
+      gmScoreEl.textContent = gmCorrect + ' / ' + gmTotal;
+      gmReset.disabled = false;
+      playWrongAnim(() => {
+        gmFeedback.textContent = '❌ NWD(' + glA + ', ' + glB + ') = ' + glNwdAns + '   NWW(' + glA + ', ' + glB + ') = ' + glNwwAns;
+        gmFeedback.className = 'feedback bad';
+        glForfeitMode = true; forfeitBtn.textContent = 'Dalej';
+      });
+    } else if (glPhase === 'lcm-mem') {
+      lmTotal++;
+      lmScoreEl.textContent = lmCorrect + ' / ' + lmTotal;
+      lmReset.disabled = false;
+      playWrongAnim(() => {
+        lmFeedback.textContent = '❌ NWW(' + lmA + ', ' + lmB + ') = ' + lmAns;
+        lmFeedback.className = 'feedback bad';
+        glForfeitMode = true; forfeitBtn.textContent = 'Dalej';
+      });
+    } else if (glPhase === 'gcd-tree') {
+      gtTotal++;
+      gtScoreEl.textContent = gtCorrect + ' / ' + gtTotal;
+      gtReset.disabled = false;
+      const nwwAns = Math.round((gtA * gtB) / gcd(gtA, gtB));
+      playWrongAnim(() => {
+        gtFeedback.textContent = '❌ NWD(' + gtA + ', ' + gtB + ') = ' + gtAns + '   NWW(' + gtA + ', ' + gtB + ') = ' + nwwAns;
+        gtFeedback.className = 'feedback bad';
+        glForfeitMode = true; forfeitBtn.textContent = 'Dalej';
+      });
+    } else if (glPhase === 'lcm-tree') {
+      ltTotal++;
+      ltScoreEl.textContent = ltCorrect + ' / ' + ltTotal;
+      ltReset.disabled = false;
+      playWrongAnim(() => {
+        ltFeedback.textContent = '❌ NWW(' + ltA + ', ' + ltB + ') = ' + ltAns;
+        ltFeedback.className = 'feedback bad';
+        glForfeitMode = true; forfeitBtn.textContent = 'Dalej';
+      });
+    }
+  }
+
+  forfeitBtn.addEventListener('click', () => {
+    if (glForfeitMode) {
+      glForfeitMode = false; forfeitBtn.textContent = 'Forfeit';
+      const savedPhase = glPhase;
+      if (savedPhase === 'gcd-mem' || savedPhase === 'lcm-mem') newGcdLcmMemoryQuestion();
+      else startGcdLcmQuestion();
+    } else {
+      handleForfeit();
+    }
+  });
+
+</script>
+</body>
+</html>
+

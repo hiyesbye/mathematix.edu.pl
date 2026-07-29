@@ -42,8 +42,8 @@
     text-align: center;
     margin: 0 0 16px;
     padding: 13px 20px;
-    background: linear-gradient(135deg, #7b93f7, #b978f2);
-    border: 2px solid #a89cd8;
+    background: linear-gradient(135deg, #004d40, #4db6ac);
+    border: 2px solid #00695c;
     border-radius: 16px;
     color: #fff;
   }
@@ -152,6 +152,33 @@
   .mr-bar { width: 2.2em; height: 2.5px; background: currentColor; margin: 2px 0; }
   .mr-inp { width: 52px; }
   .mr-times { font-size: 2rem; font-weight: 700; align-self: center; }
+  .mr-clickable {
+    font-size: 2rem; font-weight: 700; cursor: pointer; padding: 2px 8px;
+    border-radius: 6px; transition: background .15s, color .15s;
+    user-select: none; display: inline-block; position: relative; line-height: 1.2;
+  }
+  .mr-clickable:hover:not(.cancelled):not(.mr-selecting) { background: rgba(0,0,0,.07); }
+  .mr-clickable.mr-selecting {
+    background: rgba(255,180,0,.25); color: #9a6f00;
+    outline: 2px solid #f0b429; outline-offset: 2px;
+  }
+  .mr-clickable.cancelled { color: #e53e3e; cursor: default; }
+  .mr-clickable.cancelled::after {
+    content: ''; position: absolute; top: 8%; left: 0; width: 100%; height: 84%;
+    background: linear-gradient(
+      to bottom right,
+      transparent calc(50% - 1.5px), #111 calc(50% - 1.5px),
+      #111 calc(50% + 1.5px), transparent calc(50% + 1.5px)
+    );
+    pointer-events: none;
+  }
+  .mr-slot { min-height: 44px; display: flex; align-items: center; justify-content: center; }
+  .mr-slot input { width: 52px; }
+  @keyframes mr-shake {
+    0%,100%{transform:translateX(0)} 20%{transform:translateX(-7px)}
+    40%{transform:translateX(7px)} 60%{transform:translateX(-5px)} 80%{transform:translateX(4px)}
+  }
+  .mr-shake { animation: mr-shake .45s ease; }
 
   /* ── Answer inputs (całość + ułamek) ────────────── */
   .frac-inputs {
@@ -332,23 +359,23 @@
     </div>
     <div id="mulReduceSection" style="display:none" class="mul-reduce-section">
       <div class="mr-frac">
-        <input type="number" id="mrn1" class="mr-inp" inputmode="numeric" placeholder="?">
+        <div id="mrSlotN1" class="mr-slot"></div>
         <div class="mr-frac-body">
-          <span id="mrOldN1"></span>
+          <span id="mrClickN1" class="mr-clickable" data-pos="n1"></span>
           <div class="mr-bar"></div>
-          <span id="mrOldD1"></span>
+          <span id="mrClickD1" class="mr-clickable" data-pos="d1"></span>
         </div>
-        <input type="number" id="mrd1" class="mr-inp" inputmode="numeric" placeholder="?">
+        <div id="mrSlotD1" class="mr-slot"></div>
       </div>
       <span class="mr-times">·</span>
       <div class="mr-frac">
-        <input type="number" id="mrn2" class="mr-inp" inputmode="numeric" placeholder="?">
+        <div id="mrSlotN2" class="mr-slot"></div>
         <div class="mr-frac-body">
-          <span id="mrOldN2"></span>
+          <span id="mrClickN2" class="mr-clickable" data-pos="n2"></span>
           <div class="mr-bar"></div>
-          <span id="mrOldD2"></span>
+          <span id="mrClickD2" class="mr-clickable" data-pos="d2"></span>
         </div>
-        <input type="number" id="mrd2" class="mr-inp" inputmode="numeric" placeholder="?">
+        <div id="mrSlotD2" class="mr-slot"></div>
       </div>
     </div>
     <div id="impSection" style="display:none" class="mul-reduce-section">
@@ -408,10 +435,10 @@
   const num2El       = document.getElementById('num2');
   const den2El       = document.getElementById('den2');
   const mulReduceSection = document.getElementById('mulReduceSection');
-  const mrn1El = document.getElementById('mrn1'); const mrd1El = document.getElementById('mrd1');
-  const mrn2El = document.getElementById('mrn2'); const mrd2El = document.getElementById('mrd2');
-  const mrOldN1El = document.getElementById('mrOldN1'); const mrOldD1El = document.getElementById('mrOldD1');
-  const mrOldN2El = document.getElementById('mrOldN2'); const mrOldD2El = document.getElementById('mrOldD2');
+  const mrClickN1 = document.getElementById('mrClickN1'); const mrClickD1 = document.getElementById('mrClickD1');
+  const mrClickN2 = document.getElementById('mrClickN2'); const mrClickD2 = document.getElementById('mrClickD2');
+  const mrSlotN1  = document.getElementById('mrSlotN1');  const mrSlotD1  = document.getElementById('mrSlotD1');
+  const mrSlotN2  = document.getElementById('mrSlotN2');  const mrSlotD2  = document.getElementById('mrSlotD2');
   const impSection = document.getElementById('impSection');
   const impOpSymbol = document.getElementById('impOpSymbol');
   const ipn1El = document.getElementById('ipn1'); const ipd1El = document.getElementById('ipd1');
@@ -441,6 +468,8 @@
   let stepFixedWhole = 0;     // stała całość pokazywana w kroku "skróć ułamek"
   let equationSteps = [];     // segmenty HTML doklejane po kolejnych "="
   let stepMulN1 = 0, stepMulD1 = 1, stepMulN2 = 0, stepMulD2 = 1; // skracanie wzajemne
+  let mrSelPos = null;
+  let mrPairActive = false, mrPairA = null, mrPairB = null;
 
   // ── Math helpers ────────────────────────────────
   function gcd(a, b) {
@@ -862,7 +891,7 @@
   function clearInputs() {
     wholeEl.value = ''; numEl.value = ''; denEl.value = '';
     whole2El.value = ''; num2El.value = ''; den2El.value = '';
-    mrn1El.value = ''; mrd1El.value = ''; mrn2El.value = ''; mrd2El.value = '';
+    mrReset();
     ipn1El.value = ''; ipd1El.value = ''; ipn2El.value = ''; ipd2El.value = '';
   }
 
@@ -921,6 +950,87 @@
     startTimer();
   }
 
+  // ── Skracanie wzajemne – klik-mechanika ───────────
+  function mrReset() {
+    mrSelPos = null; mrPairActive = false; mrPairA = null; mrPairB = null;
+    [mrClickN1, mrClickD1, mrClickN2, mrClickD2].forEach(el => { el.className = 'mr-clickable'; });
+    [mrSlotN1, mrSlotD1, mrSlotN2, mrSlotD2].forEach(el => { el.innerHTML = ''; });
+  }
+
+  function mrShake(positions) {
+    const elMap = { n1: mrClickN1, d1: mrClickD1, n2: mrClickN2, d2: mrClickD2 };
+    positions.forEach(p => {
+      const el = elMap[p];
+      el.classList.remove('mr-shake');
+      void el.offsetWidth;
+      el.classList.add('mr-shake');
+      setTimeout(() => el.classList.remove('mr-shake'), 500);
+    });
+  }
+
+  function mrShowInfo(msg, isError, ms = 2200) {
+    feedbackEl.className = isError ? 'feedback bad' : 'feedback';
+    feedbackEl.textContent = msg;
+    setTimeout(() => {
+      if (stepPhase === 'mul-reduce') { feedbackEl.className = 'feedback empty'; feedbackEl.textContent = ''; }
+    }, ms);
+  }
+
+  function mrHandleClick(pos) {
+    if (mrPairActive) return;
+    const elMap  = { n1: mrClickN1, d1: mrClickD1, n2: mrClickN2, d2: mrClickD2 };
+    const slotMap = { n1: mrSlotN1, d1: mrSlotD1, n2: mrSlotN2, d2: mrSlotD2 };
+    const valMap  = { n1: stepMulN1, d1: stepMulD1, n2: stepMulN2, d2: stepMulD2 };
+
+    if (mrSelPos === null) {
+      mrSelPos = pos;
+      elMap[pos].classList.add('mr-selecting');
+      return;
+    }
+    if (mrSelPos === pos) {
+      elMap[pos].classList.remove('mr-selecting');
+      mrSelPos = null;
+      return;
+    }
+
+    const A = mrSelPos, B = pos;
+    const validPairs = new Set(['n1:d2', 'd2:n1', 'n2:d1', 'd1:n2']);
+    if (!validPairs.has(A + ':' + B)) {
+      mrShake([A, B]);
+      mrShowInfo('ℹ️ Skracaj licznik jednego ułamka z mianownikiem drugiego.', false);
+      return;
+    }
+
+    const g = gcd(valMap[A], valMap[B]);
+    if (g <= 1) {
+      elMap[A].classList.remove('mr-selecting');
+      mrSelPos = null;
+      mrShake([A, B]);
+      mrShowInfo('❌ Nie da się skrócić tych liczb — nie mają wspólnego dzielnika.', true);
+      return;
+    }
+
+    // Poprawna para — aktywuj
+    mrPairActive = true; mrPairA = A; mrPairB = B; mrSelPos = null;
+    elMap[A].classList.remove('mr-selecting');
+    elMap[A].classList.add('cancelled');
+    elMap[B].classList.add('cancelled');
+
+    [A, B].forEach(p => {
+      const inp = document.createElement('input');
+      inp.type = 'number'; inp.className = 'mr-inp'; inp.inputMode = 'numeric'; inp.placeholder = '?';
+      inp.id = 'mrDynInp_' + p;
+      inp.addEventListener('input', () => { if (mode === 'ask') submitBtn.disabled = computeSubmitDisabled(); });
+      slotMap[p].appendChild(inp);
+    });
+    document.getElementById('mrDynInp_' + A).focus();
+    submitBtn.disabled = computeSubmitDisabled();
+  }
+
+  [mrClickN1, mrClickD1, mrClickN2, mrClickD2].forEach(el => {
+    el.addEventListener('click', () => mrHandleClick(el.dataset.pos));
+  });
+
   // ── Kroki: konfiguracja UI dla bieżącej fazy ─────
   function setupPhaseUI(skipFocus) {
     feedbackEl.className = 'feedback empty';
@@ -976,16 +1086,16 @@
     }
 
     if (stepPhase === 'mul-reduce') {
-      stepInfoEl.textContent = 'Skróć ułamki — wpisz nowe liczby po skróceniu w kratki';
+      stepInfoEl.textContent = 'Skróć ułamki — kliknij dwie liczby, które chcesz ze sobą skrócić';
       answerRowEl.style.display = 'none';
       mulReduceSection.style.display = '';
-      mrOldN1El.textContent = stepMulN1;
-      mrOldD1El.textContent = stepMulD1;
-      mrOldN2El.textContent = stepMulN2;
-      mrOldD2El.textContent = stepMulD2;
+      mrClickN1.textContent = stepMulN1;
+      mrClickD1.textContent = stepMulD1;
+      mrClickN2.textContent = stepMulN2;
+      mrClickD2.textContent = stepMulD2;
+      mrReset();
       submitBtn.textContent = 'Dalej';
       submitBtn.disabled = true;
-      if (!skipFocus) mrn1El.focus();
       return;
     }
 
@@ -1058,7 +1168,10 @@
       return !(ipn1El.value && ipd1El.value && ipn2El.value && ipd2El.value);
     }
     if (stepActive && stepPhase === 'mul-reduce') {
-      return false;
+      if (!mrPairActive) return true;
+      const inpA = document.getElementById('mrDynInp_' + mrPairA);
+      const inpB = document.getElementById('mrDynInp_' + mrPairB);
+      return !(inpA && inpA.value && inpB && inpB.value);
     }
     const nothingEntered = wholeEl.value === '' && numEl.value === '' && denEl.value === '';
     if (nothingEntered) return true;
@@ -1155,21 +1268,22 @@
     }
 
     if (stepPhase === 'mul-reduce') {
-      const n1 = mrn1El.value !== '' ? Number(mrn1El.value) : stepMulN1;
-      const d1 = mrd1El.value !== '' ? Number(mrd1El.value) : stepMulD1;
-      const n2 = mrn2El.value !== '' ? Number(mrn2El.value) : stepMulN2;
-      const d2 = mrd2El.value !== '' ? Number(mrd2El.value) : stepMulD2;
-      if (n1 <= 0 || d1 <= 0 || n2 <= 0 || d2 <= 0) {
+      const inpA = document.getElementById('mrDynInp_' + mrPairA);
+      const inpB = document.getElementById('mrDynInp_' + mrPairB);
+      const newA = Number(inpA.value), newB = Number(inpB.value);
+      if (newA <= 0 || newB <= 0) {
         stepWrongRetry('❌ Wpisz poprawne wartości (liczby całkowite dodatnie).');
         return;
       }
+      let n1 = stepMulN1, d1 = stepMulD1, n2 = stepMulN2, d2 = stepMulD2;
+      const setVal = (p, v) => { if(p==='n1')n1=v; else if(p==='d1')d1=v; else if(p==='n2')n2=v; else d2=v; };
+      setVal(mrPairA, newA); setVal(mrPairB, newB);
       if (n1 * n2 * stepMulD1 * stepMulD2 !== stepMulN1 * stepMulN2 * d1 * d2) {
         stepWrongRetry('❌ Wartość iloczynu się zmieniła. Skróć poprawnie.');
         return;
       }
-      const allUnchanged = n1 === stepMulN1 && d1 === stepMulD1 && n2 === stepMulN2 && d2 === stepMulD2;
-      if (allUnchanged) {
-        stepWrongRetry('❌ Skróć ułamki — wpisz nowe wartości po skróceniu.');
+      if (n1 === stepMulN1 && d1 === stepMulD1 && n2 === stepMulN2 && d2 === stepMulD2) {
+        stepWrongRetry('❌ Skróć ułamki — wartości muszą się zmienić.');
         return;
       }
       stepMulN1 = n1; stepMulD1 = d1; stepMulN2 = n2; stepMulD2 = d2;
@@ -1431,7 +1545,7 @@
     const toggle = () => {
       if (mode === 'ask') submitBtn.disabled = computeSubmitDisabled();
     };
-    ['whole', 'num', 'den', 'whole2', 'num2', 'den2', 'mrn1', 'mrd1', 'mrn2', 'mrd2', 'ipn1', 'ipd1', 'ipn2', 'ipd2'].forEach(id => {
+    ['whole', 'num', 'den', 'whole2', 'num2', 'den2', 'ipn1', 'ipd1', 'ipn2', 'ipd2'].forEach(id => {
       document.getElementById(id).addEventListener('input', toggle);
     });
   }
