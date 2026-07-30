@@ -207,6 +207,17 @@
                 cursor: pointer;
             }
             .btn-zapisz-dz:hover { background: #1e7a30; }
+            .btn-nowe-okno {
+                padding: 8px 18px;
+                background: rgb(11, 105, 148);
+                color: white;
+                border: none;
+                border-radius: 6px;
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 15px;
+                cursor: pointer;
+            }
+            .btn-nowe-okno:hover { background: #0a7aa8; }
             #dz-tabela {
                 width: 100%;
                 border-collapse: collapse;
@@ -341,6 +352,7 @@
                                 <option value="punkty">Punkty aktywności</option>
                             </select>
                             <button class="btn-zapisz-dz" id="btnZapiszDz" onclick="zapiszDziennik()" style="display:none;">Zapisz wszystkie</button>
+                            <button class="btn-nowe-okno" id="btnNoweOkno" onclick="otworzNoweOkno()" style="display:none;">&#x2197; Nowe okno</button>
                         </div>
                         <div id="dz-komunikat"></div>
                         <div style="overflow-x: auto; margin-top: 10px;">
@@ -570,6 +582,7 @@
                 kom.textContent = '';
                 tabela.style.display = 'none';
                 btn.style.display = 'none';
+                document.getElementById('btnNoweOkno').style.display = 'none';
 
                 if (!klasa || !dzTyp) return;
 
@@ -592,6 +605,7 @@
                 renderujDziennik();
                 tabela.style.display = 'table';
                 btn.style.display = 'inline-block';
+                document.getElementById('btnNoweOkno').style.display = 'inline-block';
             }
 
             function renderujDziennik() {
@@ -618,6 +632,13 @@
                     }
                     return `<tr>${tds}</tr>`;
                 }).join('');
+            }
+
+            function otworzNoweOkno() {
+                const klasa = document.getElementById('dz-klasa').value;
+                if (!klasa || !dzTyp) return;
+                const url = `dziennik-okno.html?klasa=${encodeURIComponent(klasa)}&typ=${encodeURIComponent(dzTyp)}`;
+                window.open(url, '_blank', 'width=1050,height=700,resizable=yes,scrollbars=yes');
             }
 
             async function zapiszDziennik() {

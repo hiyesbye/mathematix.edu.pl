@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+<meta charset="utf-8">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dziennik ocen</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <style>
+        * { margin: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            background: #eef2f5;
+            overflow-x: hidden;
+        }
+
+        /* ── Górny pasek ── */
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: #1c1c1c;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            height: 52px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+        .topbar-title {
+            font-size: 17px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        #komunikat {
+            font-size: 14px;
+            min-width: 160px;
+            text-align: right;
+        }
+        .btn-zapisz {
+            padding: 7px 22px;
+            background: #2a9d3f;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .btn-zapisz:hover { background: #1e7a30; }
+
+        /* ── Tabela ── */
+        .table-wrap {
+            padding: 18px 14px 30px;
+            overflow-x: auto;
+        }
+
+        table {
+            border-collapse: collapse;
+            font-size: 15px;
+            background: white;
+            min-width: 100%;
+            box-shadow: 0 1px 6px rgba(0,0,0,0.1);
+        }
+
+        th {
+            background: #2d2d2d;
+            color: white;
+            padding: 10px 12px;
+            text-align: center;
+            white-space: nowrap;
+            position: sticky;
+            top: 52px;
+            z-index: 10;
+            border-right: 1px solid rgba(255,255,255,0.1);
+        }
+        th.th-zielony   { background: #1a7a2e; }
+        th.th-niebieski { background: rgb(11, 105, 148); }
+        th.th-czerwony  { background: #b52a1e; }
+
+        /* Sticky lewe kolumny — nagłówki (róg = oba sticky) */
+        th.th-nr {
+            background: #2d2d2d;
+            position: sticky;
+            top: 52px;
+            left: 0;
+            z-index: 30;
+            min-width: 52px;
+            border-right: 2px solid #555;
+        }
+        th.th-uczen {
+            background: #2d2d2d;
+            position: sticky;
+            top: 52px;
+            left: 52px;
+            z-index: 30;
+            text-align: left;
+            padding-left: 14px;
+            min-width: 180px;
+            border-right: 2px solid #555;
+        }
+
+        /* Wiersze danych */
+        td {
+            padding: 6px 10px;
+            border-bottom: 1px solid #e8e8e8;
+            border-right: 1px solid #f0f0f0;
+            text-align: center;
+            vertical-align: middle;
+        }
+        td.td-nr {
+            position: sticky;
+            left: 0;
+            background: #f5f7f9;
+            z-index: 5;
+            font-weight: bold;
+            color: #444;
+            border-right: 2px solid #ddd;
+            min-width: 52px;
+        }
+        td.td-uczen {
+            position: sticky;
+            left: 52px;
+            background: #f5f7f9;
+            z-index: 5;
+            text-align: left;
+            padding: 6px 14px;
+            white-space: nowrap;
+            border-right: 2px solid #ddd;
+            min-width: 180px;
+        }
+        tr:nth-child(even) td { background: #fafbfc; }
+        tr:nth-child(even) td.td-nr,
+        tr:nth-child(even) td.td-uczen { background: #eff2f5; }
+        tr:hover td { background: #ddeef9 !important; }
+
+        /* Inputy ocen */
+        .dz-input {
+            width: 54px;
+            padding: 5px 4px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 15px;
+            text-align: center;
+            border: 2px solid #ccc;
+            border-radius: 4px;
+            background: white;
+            transition: border-color 0.15s;
+        }
+        .dz-input:focus { outline: none; }
+        .dz-input.kolor-zielony   { border-color: #2a9d3f; background: #f0fff3; }
+        .dz-input.kolor-niebieski { border-color: rgb(11,105,148); background: #f0f7fb; }
+        .dz-input.kolor-czerwony  { border-color: #c0392b; background: #fff4f3; }
+        .dz-input:focus.kolor-zielony   { border-color: #1a6e2a; box-shadow: 0 0 0 2px rgba(42,157,63,0.25); }
+        .dz-input:focus.kolor-niebieski { border-color: rgb(8,80,115); box-shadow: 0 0 0 2px rgba(11,105,148,0.25); }
+        .dz-input:focus.kolor-czerwony  { border-color: #8e1e15; box-shadow: 0 0 0 2px rgba(192,57,43,0.25); }
+
+        #ladowanie {
+            text-align: center;
+            padding: 60px 20px;
+            font-size: 20px;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <span class="topbar-title" id="tytul">Dziennik ocen</span>
+        <div class="topbar-right">
+            <span id="komunikat"></span>
+            <button class="btn-zapisz" onclick="zapisz()">Zapisz wszystkie</button>
+        </div>
+    </div>
+
+    <div id="ladowanie">Wczytywanie...</div>
+    <div class="table-wrap" id="tableWrap" style="display:none;">
+        <table>
+            <thead id="thead"></thead>
+            <tbody id="tbody"></tbody>
+        </table>
+    </div>
+
+    <script src="supabase-config.js"></script>
+    <script>
+        const TYPY = {
+            aktywnosc:       { prefix: 'aktywnosc_',       count: 5, label: 'Aktywność',    kolor: 'zielony',   thKolor: 'th-zielony'   },
+            kartkowka:       { prefix: 'kartkowka_',        count: 8, label: 'Kartkówka',    kolor: 'niebieski', thKolor: 'th-niebieski' },
+            praca_kontrolna: { prefix: 'praca_kontrolna_',  count: 4, label: 'Praca kontr.', kolor: 'czerwony',  thKolor: 'th-czerwony'  },
+            punkty:          { prefix: 'punkty_aktywnosci', count: 1, label: 'Pkt. akt.',    kolor: '',          thKolor: ''             },
+        };
+
+        const params = new URLSearchParams(window.location.search);
+        const klasa  = params.get('klasa') || '';
+        const typ    = params.get('typ')   || '';
+        let dane = [];
+
+        async function init() {
+            const t = TYPY[typ];
+            if (!klasa || !t) {
+                document.getElementById('ladowanie').textContent = 'Nieprawidłowe parametry.';
+                return;
+            }
+
+            document.getElementById('tytul').textContent = `Klasa ${klasa} — ${t.label}`;
+            document.title = `Dziennik: ${klasa} / ${t.label}`;
+
+            const { data: profiles, error: pe } = await sb.from('profiles')
+                .select('*').eq('klasa', klasa).order('nr');
+
+            if (pe || !profiles || profiles.length === 0) {
+                document.getElementById('ladowanie').textContent = 'Brak uczniów w tej klasie.';
+                return;
+            }
+
+            const ids = profiles.map(p => p.id);
+            const { data: semData } = await sb.from('semestr1').select('*').in('profil_id', ids);
+            const semMap = {};
+            (semData || []).forEach(row => { semMap[row.profil_id] = row; });
+
+            dane = profiles.map(p => ({ profil: p, sem1: semMap[p.id] || null }));
+
+            renderuj(t);
+            document.getElementById('ladowanie').style.display = 'none';
+            document.getElementById('tableWrap').style.display = 'block';
+        }
+
+        function renderuj(t) {
+            const thead = document.getElementById('thead');
+            const tbody = document.getElementById('tbody');
+
+            let thRow = '<tr><th class="th-nr">Nr</th><th class="th-uczen">Uczeń</th>';
+            for (let i = 1; i <= t.count; i++) {
+                const label = t.count > 1 ? `${t.label} ${i}` : t.label;
+                thRow += `<th class="${t.thKolor}">${label}</th>`;
+            }
+            thead.innerHTML = thRow + '</tr>';
+
+            tbody.innerHTML = dane.map(({ profil, sem1 }) => {
+                let tds = `<td class="td-nr">${profil.nr ?? '—'}</td>`;
+                tds += `<td class="td-uczen">${profil.imie || ''} ${profil.nazwisko || ''}</td>`;
+                for (let i = 1; i <= t.count; i++) {
+                    const field = t.count === 1 ? t.prefix : `${t.prefix}${i}`;
+                    const val = sem1?.[field];
+                    const displayed = (val !== null && val !== undefined) ? val : '';
+                    const colorCls = t.kolor ? `kolor-${t.kolor}` : '';
+                    tds += `<td><input class="dz-input ${colorCls}" type="number" id="dz-${profil.id}-${i}" step="1" value="${displayed}" placeholder="—"></td>`;
+                }
+                return `<tr>${tds}</tr>`;
+            }).join('');
+        }
+
+        async function zapisz() {
+            const t = TYPY[typ];
+            const kom = document.getElementById('komunikat');
+            kom.style.color = '#ccc';
+            kom.textContent = 'Zapisywanie...';
+
+            const toUpsert = dane.map(({ profil }) => {
+                const row = { profil_id: profil.id };
+                for (let i = 1; i <= t.count; i++) {
+                    const field = t.count === 1 ? t.prefix : `${t.prefix}${i}`;
+                    const val = document.getElementById(`dz-${profil.id}-${i}`)?.value;
+                    row[field] = (val !== '' && val !== undefined) ? parseInt(val) : null;
+                }
+                return row;
+            });
+
+            const { error } = await sb.from('semestr1').upsert(toUpsert, { onConflict: 'profil_id' });
+            if (error) {
+                kom.style.color = '#ff7070';
+                kom.textContent = 'Błąd: ' + error.message;
+            } else {
+                kom.style.color = '#6dcc80';
+                kom.textContent = `Zapisano (${toUpsert.length} uczniów) ✓`;
+                setTimeout(() => { kom.textContent = ''; }, 3000);
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
