@@ -7,43 +7,94 @@
         <title>Mathematix - Mój profil</title>
         <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
         <style>
+            .profil-wrap {
+                font-family: 'Courier New', Courier, monospace;
+                max-width: 700px;
+                margin: 24px auto;
+                padding: 0 12px 40px;
+            }
             .profil-box {
                 background: #f2f2f2;
                 border-radius: 8px;
-                padding: 24px 32px;
-                font-family: 'Courier New', Courier, monospace;
-                font-size: 20px;
-                max-width: 500px;
-                margin: 30px auto;
+                padding: 20px 28px;
+                font-size: 19px;
+                margin-bottom: 24px;
             }
             .profil-box h2 {
-                font-size: 26px;
-                margin-bottom: 20px;
+                font-size: 24px;
+                margin-bottom: 16px;
             }
             .profil-row {
                 display: flex;
                 justify-content: space-between;
                 border-bottom: 1px solid #ccc;
-                padding: 10px 0;
+                padding: 8px 0;
             }
-            .profil-label {
-                color: #555;
-                font-weight: bold;
+            .profil-label { color: #555; font-weight: bold; }
+            .profil-value { color: #000; }
+            .semestr-box {
+                background: #f2f2f2;
+                border-radius: 8px;
+                padding: 20px 28px;
+                font-size: 17px;
             }
-            .profil-value {
-                color: #000;
+            .semestr-box h2 {
+                font-size: 22px;
+                margin-bottom: 16px;
             }
+            .oceny-sekcja {
+                margin-bottom: 18px;
+            }
+            .oceny-sekcja h3 {
+                font-size: 16px;
+                color: #444;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                margin-bottom: 8px;
+                border-bottom: 2px solid #ccc;
+                padding-bottom: 4px;
+            }
+            .oceny-grid {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            .ocena-kafelek {
+                background: white;
+                border: 1px solid #ccc;
+                border-radius: 6px;
+                padding: 6px 12px;
+                min-width: 110px;
+                display: flex;
+                justify-content: space-between;
+                gap: 10px;
+            }
+            .ocena-nazwa { color: #555; }
+            .ocena-wartosc { font-weight: bold; color: #000; }
+            .ocena-wartosc.brak { color: #aaa; font-weight: normal; }
+            .punkty-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                background: white;
+                border: 1px solid #ccc;
+                border-radius: 6px;
+                padding: 10px 16px;
+                font-size: 19px;
+                margin-bottom: 18px;
+            }
+            .punkty-row span:last-child { font-weight: bold; font-size: 22px; }
             .btn-wyloguj {
                 display: block;
                 width: 100%;
-                margin-top: 24px;
-                padding: 12px;
+                margin-top: 20px;
+                padding: 11px;
                 background: #333;
                 color: white;
                 border: none;
                 border-radius: 6px;
                 font-family: 'Courier New', Courier, monospace;
-                font-size: 18px;
+                font-size: 17px;
                 font-weight: bold;
                 cursor: pointer;
             }
@@ -93,30 +144,56 @@
         <div id="newsy">
             <div id="ladowanie">Ładowanie profilu...</div>
             <div id="profilContent" style="display:none;">
-                <div class="profil-box">
-                    <h2>Mój profil</h2>
-                    <div class="profil-row">
-                        <span class="profil-label">Login:</span>
-                        <span class="profil-value" id="p-login"></span>
+                <div class="profil-wrap">
+                    <div class="profil-box">
+                        <h2>Mój profil</h2>
+                        <div class="profil-row">
+                            <span class="profil-label">Login:</span>
+                            <span class="profil-value" id="p-login"></span>
+                        </div>
+                        <div class="profil-row">
+                            <span class="profil-label">Imię:</span>
+                            <span class="profil-value" id="p-imie"></span>
+                        </div>
+                        <div class="profil-row">
+                            <span class="profil-label">Nazwisko:</span>
+                            <span class="profil-value" id="p-nazwisko"></span>
+                        </div>
+                        <div class="profil-row">
+                            <span class="profil-label">Klasa:</span>
+                            <span class="profil-value" id="p-klasa"></span>
+                        </div>
+                        <div class="profil-row">
+                            <span class="profil-label">Płeć:</span>
+                            <span class="profil-value" id="p-plec"></span>
+                        </div>
+                        <a id="linkAdmin" href="admin.html" style="display:none; text-align:center; margin-top:14px; font-size:18px; font-family:'Courier New',monospace; font-weight:bold; color:rgb(11,105,148);">&#9654; Panel admina</a>
+                        <button class="btn-wyloguj" onclick="wyloguj()">Wyloguj się</button>
                     </div>
-                    <div class="profil-row">
-                        <span class="profil-label">Imię:</span>
-                        <span class="profil-value" id="p-imie"></span>
+
+                    <div class="semestr-box">
+                        <h2>Semestr 1</h2>
+
+                        <div class="punkty-row">
+                            <span>Punkty aktywności:</span>
+                            <span id="p-punkty">—</span>
+                        </div>
+
+                        <div class="oceny-sekcja">
+                            <h3>Aktywność</h3>
+                            <div class="oceny-grid" id="grid-aktywnosc"></div>
+                        </div>
+
+                        <div class="oceny-sekcja">
+                            <h3>Prace kontrolne</h3>
+                            <div class="oceny-grid" id="grid-prace"></div>
+                        </div>
+
+                        <div class="oceny-sekcja">
+                            <h3>Kartkówki</h3>
+                            <div class="oceny-grid" id="grid-kartkowki"></div>
+                        </div>
                     </div>
-                    <div class="profil-row">
-                        <span class="profil-label">Nazwisko:</span>
-                        <span class="profil-value" id="p-nazwisko"></span>
-                    </div>
-                    <div class="profil-row">
-                        <span class="profil-label">Klasa:</span>
-                        <span class="profil-value" id="p-klasa"></span>
-                    </div>
-                    <div class="profil-row">
-                        <span class="profil-label">Płeć:</span>
-                        <span class="profil-value" id="p-plec"></span>
-                    </div>
-                    <a id="linkAdmin" href="admin.html" style="display:none; text-align:center; margin-top:14px; font-size:18px; font-family:'Courier New',monospace; font-weight:bold; color:rgb(11,105,148);">&#9654; Panel admina</a>
-                    <button class="btn-wyloguj" onclick="wyloguj()">Wyloguj się</button>
                 </div>
             </div>
         </div>
@@ -153,6 +230,34 @@
                 document.getElementById('p-klasa').textContent = profil.klasa || '—';
                 document.getElementById('p-plec').textContent =
                     profil.plec === 'K' ? 'Kobieta' : profil.plec === 'M' ? 'Mężczyzna' : '—';
+
+                // Punkty aktywności
+                const pkt = profil.punkty_aktywnosci;
+                document.getElementById('p-punkty').textContent = pkt !== null && pkt !== undefined ? pkt : '—';
+
+                // Pomocnicza funkcja kafelka
+                function kafelek(nazwa, wartosc) {
+                    const val = (wartosc !== null && wartosc !== undefined) ? wartosc : null;
+                    return `<div class="ocena-kafelek">
+                        <span class="ocena-nazwa">${nazwa}</span>
+                        <span class="ocena-wartosc${val === null ? ' brak' : ''}">${val !== null ? val : '—'}</span>
+                    </div>`;
+                }
+
+                // Aktywność 1–5
+                let aktHtml = '';
+                for (let i = 1; i <= 5; i++) aktHtml += kafelek(`Aktywność ${i}`, profil[`aktywnosc_${i}`]);
+                document.getElementById('grid-aktywnosc').innerHTML = aktHtml;
+
+                // Prace kontrolne 1–4
+                let pkHtml = '';
+                for (let i = 1; i <= 4; i++) pkHtml += kafelek(`Praca kontr. ${i}`, profil[`praca_kontrolna_${i}`]);
+                document.getElementById('grid-prace').innerHTML = pkHtml;
+
+                // Kartkówki 1–8
+                let kartHtml = '';
+                for (let i = 1; i <= 8; i++) kartHtml += kafelek(`Kartkówka ${i}`, profil[`kartkowka_${i}`]);
+                document.getElementById('grid-kartkowki').innerHTML = kartHtml;
 
                 const { data: adminRow } = await sb.from('admins').select('id').eq('id', session.user.id).single();
                 if (adminRow) document.getElementById('linkAdmin').style.display = 'block';
