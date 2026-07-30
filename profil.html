@@ -137,8 +137,13 @@
                 document.getElementById('ladowanie').style.display = 'none';
 
                 if (error || !profil) {
-                    document.getElementById('newsy').innerHTML =
-                        '<p class="duzaramka">Nie znaleziono profilu. Skontaktuj się z nauczycielem.</p>';
+                    const { data: adminRow } = await sb.from('admins').select('id').eq('id', session.user.id).single();
+                    if (adminRow) {
+                        window.location.href = 'admin.html';
+                    } else {
+                        document.getElementById('newsy').innerHTML =
+                            '<p class="duzaramka">Nie znaleziono profilu. Skontaktuj się z nauczycielem.</p>';
+                    }
                     return;
                 }
 
