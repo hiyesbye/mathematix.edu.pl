@@ -227,6 +227,8 @@
                                     <th onclick="sortuj('nazwisko')">Nazwisko ↕</th>
                                     <th onclick="sortuj('klasa')">Klasa ↕</th>
                                     <th onclick="sortuj('plec')">Płeć ↕</th>
+                                    <th onclick="sortuj('srAryt')" title="Śr. arytmetyczna">Śr. aryt. ↕</th>
+                                    <th onclick="sortuj('srWaz')" title="Śr. ważona (akt×1, kart×2, pk×3)">Śr. ważona ↕</th>
                                     <th>Oceny</th>
                                 </tr>
                             </thead>
@@ -268,6 +270,18 @@
             let sortKolumna = 'klasa';
             let sortDir = 1;
 
+            function liczSrednie(s) {
+                if (!s) return { srAryt: null, srWaz: null };
+                const akt  = [1,2,3,4,5].map(i => s[`aktywnosc_${i}`]).filter(v => v !== null && v !== undefined);
+                const pk   = [1,2,3,4].map(i => s[`praca_kontrolna_${i}`]).filter(v => v !== null && v !== undefined);
+                const kart = [1,2,3,4,5,6,7,8].map(i => s[`kartkowka_${i}`]).filter(v => v !== null && v !== undefined);
+                const wszystkie = [...akt, ...pk, ...kart];
+                const srAryt = wszystkie.length ? wszystkie.reduce((a, b) => a + b, 0) / wszystkie.length : null;
+                const wLicz = akt.reduce((a, b) => a + b, 0) * 1 + pk.reduce((a, b) => a + b, 0) * 3 + kart.reduce((a, b) => a + b, 0) * 2;
+                const wMian = akt.length * 1 + pk.length * 3 + kart.length * 2;
+                return { srAryt, srWaz: wMian ? wLicz / wMian : null };
+            }
+
             async function init() {
                 const { data: { session } } = await sb.auth.getSession();
                 if (!session) { window.location.href = 'login.html'; return; }
@@ -280,7 +294,10 @@
                     return;
                 }
 
-                const { data: uczniowie, error } = await sb.from('profiles').select('*').order('klasa');
+                const [{ data: uczniowie, error }, { data: semData }] = await Promise.all([
+                    sb.from('profiles').select('*').order('klasa'),
+                    sb.from('semestr1').select('*')
+                ]);
                 document.getElementById('ladowanie').style.display = 'none';
 
                 if (error) {
@@ -289,7 +306,13 @@
                     return;
                 }
 
-                wszyscyUczniowie = uczniowie || [];
+                const semMap = {};
+                (semData || []).forEach(row => { semMap[row.profil_id] = row; });
+
+                wszyscyUczniowie = (uczniowie || []).map(u => ({
+                    ...u,
+                    ...liczSrednie(semMap[u.id])
+                }));
 
                 const klasy = [...new Set(wszyscyUczniowie.map(u => u.klasa).filter(Boolean))].sort();
                 const sel = document.getElementById('filterKlasa');
@@ -325,9 +348,14 @@
 
             function renderuj(lista) {
                 const posortowana = [...lista].sort((a, b) => {
-                    const va = (a[sortKolumna] || '').toLowerCase();
-                    const vb = (b[sortKolumna] || '').toLowerCase();
-                    return va < vb ? -sortDir : va > vb ? sortDir : 0;
+                    const va = a[sortKolumna];
+                    const vb = b[sortKolumna];
+                    if (typeof va === 'number' || typeof vb === 'number') {
+                        return ((va ?? -Infinity) - (vb ?? -Infinity)) * sortDir;
+                    }
+                    const sa = (va || '').toString().toLowerCase();
+                    const sb2 = (vb || '').toString().toLowerCase();
+                    return sa < sb2 ? -sortDir : sa > sb2 ? sortDir : 0;
                 });
 
                 document.getElementById('licznik').textContent =
@@ -342,6 +370,8 @@
                         <td>${u.nazwisko || '—'}</td>
                         <td>${u.klasa || '—'}</td>
                         <td>${u.plec === 'K' ? 'Kobieta' : u.plec === 'M' ? 'Mężczyzna' : '—'}</td>
+                        <td>${u.srAryt !== null && u.srAryt !== undefined ? u.srAryt.toFixed(2) : '—'}</td>
+                        <td>${u.srWaz  !== null && u.srWaz  !== undefined ? u.srWaz.toFixed(2)  : '—'}</td>
                         <td><button class="btn-edytuj" onclick="edytuj('${u.id}','${u.imie || ''} ${u.nazwisko || ''}','${u.nr ?? ''}')">Edytuj</button></td>
                     </tr>`).join('');
             }
