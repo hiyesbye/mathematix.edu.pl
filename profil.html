@@ -261,11 +261,10 @@
                     .single();
 
                 function kafelek(nazwa, wartosc, kolor) {
-                    const val = (wartosc !== null && wartosc !== undefined) ? wartosc : null;
-                    const cls = val === null ? 'brak' : (kolor || '');
+                    if (wartosc === null || wartosc === undefined) return '';
                     return `<div class="ocena-para">
                         <div class="ocena-nazwa-box">${nazwa}</div>
-                        <div class="ocena-wartosc-box ${cls}">${val !== null ? val : '—'}</div>
+                        <div class="ocena-wartosc-box ${kolor || ''}">${wartosc}</div>
                     </div>`;
                 }
 
