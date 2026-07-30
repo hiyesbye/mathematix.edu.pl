@@ -1,10 +1,55 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <meta charset="utf-8">
     <head>
         <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
         <link rel="stylesheet" href="mystyle.css">
-        <title>Mathematix</title>
+        <title>Mathematix - Mój profil</title>
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+        <style>
+            .profil-box {
+                background: #f2f2f2;
+                border-radius: 8px;
+                padding: 24px 32px;
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 20px;
+                max-width: 500px;
+                margin: 30px auto;
+            }
+            .profil-box h2 {
+                font-size: 26px;
+                margin-bottom: 20px;
+            }
+            .profil-row {
+                display: flex;
+                justify-content: space-between;
+                border-bottom: 1px solid #ccc;
+                padding: 10px 0;
+            }
+            .profil-label {
+                color: #555;
+                font-weight: bold;
+            }
+            .profil-value {
+                color: #000;
+            }
+            .btn-wyloguj {
+                display: block;
+                width: 100%;
+                margin-top: 24px;
+                padding: 12px;
+                background: #333;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 18px;
+                font-weight: bold;
+                cursor: pointer;
+            }
+            .btn-wyloguj:hover { background: rgb(11, 105, 148); }
+            #ladowanie { text-align:center; font-size:20px; padding:40px; font-family:monospace; }
+        </style>
     </head>
     <body>
     <div class="obrazek2">
@@ -15,7 +60,6 @@
         <ul id="navbar">
             <li><a href="index.html">Aktualności</a></li>
             <li><a href="matapki.html">MatApki</a></li>
-
             <li class="dropdown">
                 <a href="javascript:void(0)" class="dropbtn">Filmy instruktażowe</a>
                 <div class="dropdown-content">
@@ -25,12 +69,13 @@
                   <a href="klasa VII.html" title="Filmy z klasy VII">Klasa VII</a>
                   <a href="klasa VIII.html" title="Filmy z klasy VIII">Klasa VIII</a>
                 </div></li>
-                <li class="dropdown">
+            <li class="dropdown">
                 <a href="javascript:void(0)" class="dropbtn">Zadania</a>
                 <div class="dropdown-content">
                   <a href="konkurs.html" title="Zadania konkursowe" style="font-size:80%;">Zadania konkursowe</a>
                   <a href="taski.html" title="Zadania dodatkowe" style="font-size:80%;">Zadania dodatkowe</a>
-                  <li class="dropdown">
+                </div></li>
+            <li class="dropdown">
                 <a href="javascript:void(0)" class="dropbtn">Rozkłady materiału</a>
                 <div class="dropdown-content">
                   <a href="./Klasa IV - Rozkład materiału.pdf" title="Rozkład materiału w klasie IV" target="_blank">Klasa IV</a>
@@ -39,14 +84,78 @@
                   <a href="./Klasa VII - Rozkład materiału.pdf" title="Rozkład materiału w klasie VII" target="_blank">Klasa VII</a>
                   <a href="./Klasa VIII - Rozkład materiału.pdf" title="Rozkład materiału w klasie VIII" target="_blank">Klasa VIII</a>
                 </div></li>
-                <li><a href='https://eduvulcan.pl/logowanie' target='_blank'>Dziennik elektroniczny</a></li>
-                <li><a href='login.html'>Zaloguj się</a></li>
-          </ul>
+            <li><a href='https://eduvulcan.pl/logowanie' target='_blank'>Dziennik elektroniczny</a></li>
+            <li><a href='login.html'>Zaloguj się</a></li>
+        </ul>
+        </div>
+        <div class="pusty">&nbsp</div>
+        <div id="newsy">
+            <div id="ladowanie">Ładowanie profilu...</div>
+            <div id="profilContent" style="display:none;">
+                <div class="profil-box">
+                    <h2>Mój profil</h2>
+                    <div class="profil-row">
+                        <span class="profil-label">Login:</span>
+                        <span class="profil-value" id="p-login"></span>
+                    </div>
+                    <div class="profil-row">
+                        <span class="profil-label">Imię:</span>
+                        <span class="profil-value" id="p-imie"></span>
+                    </div>
+                    <div class="profil-row">
+                        <span class="profil-label">Nazwisko:</span>
+                        <span class="profil-value" id="p-nazwisko"></span>
+                    </div>
+                    <div class="profil-row">
+                        <span class="profil-label">Klasa:</span>
+                        <span class="profil-value" id="p-klasa"></span>
+                    </div>
+                    <div class="profil-row">
+                        <span class="profil-label">Płeć:</span>
+                        <span class="profil-value" id="p-plec"></span>
+                    </div>
+                    <button class="btn-wyloguj" onclick="wyloguj()">Wyloguj się</button>
                 </div>
-          <div class="pusty">&nbsp</div>
-          <div id="newsy">
-            <p class="duzaramka">Ta strona wymaga zalogowania.<br><br>
-            <a href="login.html">Zaloguj się</a>, żeby zobaczyć tę stronę.</p>
-          </div>
+            </div>
+        </div>
+        <script src="supabase-config.js"></script>
+        <script>
+            async function init() {
+                const { data: { session } } = await sb.auth.getSession();
+                if (!session) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                const { data: profil, error } = await sb.from('profiles')
+                    .select('*')
+                    .eq('id', session.user.id)
+                    .single();
+
+                document.getElementById('ladowanie').style.display = 'none';
+
+                if (error || !profil) {
+                    document.getElementById('newsy').innerHTML =
+                        '<p class="duzaramka">Nie znaleziono profilu. Skontaktuj się z nauczycielem.</p>';
+                    return;
+                }
+
+                document.getElementById('p-login').textContent = profil.login;
+                document.getElementById('p-imie').textContent = profil.imie || '—';
+                document.getElementById('p-nazwisko').textContent = profil.nazwisko || '—';
+                document.getElementById('p-klasa').textContent = profil.klasa || '—';
+                document.getElementById('p-plec').textContent =
+                    profil.plec === 'K' ? 'Kobieta' : profil.plec === 'M' ? 'Mężczyzna' : '—';
+
+                document.getElementById('profilContent').style.display = 'block';
+            }
+
+            async function wyloguj() {
+                await sb.auth.signOut();
+                window.location.href = 'login.html';
+            }
+
+            init();
+        </script>
     </body>
 </html>

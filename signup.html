@@ -1,11 +1,12 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <meta charset="utf-8">
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" href="loginsignup.css">
         <link rel="stylesheet" href="mystyle.css">
-        <title>Mathematix</title>
+        <title>Mathematix - Rejestracja</title>
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     </head>
     <body>
     <div class="obrazek2">
@@ -16,7 +17,6 @@
         <ul id="navbar">
             <li><a href="index.html">Aktualności</a></li>
             <li><a href="matapki.html">MatApki</a></li>
-
             <li class="dropdown">
                 <a href="javascript:void(0)" class="dropbtn">Filmy instruktażowe</a>
                 <div class="dropdown-content">
@@ -26,12 +26,13 @@
                   <a href="klasa VII.html" title="Filmy z klasy VII">Klasa VII</a>
                   <a href="klasa VIII.html" title="Filmy z klasy VIII">Klasa VIII</a>
                 </div></li>
-                <li class="dropdown">
+            <li class="dropdown">
                 <a href="javascript:void(0)" class="dropbtn">Zadania</a>
                 <div class="dropdown-content">
                   <a href="konkurs.html" title="Zadania konkursowe" style="font-size:80%;">Zadania konkursowe</a>
                   <a href="taski.html" title="Zadania dodatkowe" style="font-size:80%;">Zadania dodatkowe</a>
-                  <li class="dropdown">
+                </div></li>
+            <li class="dropdown">
                 <a href="javascript:void(0)" class="dropbtn">Rozkłady materiału</a>
                 <div class="dropdown-content">
                   <a href="./Klasa IV - Rozkład materiału.pdf" title="Rozkład materiału w klasie IV" target="_blank">Klasa IV</a>
@@ -40,34 +41,112 @@
                   <a href="./Klasa VII - Rozkład materiału.pdf" title="Rozkład materiału w klasie VII" target="_blank">Klasa VII</a>
                   <a href="./Klasa VIII - Rozkład materiału.pdf" title="Rozkład materiału w klasie VIII" target="_blank">Klasa VIII</a>
                 </div></li>
-                <li><a href='https://eduvulcan.pl/logowanie' target='_blank'>Dziennik elektroniczny</a></li>
-                <li><a href='login.html'>Zaloguj się</a></li>
-          </ul>
-                </div>
-          <div class="pusty">&nbsp</div>
-          <div id="newsy">
+            <li><a href='https://eduvulcan.pl/logowanie' target='_blank'>Dziennik elektroniczny</a></li>
+            <li><a href='login.html'>Zaloguj się</a></li>
+        </ul>
+        </div>
+        <div class="pusty">&nbsp</div>
+        <div id="newsy">
             <div class="toform">
-            <h2>Rejestracja:</h2><br>
-                <form action="#">
-                <label for="fname">Imię i nazwisko:</label>
-                <input type="text" name="name" placeholder="Imię i nazwisko...">
-                <label for="fname">Nazwa użytkownika:</label>
-                <input type="text" name="uid" placeholder="Nazwa użytkownika...">
-                <label for="fname">Hasło:</label>
-                <input type="password" name="pwd" placeholder="Hasło...">
-                <label for="fname">Powtórz hasło:</label>
-                <input type="password" name="pwdrepeat" placeholder="Powtórz hasło...">
-                <label for="fname">Klasa:</label>
-                <input type="number" name="nrklasy" placeholder="liczba" min="1" max="8">
-                <input type="text" id="cl" name="litklasy" placeholder="Wielka litera..." maxlength="1" pattern="[A-Z]{1}"> <br>
-                <label for="fname">Płeć:</label><br>
-                <input type="radio" name="gender" id="fname1" value="K">
-                <label for="fname1" style="font-size:20px;">Kobieta</label><br>
-                <input type="radio" name="gender" id="fname2" value="M">
-                <label for="fname2" style="font-size:20px;">Mężczyzna</label>
-                <button type="submit" name="submit">Zarejestruj się</button>
+                <h2>Rejestracja:</h2><br>
+                <div id="komunikat" style="color:red; margin-bottom:10px; font-size:18px;"></div>
+                <form id="signupForm">
+                    <label>Login (wymyślony):</label>
+                    <input type="text" id="loginInput" placeholder="np. janek_k..." autocomplete="username">
+                    <label>Imię:</label>
+                    <input type="text" id="imieInput" placeholder="Imię...">
+                    <label>Nazwisko:</label>
+                    <input type="text" id="nazwiskoInput" placeholder="Nazwisko...">
+                    <label>Klasa:</label>
+                    <input type="text" id="klasaInput" placeholder="np. 4a...">
+                    <label>Płeć:</label><br>
+                    <input type="radio" name="plec" id="plecK" value="K">
+                    <label for="plecK" style="font-size:20px; display:inline;">Kobieta</label>&nbsp;&nbsp;
+                    <input type="radio" name="plec" id="plecM" value="M">
+                    <label for="plecM" style="font-size:20px; display:inline;">Mężczyzna</label><br><br>
+                    <label>Hasło:</label>
+                    <input type="password" id="passwordInput" placeholder="Hasło..." autocomplete="new-password">
+                    <label>Powtórz hasło:</label>
+                    <input type="password" id="password2Input" placeholder="Powtórz hasło..." autocomplete="new-password">
+                    <button type="submit">Zarejestruj się</button>
                 </form>
+                <p style="text-align:center; margin-top:16px; font-size:18px;">
+                    Masz już konto? <a href="login.html">Zaloguj się</a>
+                </p>
             </div>
-          </div>
+        </div>
+        <script src="supabase-config.js"></script>
+        <script>
+            sb.auth.getSession().then(({ data: { session } }) => {
+                if (session) window.location.href = 'profil.html';
+            });
+
+            document.getElementById('signupForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const komunikat = document.getElementById('komunikat');
+                komunikat.style.color = 'red';
+                komunikat.textContent = '';
+
+                const login = document.getElementById('loginInput').value.trim().toLowerCase();
+                const imie = document.getElementById('imieInput').value.trim();
+                const nazwisko = document.getElementById('nazwiskoInput').value.trim();
+                const klasa = document.getElementById('klasaInput').value.trim().toLowerCase();
+                const plec = document.querySelector('input[name="plec"]:checked')?.value || '';
+                const password = document.getElementById('passwordInput').value;
+                const password2 = document.getElementById('password2Input').value;
+
+                if (!login || !imie || !nazwisko || !klasa || !password) {
+                    komunikat.textContent = 'Wypełnij wszystkie pola.';
+                    return;
+                }
+                if (password !== password2) {
+                    komunikat.textContent = 'Hasła nie są takie same.';
+                    return;
+                }
+                if (password.length < 6) {
+                    komunikat.textContent = 'Hasło musi mieć co najmniej 6 znaków.';
+                    return;
+                }
+                if (!/^[a-z0-9_]+$/.test(login)) {
+                    komunikat.textContent = 'Login może zawierać tylko litery, cyfry i znak _.';
+                    return;
+                }
+
+                komunikat.style.color = 'gray';
+                komunikat.textContent = 'Rejestracja...';
+
+                const { data, error } = await sb.auth.signUp({
+                    email: login + '@mathematix.pl',
+                    password
+                });
+
+                if (error) {
+                    komunikat.style.color = 'red';
+                    if (error.message.includes('already registered')) {
+                        komunikat.textContent = 'Ten login jest już zajęty.';
+                    } else {
+                        komunikat.textContent = 'Błąd rejestracji: ' + error.message;
+                    }
+                    return;
+                }
+
+                const { error: profileError } = await sb.from('profiles').insert({
+                    id: data.user.id,
+                    login,
+                    imie,
+                    nazwisko,
+                    klasa,
+                    plec
+                });
+
+                if (profileError) {
+                    komunikat.style.color = 'red';
+                    komunikat.textContent = 'Błąd zapisu profilu: ' + profileError.message;
+                    return;
+                }
+
+                window.location.href = 'profil.html';
+            });
+        </script>
     </body>
 </html>

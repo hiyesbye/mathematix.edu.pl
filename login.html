@@ -1,11 +1,12 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <meta charset="utf-8">
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" href="loginsignup.css">
         <link rel="stylesheet" href="mystyle.css">
-        <title>Mathematix</title>
+        <title>Mathematix - Logowanie</title>
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     </head>
     <body>
     <div class="obrazek2">
@@ -16,7 +17,6 @@
         <ul id="navbar">
             <li><a href="index.html">Aktualności</a></li>
             <li><a href="matapki.html">MatApki</a></li>
-
             <li class="dropdown">
                 <a href="javascript:void(0)" class="dropbtn">Filmy instruktażowe</a>
                 <div class="dropdown-content">
@@ -26,12 +26,13 @@
                   <a href="klasa VII.html" title="Filmy z klasy VII">Klasa VII</a>
                   <a href="klasa VIII.html" title="Filmy z klasy VIII">Klasa VIII</a>
                 </div></li>
-                <li class="dropdown">
+            <li class="dropdown">
                 <a href="javascript:void(0)" class="dropbtn">Zadania</a>
                 <div class="dropdown-content">
                   <a href="konkurs.html" title="Zadania konkursowe" style="font-size:80%;">Zadania konkursowe</a>
                   <a href="taski.html" title="Zadania dodatkowe" style="font-size:80%;">Zadania dodatkowe</a>
-                  <li class="dropdown">
+                </div></li>
+            <li class="dropdown">
                 <a href="javascript:void(0)" class="dropbtn">Rozkłady materiału</a>
                 <div class="dropdown-content">
                   <a href="./Klasa IV - Rozkład materiału.pdf" title="Rozkład materiału w klasie IV" target="_blank">Klasa IV</a>
@@ -40,22 +41,56 @@
                   <a href="./Klasa VII - Rozkład materiału.pdf" title="Rozkład materiału w klasie VII" target="_blank">Klasa VII</a>
                   <a href="./Klasa VIII - Rozkład materiału.pdf" title="Rozkład materiału w klasie VIII" target="_blank">Klasa VIII</a>
                 </div></li>
-                <li><a href='https://eduvulcan.pl/logowanie' target='_blank'>Dziennik elektroniczny</a></li>
-                <li><a href='login.html'>Zaloguj się</a></li>
-          </ul>
-                </div>
-          <div class="pusty">&nbsp</div>
-          <div id="newsy">
+            <li><a href='https://eduvulcan.pl/logowanie' target='_blank'>Dziennik elektroniczny</a></li>
+            <li><a href='login.html'>Zaloguj się</a></li>
+        </ul>
+        </div>
+        <div class="pusty">&nbsp</div>
+        <div id="newsy">
             <div class="toform">
-            <h2>Zaloguj się:</h2><br>
-                <form action="#">
-                <label for="fname">Nazwa użytkownika:</label>
-                <input type="text" name="uid" placeholder="Nazwa użytkownika...">
-                <label for="fname">Hasło:</label>
-                <input type="password" name="pwd" placeholder="Hasło...">
-                <button type="submit" name="submit">Zaloguj się</button>
+                <h2>Zaloguj się:</h2><br>
+                <div id="komunikat" style="color:red; margin-bottom:10px; font-size:18px;"></div>
+                <form id="loginForm">
+                    <label>Login:</label>
+                    <input type="text" id="loginInput" placeholder="Wpisz login..." autocomplete="username">
+                    <label>Hasło:</label>
+                    <input type="password" id="passwordInput" placeholder="Hasło..." autocomplete="current-password">
+                    <button type="submit">Zaloguj się</button>
                 </form>
+                <p style="text-align:center; margin-top:16px; font-size:18px;">
+                    Nie masz konta? <a href="signup.html">Zarejestruj się</a>
+                </p>
             </div>
-          </div>
+        </div>
+        <script src="supabase-config.js"></script>
+        <script>
+            sb.auth.getSession().then(({ data: { session } }) => {
+                if (session) window.location.href = 'profil.html';
+            });
+
+            document.getElementById('loginForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const login = document.getElementById('loginInput').value.trim();
+                const password = document.getElementById('passwordInput').value;
+                const komunikat = document.getElementById('komunikat');
+                komunikat.textContent = '';
+
+                if (!login || !password) {
+                    komunikat.textContent = 'Wypełnij wszystkie pola.';
+                    return;
+                }
+
+                const { error } = await sb.auth.signInWithPassword({
+                    email: login + '@mathematix.pl',
+                    password
+                });
+
+                if (error) {
+                    komunikat.textContent = 'Błędny login lub hasło.';
+                } else {
+                    window.location.href = 'profil.html';
+                }
+            });
+        </script>
     </body>
 </html>
