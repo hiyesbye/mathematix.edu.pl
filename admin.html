@@ -257,6 +257,34 @@
             .dz-input.kolor-niebieski { border-color: rgb(11, 105, 148); background: #f0f7fb; }
             .dz-input.kolor-czerwony  { border-color: #c0392b; background: #fff4f3; }
             #dz-komunikat { font-size: 15px; min-height: 20px; }
+
+            /* ── Punkty (kartkówki / prace kontrolne) ── */
+            .pkt-grid { display: flex; flex-direction: column; gap: 6px; }
+            .pkt-row  { display: flex; align-items: center; gap: 8px; }
+            .pkt-row label { width: 88px; font-size: 13px; color: #555; flex-shrink: 0; }
+            .pkt-row input {
+                width: 66px; padding: 5px 6px; text-align: center;
+                font-family: 'Courier New', Courier, monospace; font-size: 14px;
+                border: 2px solid #ccc; border-radius: 4px; box-sizing: border-box;
+            }
+            .pkt-kart .pkt-row input { border-color: #2a9d3f; background: #f0fff3; }
+            .pkt-klas .pkt-row input { border-color: #c0392b; background: #fff4f3; }
+            .pkt-sep  { color: #888; font-weight: bold; font-size: 16px; }
+            .pkt-proc {
+                min-width: 54px; padding: 4px 6px; text-align: center; font-size: 13px;
+                background: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; color: #555;
+                font-family: 'Courier New', Courier, monospace;
+            }
+            .pkt-grade {
+                min-width: 32px; padding: 4px 6px; text-align: center; font-size: 15px;
+                font-weight: bold; background: #f8f8f8; border: 2px solid #ccc;
+                border-radius: 4px; font-family: 'Courier New', Courier, monospace;
+            }
+            .pkt-wynik {
+                margin-top: 8px; padding: 5px 12px; border-radius: 4px;
+                background: #eee; font-size: 14px; font-weight: bold; color: #333;
+                display: inline-block;
+            }
         </style>
     </head>
     <body>
@@ -325,12 +353,14 @@
                             <div class="edit-grid kolor-zielony" id="eg-aktywnosc"></div>
                         </div>
                         <div class="edit-sekcja">
-                            <h4>Prace kontrolne</h4>
-                            <div class="edit-grid kolor-czerwony" id="eg-prace"></div>
+                            <h4>Kartkówki — punkty</h4>
+                            <div class="pkt-grid pkt-kart" id="eg-kart-pkt"></div>
+                            <div class="pkt-wynik" id="wynik-kart">—</div>
                         </div>
                         <div class="edit-sekcja">
-                            <h4>Kartkówki</h4>
-                            <div class="edit-grid kolor-niebieski" id="eg-kartkowki"></div>
+                            <h4>Prace kontrolne — punkty</h4>
+                            <div class="pkt-grid pkt-klas" id="eg-klas-pkt"></div>
+                            <div class="pkt-wynik" id="wynik-klas">—</div>
                         </div>
                         <div class="edit-przyciski">
                             <button class="btn-zapisz" onclick="zapiszOceny()">Zapisz</button>
@@ -349,9 +379,9 @@
                             <select id="dz-typ" onchange="odswiezDziennik()">
                                 <option value="">Wybierz formę sprawdzenia...</option>
                                 <option value="aktywnosc">Aktywność</option>
+                                <option value="punkty">Punkty aktywności</option>
                                 <option value="kartkowka">Kartkówki</option>
                                 <option value="praca_kontrolna">Prace kontrolne</option>
-                                <option value="punkty">Punkty aktywności</option>
                                 <option value="wszystkie">Wszystkie oceny</option>
                             </select>
                             <button class="btn-zapisz-dz" id="btnZapiszDz" onclick="zapiszDziennik()" style="display:none;">Zapisz wszystkie</button>
@@ -366,6 +396,25 @@
                         </div>
                     </div>
 
+                    <div id="maksPanel" style="margin-top: 28px; border-top: 2px solid #ccc; padding-top: 20px;">
+                        <h3 style="font-size: 20px; margin-bottom: 16px;">Ustaw maks. punkty dla klasy</h3>
+                        <div class="dziennik-filtry">
+                            <select id="maks-klasa">
+                                <option value="">Wybierz klasę...</option>
+                            </select>
+                        </div>
+                        <div class="edit-sekcja" style="margin-top: 14px;">
+                            <h4>Kartkówki — maks. punkty</h4>
+                            <div class="edit-grid kolor-zielony" id="maks-kart-grid"></div>
+                        </div>
+                        <div class="edit-sekcja">
+                            <h4>Prace kontrolne — maks. punkty</h4>
+                            <div class="edit-grid kolor-czerwony" id="maks-klas-grid"></div>
+                        </div>
+                        <button class="btn-zapisz-dz" onclick="zastosujMaksima()">Zastosuj do wszystkich w klasie</button>
+                        <div id="maks-komunikat" style="margin-top: 10px; font-size: 15px; min-height: 20px;"></div>
+                    </div>
+
                     <button class="btn-wyloguj" onclick="wyloguj()" style="margin-top: 28px;">Wyloguj się</button>
                 </div>
             </div>
@@ -378,14 +427,9 @@
 
             function liczSrednie(s) {
                 if (!s) return { srAryt: null, srWaz: null };
-                const akt  = [1,2,3,4,5].map(i => s[`aktywnosc_${i}`]).filter(v => v !== null && v !== undefined);
-                const pk   = [1,2,3,4].map(i => s[`praca_kontrolna_${i}`]).filter(v => v !== null && v !== undefined);
-                const kart = [1,2,3,4,5,6,7,8].map(i => s[`kartkowka_${i}`]).filter(v => v !== null && v !== undefined);
-                const wszystkie = [...akt, ...pk, ...kart];
-                const srAryt = wszystkie.length ? wszystkie.reduce((a, b) => a + b, 0) / wszystkie.length : null;
-                const wLicz = akt.reduce((a, b) => a + b, 0) * 1 + pk.reduce((a, b) => a + b, 0) * 3 + kart.reduce((a, b) => a + b, 0) * 2;
-                const wMian = akt.length * 1 + pk.length * 3 + kart.length * 2;
-                return { srAryt, srWaz: wMian ? wLicz / wMian : null };
+                const akt = [1,2,3,4,5].map(i => s[`aktywnosc_${i}`]).filter(v => v !== null && v !== undefined);
+                const srAryt = akt.length ? akt.reduce((a, b) => a + b, 0) / akt.length : null;
+                return { srAryt, srWaz: srAryt };
             }
 
             async function init() {
@@ -422,13 +466,14 @@
 
                 const klasy = [...new Set(wszyscyUczniowie.map(u => u.klasa).filter(Boolean))].sort();
                 klasy.forEach(k => {
-                    ['filterKlasa', 'dz-klasa'].forEach(id => {
+                    ['filterKlasa', 'dz-klasa', 'maks-klasa'].forEach(id => {
                         const opt = document.createElement('option');
                         opt.value = k; opt.textContent = k;
                         document.getElementById(id).appendChild(opt);
                     });
                 });
 
+                budujMaksGridy();
                 renderuj(wszyscyUczniowie);
                 document.getElementById('panelContent').style.display = 'block';
             }
@@ -490,6 +535,192 @@
 
             let edytowanyProfilId = null;
 
+            function budujMaksGridy() {
+                function gen(containerId, prefix, count, etykieta) {
+                    const el = document.getElementById(containerId);
+                    el.innerHTML = '';
+                    for (let i = 1; i <= count; i++) {
+                        const div = document.createElement('div');
+                        div.className = 'edit-pole';
+                        div.innerHTML = `<label>${etykieta} ${i}</label><input type="number" id="maks-${prefix}-${i}" min="0" step="1" placeholder="—">`;
+                        el.appendChild(div);
+                    }
+                }
+                gen('maks-kart-grid', 'kart', 8, 'Kart.');
+                gen('maks-klas-grid', 'klas', 4, 'PK');
+            }
+
+            async function zastosujMaksima() {
+                const klasa = document.getElementById('maks-klasa').value;
+                const kom = document.getElementById('maks-komunikat');
+                if (!klasa) { kom.style.color = 'red'; kom.textContent = 'Wybierz klasę.'; return; }
+
+                kom.style.color = 'gray';
+                kom.textContent = 'Wczytywanie uczniów...';
+
+                const { data: profiles } = await sb.from('profiles').select('id').eq('klasa', klasa);
+                if (!profiles || profiles.length === 0) {
+                    kom.style.color = 'red'; kom.textContent = 'Brak uczniów w tej klasie.'; return;
+                }
+
+                function pobierzMaks(id) {
+                    const val = document.getElementById(id)?.value;
+                    return val !== '' && val !== undefined ? parseInt(val) : null;
+                }
+
+                const maks = {};
+                for (let i = 1; i <= 8; i++) maks[`kartmax${i}`] = pobierzMaks(`maks-kart-${i}`);
+                for (let i = 1; i <= 4; i++) maks[`klasmax${i}`]  = pobierzMaks(`maks-klas-${i}`);
+
+                const rows = profiles.map(p => ({ profil_id: p.id, ...maks }));
+                kom.textContent = `Zapisywanie dla ${rows.length} uczniów...`;
+
+                const { error } = await sb.from('Punktysem1').upsert(rows, { onConflict: 'profil_id' });
+                if (error) {
+                    kom.style.color = 'red';
+                    kom.textContent = 'Błąd: ' + error.message;
+                    return;
+                }
+
+                // Przelicz oceny dla uczniów, którzy mają wpisane punkty
+                kom.textContent = 'Przeliczanie ocen...';
+                const ids = profiles.map(p => p.id);
+                const { data: pktData } = await sb.from('Punktysem1').select('*').in('profil_id', ids);
+                if (pktData && pktData.length > 0) {
+                    const semRows = [];
+                    for (const pkt of pktData) {
+                        const row = { profil_id: pkt.profil_id };
+                        let hasAny = false;
+                        for (let i = 1; i <= 8; i++) {
+                            const pts = pkt[`kartp${i}`];
+                            const max = maks[`kartmax${i}`];
+                            if (pts !== null && pts !== undefined && max) {
+                                const oc = punktyNaOcene(pts, max);
+                                row[`kartkowka_${i}`] = typeof oc === 'number' ? oc : null;
+                                hasAny = true;
+                            }
+                        }
+                        for (let i = 1; i <= 4; i++) {
+                            const pts = pkt[`klasp${i}`];
+                            const max = maks[`klasmax${i}`];
+                            if (pts !== null && pts !== undefined && max) {
+                                const oc = punktyNaOcene(pts, max);
+                                row[`praca_kontrolna_${i}`] = typeof oc === 'number' ? oc : null;
+                                hasAny = true;
+                            }
+                        }
+                        if (hasAny) semRows.push(row);
+                    }
+                    if (semRows.length > 0) {
+                        const { error: semErr } = await sb.from('semestr1').upsert(semRows, { onConflict: 'profil_id' });
+                        if (semErr) {
+                            kom.style.color = 'red';
+                            kom.textContent = 'Błąd przeliczania ocen: ' + semErr.message;
+                            return;
+                        }
+                    }
+                }
+
+                kom.style.color = 'green';
+                kom.textContent = `✓ Zaktualizowano maksima i przeliczono oceny dla ${rows.length} uczniów z klasy ${klasa}.`;
+            }
+
+            function punktyNaOcene(pkt, max) {
+                if (max === null || max === undefined || max <= 0 || pkt === null || pkt === undefined) return null;
+                const proc = Math.round((pkt / max) * 100);
+                if (proc < 0 || proc > 100) return 'BŁĄD';
+                if (proc < 30) return 1;
+                if (proc < 50) return 2;
+                if (proc < 70) return 3;
+                if (proc < 87) return 4;
+                if (proc < 97) return 5;
+                return 6;
+            }
+
+            function ocenaNaKolor(ocena) {
+                if (ocena <= 2) return '#c0392b';
+                if (ocena === 3) return '#e67e22';
+                if (ocena === 4) return '#2980b9';
+                return '#27ae60';
+            }
+
+            function budujPktGrid(containerId, idP, idMax, count, etykieta, wynikId) {
+                const el = document.getElementById(containerId);
+                el.innerHTML = '';
+                for (let i = 1; i <= count; i++) {
+                    const row = document.createElement('div');
+                    row.className = 'pkt-row';
+                    row.innerHTML = `
+                        <label>${etykieta} ${i}:</label>
+                        <input type="number" id="${idP}${i}" min="0" step="1" placeholder="pkt"
+                            oninput="przeliczPkt('${idP}','${idMax}',${count},'${wynikId}')">
+                        <span class="pkt-sep">/</span>
+                        <input type="number" id="${idMax}${i}" min="0" step="1" placeholder="max"
+                            oninput="przeliczPkt('${idP}','${idMax}',${count},'${wynikId}')">
+                        <span class="pkt-proc" id="${idP}proc${i}">—</span>
+                        <span class="pkt-grade" id="${idP}ocena${i}">—</span>
+                    `;
+                    el.appendChild(row);
+                }
+            }
+
+            function przeliczPkt(idP, idMax, count, wynikId) {
+                let sumP = 0, sumM = 0;
+                for (let i = 1; i <= count; i++) {
+                    const pVal = document.getElementById(`${idP}${i}`)?.value;
+                    const mVal = document.getElementById(`${idMax}${i}`)?.value;
+                    sumP += parseFloat(pVal) || 0;
+                    sumM += parseFloat(mVal) || 0;
+                    const procEl  = document.getElementById(`${idP}proc${i}`);
+                    const ocenaEl = document.getElementById(`${idP}ocena${i}`);
+                    if (procEl && ocenaEl) {
+                        const pNum = parseFloat(pVal);
+                        const mNum = parseFloat(mVal);
+                        if (!isNaN(pNum) && !isNaN(mNum) && mNum > 0) {
+                            const proc  = Math.round(pNum / mNum * 100);
+                            const ocena = punktyNaOcene(pNum, mNum);
+                            procEl.textContent = `${proc}%`;
+                            if (ocena === 'BŁĄD') {
+                                procEl.style.color = '#c0392b';
+                                procEl.style.borderColor = '#c0392b';
+                                ocenaEl.textContent = '!';
+                                ocenaEl.style.color = '#c0392b';
+                                ocenaEl.style.borderColor = '#c0392b';
+                            } else if (ocena !== null) {
+                                const kolor = ocenaNaKolor(ocena);
+                                procEl.style.color = kolor;
+                                procEl.style.borderColor = kolor;
+                                ocenaEl.textContent = `${ocena}`;
+                                ocenaEl.style.color = kolor;
+                                ocenaEl.style.borderColor = kolor;
+                            } else {
+                                procEl.style.color = '#999';
+                                procEl.style.borderColor = '#ccc';
+                                ocenaEl.textContent = '—';
+                                ocenaEl.style.color = '#999';
+                                ocenaEl.style.borderColor = '#ccc';
+                            }
+                        } else {
+                            procEl.textContent = '—';
+                            procEl.style.color = '#ccc';
+                            procEl.style.borderColor = '#ccc';
+                            ocenaEl.textContent = '—';
+                            ocenaEl.style.color = '#999';
+                            ocenaEl.style.borderColor = '#ccc';
+                        }
+                    }
+                }
+                const el = document.getElementById(wynikId);
+                if (sumM > 0) {
+                    const proc = (sumP / sumM * 100).toFixed(1);
+                    el.textContent = `Suma: ${sumP} / ${sumM} pkt (${proc}%)`;
+                    el.style.background = parseFloat(proc) >= 50 ? '#d4edda' : '#f8d7da';
+                } else {
+                    el.textContent = '—';
+                    el.style.background = '#eee';
+                }
+            }
+
             async function edytuj(profilId, nazwa, nr) {
                 edytowanyProfilId = profilId;
                 document.getElementById('editTytuł').textContent =
@@ -508,8 +739,6 @@
                     }
                 }
                 polaBuduj('eg-aktywnosc', 'akt', 5, 'Aktywność');
-                polaBuduj('eg-prace', 'pk', 4, 'Praca kontr.');
-                polaBuduj('eg-kartkowki', 'kart', 8, 'Kartkówka');
 
                 // Pobierz istniejące oceny
                 const { data: sem1 } = await sb.from('semestr1')
@@ -523,8 +752,26 @@
                 if (sem1) {
                     ustaw('e-punkty', sem1.punkty_aktywnosci);
                     for (let i = 1; i <= 5; i++) ustaw(`e-akt-${i}`, sem1[`aktywnosc_${i}`]);
-                    for (let i = 1; i <= 4; i++) ustaw(`e-pk-${i}`, sem1[`praca_kontrolna_${i}`]);
-                    for (let i = 1; i <= 8; i++) ustaw(`e-kart-${i}`, sem1[`kartkowka_${i}`]);
+                }
+
+                // Buduj siatki punktów i załaduj dane z Punktysem1
+                budujPktGrid('eg-kart-pkt', 'e-kp-', 'e-km-', 8, 'Kart.', 'wynik-kart');
+                budujPktGrid('eg-klas-pkt', 'e-lp-', 'e-lm-', 4, 'Praca kont.', 'wynik-klas');
+                document.getElementById('wynik-kart').textContent = '—';
+                document.getElementById('wynik-klas').textContent = '—';
+
+                const { data: pkt1 } = await sb.from('Punktysem1').select('*').eq('profil_id', profilId).single();
+                if (pkt1) {
+                    for (let i = 1; i <= 8; i++) {
+                        ustaw(`e-kp-${i}`, pkt1[`kartp${i}`]);
+                        ustaw(`e-km-${i}`, pkt1[`kartmax${i}`]);
+                    }
+                    for (let i = 1; i <= 4; i++) {
+                        ustaw(`e-lp-${i}`, pkt1[`klasp${i}`]);
+                        ustaw(`e-lm-${i}`, pkt1[`klasmax${i}`]);
+                    }
+                    przeliczPkt('e-kp-', 'e-km-', 8, 'wynik-kart');
+                    przeliczPkt('e-lp-', 'e-lm-', 4, 'wynik-klas');
                 }
 
                 document.getElementById('editPanel').style.display = 'block';
@@ -547,14 +794,33 @@
                     punkty_aktywnosci: pobierz('e-punkty'),
                 };
                 for (let i = 1; i <= 5; i++) dane[`aktywnosc_${i}`] = pobierz(`e-akt-${i}`);
-                for (let i = 1; i <= 4; i++) dane[`praca_kontrolna_${i}`] = pobierz(`e-pk-${i}`);
-                for (let i = 1; i <= 8; i++) dane[`kartkowka_${i}`] = pobierz(`e-kart-${i}`);
+                for (let i = 1; i <= 8; i++) {
+                    const oc = punktyNaOcene(pobierz(`e-kp-${i}`), pobierz(`e-km-${i}`));
+                    dane[`kartkowka_${i}`] = typeof oc === 'number' ? oc : null;
+                }
+                for (let i = 1; i <= 4; i++) {
+                    const oc = punktyNaOcene(pobierz(`e-lp-${i}`), pobierz(`e-lm-${i}`));
+                    dane[`praca_kontrolna_${i}`] = typeof oc === 'number' ? oc : null;
+                }
 
-                const { error } = await sb.from('semestr1').upsert(dane, { onConflict: 'profil_id' });
+                const danePkt = { profil_id: edytowanyProfilId };
+                for (let i = 1; i <= 8; i++) {
+                    danePkt[`kartp${i}`]    = pobierz(`e-kp-${i}`);
+                    danePkt[`kartmax${i}`] = pobierz(`e-km-${i}`);
+                }
+                for (let i = 1; i <= 4; i++) {
+                    danePkt[`klasp${i}`]   = pobierz(`e-lp-${i}`);
+                    danePkt[`klasmax${i}`] = pobierz(`e-lm-${i}`);
+                }
 
-                if (error) {
+                const [{ error }, { error: errorPkt }] = await Promise.all([
+                    sb.from('semestr1').upsert(dane, { onConflict: 'profil_id' }),
+                    sb.from('Punktysem1').upsert(danePkt, { onConflict: 'profil_id' })
+                ]);
+
+                if (error || errorPkt) {
                     kom.style.color = 'red';
-                    kom.textContent = 'Błąd zapisu: ' + error.message;
+                    kom.textContent = 'Błąd zapisu: ' + (error?.message || errorPkt?.message);
                 } else {
                     kom.style.color = 'green';
                     kom.textContent = 'Zapisano pomyślnie.';
@@ -568,15 +834,15 @@
 
             // ── Dziennik ocen ──
             const TYPY_DZ = {
-                aktywnosc:       { prefix: 'aktywnosc_',       count: 5, label: 'Aktywność',    kolor: 'zielony',   thKolor: 'th-zielony'   },
-                kartkowka:       { prefix: 'kartkowka_',        count: 8, label: 'Kartkówka',    kolor: 'niebieski', thKolor: 'th-niebieski' },
-                praca_kontrolna: { prefix: 'praca_kontrolna_',  count: 4, label: 'Praca kontr.', kolor: 'czerwony',  thKolor: 'th-czerwony'  },
-                punkty:          { prefix: 'punkty_aktywnosci', count: 1, label: 'Pkt. akt.',    kolor: '',          thKolor: ''             },
+                aktywnosc:       { prefix: 'aktywnosc_',       count: 5, label: 'Aktywność',   kolor: 'zielony',   thKolor: 'th-zielony'   },
+                punkty:          { prefix: 'punkty_aktywnosci', count: 1, label: 'Pkt. akt.',   kolor: '',          thKolor: ''             },
+                kartkowka:       { prefix: 'kartkowka_',        count: 8, label: 'Kartkówka',   kolor: 'niebieski', thKolor: 'th-niebieski' },
+                praca_kontrolna: { prefix: 'praca_kontrolna_', count: 4, label: 'Praca kont.', kolor: 'czerwony',  thKolor: 'th-czerwony'  },
             };
             const SEKCJE_W = [
-                { prefix: 'aktywnosc_',       count: 5, label: 'Akt.',   kolor: 'zielony',   thKolor: 'th-zielony'   },
-                { prefix: 'praca_kontrolna_', count: 4, label: 'PK',     kolor: 'czerwony',  thKolor: 'th-czerwony'  },
-                { prefix: 'kartkowka_',       count: 8, label: 'Kart.',  kolor: 'niebieski', thKolor: 'th-niebieski' },
+                { prefix: 'aktywnosc_',       count: 5, label: 'Akt.',  kolor: 'zielony',   thKolor: 'th-zielony'   },
+                { prefix: 'kartkowka_',        count: 8, label: 'Kart.', kolor: 'niebieski', thKolor: 'th-niebieski' },
+                { prefix: 'praca_kontrolna_', count: 4, label: 'PK',    kolor: 'czerwony',  thKolor: 'th-czerwony'  },
             ];
             let dzDane = [];
             let dzTyp = '';

@@ -205,15 +205,15 @@
     <script src="supabase-config.js"></script>
     <script>
         const TYPY = {
-            aktywnosc:       { prefix: 'aktywnosc_',       count: 5, label: 'Aktywność',    kolor: 'zielony',   thKolor: 'th-zielony'   },
-            kartkowka:       { prefix: 'kartkowka_',        count: 8, label: 'Kartkówka',    kolor: 'niebieski', thKolor: 'th-niebieski' },
-            praca_kontrolna: { prefix: 'praca_kontrolna_',  count: 4, label: 'Praca kontr.', kolor: 'czerwony',  thKolor: 'th-czerwony'  },
-            punkty:          { prefix: 'punkty_aktywnosci', count: 1, label: 'Pkt. akt.',    kolor: '',          thKolor: ''             },
+            aktywnosc:       { prefix: 'aktywnosc_',       count: 5, label: 'Aktywność',   kolor: 'zielony',   thKolor: 'th-zielony'   },
+            punkty:          { prefix: 'punkty_aktywnosci', count: 1, label: 'Pkt. akt.',   kolor: '',          thKolor: ''             },
+            kartkowka:       { prefix: 'kartkowka_',        count: 8, label: 'Kartkówka',   kolor: 'niebieski', thKolor: 'th-niebieski' },
+            praca_kontrolna: { prefix: 'praca_kontrolna_', count: 4, label: 'Praca kont.', kolor: 'czerwony',  thKolor: 'th-czerwony'  },
         };
         const SEKCJE_W = [
-            { prefix: 'aktywnosc_',       count: 5, label: 'Akt.',   kolor: 'zielony',   thKolor: 'th-zielony'   },
-            { prefix: 'praca_kontrolna_', count: 4, label: 'PK',     kolor: 'czerwony',  thKolor: 'th-czerwony'  },
-            { prefix: 'kartkowka_',       count: 8, label: 'Kart.',  kolor: 'niebieski', thKolor: 'th-niebieski' },
+            { prefix: 'aktywnosc_',       count: 5, label: 'Akt.',  kolor: 'zielony',   thKolor: 'th-zielony'   },
+            { prefix: 'kartkowka_',        count: 8, label: 'Kart.', kolor: 'niebieski', thKolor: 'th-niebieski' },
+            { prefix: 'praca_kontrolna_', count: 4, label: 'PK',    kolor: 'czerwony',  thKolor: 'th-czerwony'  },
         ];
 
         const params = new URLSearchParams(window.location.search);

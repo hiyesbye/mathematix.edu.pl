@@ -206,14 +206,14 @@
                             <div class="oceny-grid" id="grid-aktywnosc"></div>
                         </div>
 
-                        <div class="oceny-sekcja">
-                            <h3>Prace kontrolne</h3>
-                            <div class="oceny-grid" id="grid-prace"></div>
-                        </div>
-
-                        <div class="oceny-sekcja">
+                        <div class="oceny-sekcja" style="margin-top: 16px;">
                             <h3>Kartkówki</h3>
                             <div class="oceny-grid" id="grid-kartkowki"></div>
+                        </div>
+
+                        <div class="oceny-sekcja" style="margin-top: 16px;">
+                            <h3>Prace kontrolne</h3>
+                            <div class="oceny-grid" id="grid-prace"></div>
                         </div>
 
                         <div class="oceny-sekcja" style="margin-top: 22px;">
@@ -287,24 +287,19 @@
                 for (let i = 1; i <= 5; i++) aktHtml += kafelek(`Aktywność ${i}`, sem1?.[`aktywnosc_${i}`], 'zielony');
                 document.getElementById('grid-aktywnosc').innerHTML = aktHtml;
 
-                let pkHtml = '';
-                for (let i = 1; i <= 4; i++) pkHtml += kafelek(`Praca kontr. ${i}`, sem1?.[`praca_kontrolna_${i}`], 'czerwony');
-                document.getElementById('grid-prace').innerHTML = pkHtml;
-
                 let kartHtml = '';
                 for (let i = 1; i <= 8; i++) kartHtml += kafelek(`Kartkówka ${i}`, sem1?.[`kartkowka_${i}`], 'niebieski');
                 document.getElementById('grid-kartkowki').innerHTML = kartHtml;
 
+                let pkHtml = '';
+                for (let i = 1; i <= 4; i++) pkHtml += kafelek(`Praca kont. ${i}`, sem1?.[`praca_kontrolna_${i}`], 'czerwony');
+                document.getElementById('grid-prace').innerHTML = pkHtml;
+
                 function liczSrednie(s) {
                     if (!s) return { aryt: null, waz: null };
                     const akt = [1,2,3,4,5].map(i => s[`aktywnosc_${i}`]).filter(v => v !== null && v !== undefined);
-                    const pk  = [1,2,3,4].map(i => s[`praca_kontrolna_${i}`]).filter(v => v !== null && v !== undefined);
-                    const kart = [1,2,3,4,5,6,7,8].map(i => s[`kartkowka_${i}`]).filter(v => v !== null && v !== undefined);
-                    const wszystkie = [...akt, ...pk, ...kart];
-                    const aryt = wszystkie.length ? wszystkie.reduce((a, b) => a + b, 0) / wszystkie.length : null;
-                    const wLicz = akt.reduce((a, b) => a + b, 0) * 1 + pk.reduce((a, b) => a + b, 0) * 3 + kart.reduce((a, b) => a + b, 0) * 2;
-                    const wMian = akt.length * 1 + pk.length * 3 + kart.length * 2;
-                    return { aryt, waz: wMian ? wLicz / wMian : null };
+                    const aryt = akt.length ? akt.reduce((a, b) => a + b, 0) / akt.length : null;
+                    return { aryt, waz: aryt };
                 }
 
                 const { aryt, waz } = liczSrednie(sem1);
