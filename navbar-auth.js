@@ -9,7 +9,7 @@
     const signupLi = document.querySelector('#navbar a[href="signup.html"]')?.closest('li');
 
     if (loginLi) {
-        loginLi.innerHTML = `<a href="profil.html" style="color:rgb(12,200,200);">Zalogowano [${login}]</a>`;
+        loginLi.innerHTML = `<a href="profil.html" style="color:rgb(12,200,200);">Mój profil [${login}]</a>`;
         const wylogujLi = document.createElement('li');
         wylogujLi.innerHTML = `<a href="#" style="color:rgb(255,100,100);" id="navWyloguj">Wyloguj się</a>`;
         loginLi.after(wylogujLi);
