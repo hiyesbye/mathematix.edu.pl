@@ -57,6 +57,17 @@
             white-space: nowrap;
         }
         .btn-zapisz:hover { background: #1e7a30; }
+        .btn-powrot {
+            padding: 7px 16px;
+            background: transparent;
+            color: #ccc;
+            border: 1px solid #555;
+            border-radius: 5px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .btn-powrot:hover { background: #444; color: white; }
 
         /* ── Tabela ── */
         .table-wrap {
@@ -173,7 +184,10 @@
 </head>
 <body>
     <div class="topbar">
-        <span class="topbar-title" id="tytul">Dziennik ocen</span>
+        <div style="display:flex; align-items:center; gap:14px;">
+            <button class="btn-powrot" onclick="window.close()">&#8592; Powrót</button>
+            <span class="topbar-title" id="tytul">Dziennik ocen</span>
+        </div>
         <div class="topbar-right">
             <span id="komunikat"></span>
             <button class="btn-zapisz" onclick="zapisz()">Zapisz wszystkie</button>
