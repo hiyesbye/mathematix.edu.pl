@@ -185,7 +185,7 @@
 <body>
     <div class="topbar">
         <div style="display:flex; align-items:center; gap:14px;">
-            <button class="btn-powrot" onclick="window.close()">&#8592; Powrót</button>
+            <button class="btn-powrot" onclick="window.opener && !window.opener.closed ? window.close() : window.location.href='admin.html'">&#8592; Powrót</button>
             <span class="topbar-title" id="tytul">Dziennik ocen</span>
         </div>
         <div class="topbar-right">
