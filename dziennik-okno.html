@@ -210,31 +210,41 @@
             praca_kontrolna: { prefix: 'praca_kontrolna_',  count: 4, label: 'Praca kontr.', kolor: 'czerwony',  thKolor: 'th-czerwony'  },
             punkty:          { prefix: 'punkty_aktywnosci', count: 1, label: 'Pkt. akt.',    kolor: '',          thKolor: ''             },
         };
+        const SEKCJE_W = [
+            { prefix: 'aktywnosc_',       count: 5, label: 'Akt.',   kolor: 'zielony',   thKolor: 'th-zielony'   },
+            { prefix: 'praca_kontrolna_', count: 4, label: 'PK',     kolor: 'czerwony',  thKolor: 'th-czerwony'  },
+            { prefix: 'kartkowka_',       count: 8, label: 'Kart.',  kolor: 'niebieski', thKolor: 'th-niebieski' },
+        ];
 
         const params = new URLSearchParams(window.location.search);
         const klasa  = params.get('klasa') || '';
         const typ    = params.get('typ')   || '';
         let dane = [];
 
+        const czyWszystkieKlasy = klasa === 'wszystkie_klasy';
+
         async function init() {
             const t = TYPY[typ];
-            if (!klasa || !t) {
+            if (!klasa || (!t && typ !== 'wszystkie')) {
                 document.getElementById('ladowanie').textContent = 'Nieprawidłowe parametry.';
                 return;
             }
 
-            document.getElementById('tytul').textContent = `Klasa ${klasa} — ${t.label}`;
-            document.title = `Dziennik: ${klasa} / ${t.label}`;
+            const tytulKlasa = czyWszystkieKlasy ? 'Wszystkie klasy' : `Klasa ${klasa}`;
+            const tytulLabel = typ === 'wszystkie' ? 'Wszystkie oceny' : t.label;
+            document.getElementById('tytul').textContent = `${tytulKlasa} — ${tytulLabel}`;
+            document.title = `Dziennik: ${czyWszystkieKlasy ? 'Wszystkie' : klasa} / ${tytulLabel}`;
 
             // Poczekaj na przywrócenie sesji z localStorage zanim Supabase RLS przepuści zapytanie
             await sb.auth.getSession();
 
-            const { data: profiles, error: pe } = await sb.from('profiles')
-                .select('*').eq('klasa', klasa).order('nr');
+            let q = sb.from('profiles').select('*');
+            if (!czyWszystkieKlasy) q = q.eq('klasa', klasa);
+            const { data: profiles, error: pe } = await q.order('klasa').order('nr');
 
             if (pe || !profiles || profiles.length === 0) {
                 document.getElementById('ladowanie').textContent =
-                    pe ? 'Błąd: ' + pe.message : 'Brak uczniów w tej klasie.';
+                    pe ? 'Błąd: ' + pe.message : 'Brak uczniów.';
                 return;
             }
 
@@ -245,16 +255,48 @@
 
             dane = profiles.map(p => ({ profil: p, sem1: semMap[p.id] || null }));
 
-            renderuj(t);
+            if (typ === 'wszystkie') {
+                renderujWszystkie();
+            } else {
+                renderuj(t);
+            }
             document.getElementById('ladowanie').style.display = 'none';
             document.getElementById('tableWrap').style.display = 'block';
+        }
+
+        function renderujWszystkie() {
+            const thead = document.getElementById('thead');
+            const tbody = document.getElementById('tbody');
+
+            let thRow = `<tr><th class="th-nr">Nr</th><th class="th-uczen">Uczeń</th>${czyWszystkieKlasy ? '<th>Klasa</th>' : ''}`;
+            for (const sek of SEKCJE_W) {
+                for (let i = 1; i <= sek.count; i++) {
+                    thRow += `<th class="${sek.thKolor}">${sek.label} ${i}</th>`;
+                }
+            }
+            thead.innerHTML = thRow + '</tr>';
+
+            tbody.innerHTML = dane.map(({ profil, sem1 }) => {
+                let tds = `<td class="td-nr">${profil.nr ?? '—'}</td>`;
+                tds += `<td class="td-uczen">${profil.imie || ''} ${profil.nazwisko || ''}</td>`;
+                if (czyWszystkieKlasy) tds += `<td>${profil.klasa || '—'}</td>`;
+                for (const sek of SEKCJE_W) {
+                    for (let i = 1; i <= sek.count; i++) {
+                        const field = `${sek.prefix}${i}`;
+                        const val = sem1?.[field];
+                        const displayed = (val !== null && val !== undefined) ? val : '';
+                        tds += `<td><input class="dz-input kolor-${sek.kolor}" type="number" id="dz-${profil.id}-${field}" step="1" value="${displayed}" placeholder="—"></td>`;
+                    }
+                }
+                return `<tr>${tds}</tr>`;
+            }).join('');
         }
 
         function renderuj(t) {
             const thead = document.getElementById('thead');
             const tbody = document.getElementById('tbody');
 
-            let thRow = '<tr><th class="th-nr">Nr</th><th class="th-uczen">Uczeń</th>';
+            let thRow = `<tr><th class="th-nr">Nr</th><th class="th-uczen">Uczeń</th>${czyWszystkieKlasy ? '<th>Klasa</th>' : ''}`;
             for (let i = 1; i <= t.count; i++) {
                 const label = t.count > 1 ? `${t.label} ${i}` : t.label;
                 thRow += `<th class="${t.thKolor}">${label}</th>`;
@@ -264,6 +306,7 @@
             tbody.innerHTML = dane.map(({ profil, sem1 }) => {
                 let tds = `<td class="td-nr">${profil.nr ?? '—'}</td>`;
                 tds += `<td class="td-uczen">${profil.imie || ''} ${profil.nazwisko || ''}</td>`;
+                if (czyWszystkieKlasy) tds += `<td>${profil.klasa || '—'}</td>`;
                 for (let i = 1; i <= t.count; i++) {
                     const field = t.count === 1 ? t.prefix : `${t.prefix}${i}`;
                     const val = sem1?.[field];
@@ -276,20 +319,35 @@
         }
 
         async function zapisz() {
-            const t = TYPY[typ];
             const kom = document.getElementById('komunikat');
             kom.style.color = '#ccc';
             kom.textContent = 'Zapisywanie...';
 
-            const toUpsert = dane.map(({ profil }) => {
-                const row = { profil_id: profil.id };
-                for (let i = 1; i <= t.count; i++) {
-                    const field = t.count === 1 ? t.prefix : `${t.prefix}${i}`;
-                    const val = document.getElementById(`dz-${profil.id}-${i}`)?.value;
-                    row[field] = (val !== '' && val !== undefined) ? parseInt(val) : null;
-                }
-                return row;
-            });
+            let toUpsert;
+            if (typ === 'wszystkie') {
+                toUpsert = dane.map(({ profil }) => {
+                    const row = { profil_id: profil.id };
+                    for (const sek of SEKCJE_W) {
+                        for (let i = 1; i <= sek.count; i++) {
+                            const field = `${sek.prefix}${i}`;
+                            const val = document.getElementById(`dz-${profil.id}-${field}`)?.value;
+                            row[field] = (val !== '' && val !== undefined) ? parseInt(val) : null;
+                        }
+                    }
+                    return row;
+                });
+            } else {
+                const t = TYPY[typ];
+                toUpsert = dane.map(({ profil }) => {
+                    const row = { profil_id: profil.id };
+                    for (let i = 1; i <= t.count; i++) {
+                        const field = t.count === 1 ? t.prefix : `${t.prefix}${i}`;
+                        const val = document.getElementById(`dz-${profil.id}-${i}`)?.value;
+                        row[field] = (val !== '' && val !== undefined) ? parseInt(val) : null;
+                    }
+                    return row;
+                });
+            }
 
             const { error } = await sb.from('semestr1').upsert(toUpsert, { onConflict: 'profil_id' });
             if (error) {

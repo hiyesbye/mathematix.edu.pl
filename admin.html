@@ -344,6 +344,7 @@
                         <div class="dziennik-filtry">
                             <select id="dz-klasa" onchange="odswiezDziennik()">
                                 <option value="">Wybierz klasę...</option>
+                                <option value="wszystkie_klasy">Wszystkie klasy</option>
                             </select>
                             <select id="dz-typ" onchange="odswiezDziennik()">
                                 <option value="">Wybierz formę sprawdzenia...</option>
@@ -351,6 +352,7 @@
                                 <option value="kartkowka">Kartkówki</option>
                                 <option value="praca_kontrolna">Prace kontrolne</option>
                                 <option value="punkty">Punkty aktywności</option>
+                                <option value="wszystkie">Wszystkie oceny</option>
                             </select>
                             <button class="btn-zapisz-dz" id="btnZapiszDz" onclick="zapiszDziennik()" style="display:none;">Zapisz wszystkie</button>
                             <button class="btn-nowe-okno" id="btnNoweOkno" onclick="otworzNoweOkno()" style="display:none;">&#x2197; Nowe okno</button>
@@ -571,11 +573,17 @@
                 praca_kontrolna: { prefix: 'praca_kontrolna_',  count: 4, label: 'Praca kontr.', kolor: 'czerwony',  thKolor: 'th-czerwony'  },
                 punkty:          { prefix: 'punkty_aktywnosci', count: 1, label: 'Pkt. akt.',    kolor: '',          thKolor: ''             },
             };
+            const SEKCJE_W = [
+                { prefix: 'aktywnosc_',       count: 5, label: 'Akt.',   kolor: 'zielony',   thKolor: 'th-zielony'   },
+                { prefix: 'praca_kontrolna_', count: 4, label: 'PK',     kolor: 'czerwony',  thKolor: 'th-czerwony'  },
+                { prefix: 'kartkowka_',       count: 8, label: 'Kart.',  kolor: 'niebieski', thKolor: 'th-niebieski' },
+            ];
             let dzDane = [];
             let dzTyp = '';
+            let dzKlasa = '';
 
             async function odswiezDziennik() {
-                const klasa = document.getElementById('dz-klasa').value;
+                dzKlasa = document.getElementById('dz-klasa').value;
                 dzTyp = document.getElementById('dz-typ').value;
                 const tabela = document.getElementById('dz-tabela');
                 const btn = document.getElementById('btnZapiszDz');
@@ -585,14 +593,16 @@
                 btn.style.display = 'none';
                 document.getElementById('btnNoweOkno').style.display = 'none';
 
-                if (!klasa || !dzTyp) return;
+                if (!dzKlasa || !dzTyp) return;
 
                 kom.style.color = 'gray';
                 kom.textContent = 'Wczytywanie...';
 
-                const { data: profiles } = await sb.from('profiles').select('*').eq('klasa', klasa).order('nr');
+                let q = sb.from('profiles').select('*');
+                if (dzKlasa !== 'wszystkie_klasy') q = q.eq('klasa', dzKlasa);
+                const { data: profiles } = await q.order('klasa').order('nr');
                 if (!profiles || profiles.length === 0) {
-                    kom.textContent = 'Brak uczniów w tej klasie.';
+                    kom.textContent = 'Brak uczniów.';
                     return;
                 }
 
@@ -610,12 +620,14 @@
             }
 
             function renderujDziennik() {
+                if (dzTyp === 'wszystkie') { renderujDziennikWszystkie(); return; }
                 const typ = TYPY_DZ[dzTyp];
                 if (!typ) return;
                 const thead = document.getElementById('dz-thead');
                 const tbody = document.getElementById('dz-tbody');
+                const showKlasa = dzKlasa === 'wszystkie_klasy';
 
-                let thRow = '<tr><th>Nr</th><th>Uczeń</th>';
+                let thRow = `<tr><th>Nr</th><th>Uczeń</th>${showKlasa ? '<th>Klasa</th>' : ''}`;
                 for (let i = 1; i <= typ.count; i++) {
                     const etykieta = typ.count > 1 ? `${typ.label} ${i}` : typ.label;
                     thRow += `<th class="${typ.thKolor}">${etykieta}</th>`;
@@ -624,12 +636,41 @@
 
                 tbody.innerHTML = dzDane.map(({ profil, sem1 }) => {
                     let tds = `<td>${profil.nr ?? '—'}</td><td>${profil.imie || ''} ${profil.nazwisko || ''}</td>`;
+                    if (showKlasa) tds += `<td>${profil.klasa || '—'}</td>`;
                     for (let i = 1; i <= typ.count; i++) {
                         const field = typ.count === 1 ? typ.prefix : `${typ.prefix}${i}`;
                         const val = sem1?.[field];
                         const displayed = (val !== null && val !== undefined) ? val : '';
                         const colorCls = typ.kolor ? `kolor-${typ.kolor}` : '';
                         tds += `<td><input class="dz-input ${colorCls}" type="number" id="dz-${profil.id}-${i}" step="1" value="${displayed}" placeholder="—"></td>`;
+                    }
+                    return `<tr>${tds}</tr>`;
+                }).join('');
+            }
+
+            function renderujDziennikWszystkie() {
+                const thead = document.getElementById('dz-thead');
+                const tbody = document.getElementById('dz-tbody');
+                const showKlasa = dzKlasa === 'wszystkie_klasy';
+
+                let thRow = `<tr><th>Nr</th><th>Uczeń</th>${showKlasa ? '<th>Klasa</th>' : ''}`;
+                for (const sek of SEKCJE_W) {
+                    for (let i = 1; i <= sek.count; i++) {
+                        thRow += `<th class="${sek.thKolor}">${sek.label} ${i}</th>`;
+                    }
+                }
+                thead.innerHTML = thRow + '</tr>';
+
+                tbody.innerHTML = dzDane.map(({ profil, sem1 }) => {
+                    let tds = `<td>${profil.nr ?? '—'}</td><td>${profil.imie || ''} ${profil.nazwisko || ''}</td>`;
+                    if (showKlasa) tds += `<td>${profil.klasa || '—'}</td>`;
+                    for (const sek of SEKCJE_W) {
+                        for (let i = 1; i <= sek.count; i++) {
+                            const field = `${sek.prefix}${i}`;
+                            const val = sem1?.[field];
+                            const displayed = (val !== null && val !== undefined) ? val : '';
+                            tds += `<td><input class="dz-input kolor-${sek.kolor}" type="number" id="dz-${profil.id}-${field}" step="1" value="${displayed}" placeholder="—"></td>`;
+                        }
                     }
                     return `<tr>${tds}</tr>`;
                 }).join('');
@@ -644,20 +685,35 @@
 
             async function zapiszDziennik() {
                 if (!dzTyp || dzDane.length === 0) return;
-                const typ = TYPY_DZ[dzTyp];
                 const kom = document.getElementById('dz-komunikat');
                 kom.style.color = 'gray';
                 kom.textContent = 'Zapisywanie...';
 
-                const toUpsert = dzDane.map(({ profil }) => {
-                    const row = { profil_id: profil.id };
-                    for (let i = 1; i <= typ.count; i++) {
-                        const field = typ.count === 1 ? typ.prefix : `${typ.prefix}${i}`;
-                        const val = document.getElementById(`dz-${profil.id}-${i}`)?.value;
-                        row[field] = (val !== '' && val !== undefined) ? parseInt(val) : null;
-                    }
-                    return row;
-                });
+                let toUpsert;
+                if (dzTyp === 'wszystkie') {
+                    toUpsert = dzDane.map(({ profil }) => {
+                        const row = { profil_id: profil.id };
+                        for (const sek of SEKCJE_W) {
+                            for (let i = 1; i <= sek.count; i++) {
+                                const field = `${sek.prefix}${i}`;
+                                const val = document.getElementById(`dz-${profil.id}-${field}`)?.value;
+                                row[field] = (val !== '' && val !== undefined) ? parseInt(val) : null;
+                            }
+                        }
+                        return row;
+                    });
+                } else {
+                    const typ = TYPY_DZ[dzTyp];
+                    toUpsert = dzDane.map(({ profil }) => {
+                        const row = { profil_id: profil.id };
+                        for (let i = 1; i <= typ.count; i++) {
+                            const field = typ.count === 1 ? typ.prefix : `${typ.prefix}${i}`;
+                            const val = document.getElementById(`dz-${profil.id}-${i}`)?.value;
+                            row[field] = (val !== '' && val !== undefined) ? parseInt(val) : null;
+                        }
+                        return row;
+                    });
+                }
 
                 const { error } = await sb.from('semestr1').upsert(toUpsert, { onConflict: 'profil_id' });
                 if (error) {

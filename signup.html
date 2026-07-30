@@ -78,9 +78,13 @@
         </div>
         <script src="supabase-config.js"></script>
         <script>
-            sb.auth.getSession().then(({ data: { session } }) => {
-                if (session) window.location.href = 'profil.html';
-            });
+            // Tylko admin może wejść na tę stronę
+            (async () => {
+                const { data: { session } } = await sb.auth.getSession();
+                if (!session) { window.location.href = 'login.html'; return; }
+                const { data: adminRow } = await sb.from('admins').select('id').eq('id', session.user.id).single();
+                if (!adminRow) { window.location.href = 'profil.html'; }
+            })();
 
             document.getElementById('signupForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -116,6 +120,9 @@
                 komunikat.style.color = 'gray';
                 komunikat.textContent = 'Rejestracja...';
 
+                // Zapisz sesję admina przed signUp (który ją nadpisze)
+                const { data: { session: adminSession } } = await sb.auth.getSession();
+
                 const { data, error } = await sb.auth.signUp({
                     email: login + '@mathematix.edu.pl',
                     password
@@ -131,6 +138,7 @@
                     return;
                 }
 
+                // Wstaw profil używając sesji nowego użytkownika (spełnia RLS: auth.uid() = id)
                 const { error: profileError } = await sb.from('profiles').insert({
                     id: data.user.id,
                     login,
@@ -140,13 +148,24 @@
                     plec
                 });
 
+                // Wyloguj nowego ucznia i przywróć sesję admina
+                await sb.auth.signOut();
+                if (adminSession) {
+                    await sb.auth.setSession({
+                        access_token: adminSession.access_token,
+                        refresh_token: adminSession.refresh_token
+                    });
+                }
+
                 if (profileError) {
                     komunikat.style.color = 'red';
                     komunikat.textContent = 'Błąd zapisu profilu: ' + profileError.message;
                     return;
                 }
 
-                window.location.href = 'profil.html';
+                komunikat.style.color = 'green';
+                komunikat.textContent = `✓ Zarejestrowano: ${imie} ${nazwisko} (${login}) — klasa ${klasa}`;
+                document.getElementById('signupForm').reset();
             });
         </script>
             <script src="navbar-auth.js"></script>
