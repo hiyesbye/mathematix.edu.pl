@@ -71,6 +71,111 @@
             .btn-wyloguj:hover { background: rgb(11, 105, 148); }
             #ladowanie { text-align:center; font-size:20px; padding:40px; font-family:monospace; }
             #blad { color:red; text-align:center; font-size:20px; padding:30px; font-family:monospace; }
+            .btn-edytuj {
+                padding: 4px 12px;
+                background: rgb(11, 105, 148);
+                color: white;
+                border: none;
+                border-radius: 4px;
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 14px;
+                cursor: pointer;
+            }
+            .btn-edytuj:hover { background: #0a7aa8; }
+            #editPanel {
+                display: none;
+                background: #f0f7fb;
+                border: 2px solid rgb(11, 105, 148);
+                border-radius: 8px;
+                padding: 20px 28px;
+                margin-top: 24px;
+                font-family: 'Courier New', Courier, monospace;
+            }
+            #editPanel h3 {
+                font-size: 20px;
+                margin-bottom: 18px;
+                color: #333;
+            }
+            .edit-sekcja {
+                margin-bottom: 16px;
+            }
+            .edit-sekcja h4 {
+                font-size: 13px;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                color: #555;
+                border-bottom: 1px solid #ccc;
+                padding-bottom: 4px;
+                margin-bottom: 10px;
+            }
+            .edit-grid {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            .edit-pole {
+                display: flex;
+                flex-direction: column;
+                gap: 3px;
+                min-width: 110px;
+            }
+            .edit-pole label {
+                font-size: 13px;
+                color: #555;
+            }
+            .edit-pole input {
+                padding: 6px 8px;
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 15px;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                width: 100%;
+                box-sizing: border-box;
+            }
+            .edit-punkty {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                margin-bottom: 16px;
+                font-size: 16px;
+            }
+            .edit-punkty input {
+                padding: 6px 10px;
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 16px;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                width: 100px;
+            }
+            .edit-przyciski {
+                display: flex;
+                gap: 12px;
+                margin-top: 18px;
+            }
+            .btn-zapisz {
+                padding: 10px 28px;
+                background: #2a9d3f;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 16px;
+                font-weight: bold;
+                cursor: pointer;
+            }
+            .btn-zapisz:hover { background: #228a34; }
+            .btn-anuluj {
+                padding: 10px 28px;
+                background: #888;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 16px;
+                cursor: pointer;
+            }
+            .btn-anuluj:hover { background: #666; }
+            #editKomunikat { font-size: 15px; margin-top: 10px; }
         </style>
     </head>
     <body>
@@ -119,11 +224,37 @@
                                     <th onclick="sortuj('nazwisko')">Nazwisko ↕</th>
                                     <th onclick="sortuj('klasa')">Klasa ↕</th>
                                     <th onclick="sortuj('plec')">Płeć ↕</th>
+                                    <th>Oceny</th>
                                 </tr>
                             </thead>
                             <tbody id="tbody"></tbody>
                         </table>
                     </div>
+                    <div id="editPanel">
+                        <h3 id="editTytuł"></h3>
+                        <div class="edit-punkty">
+                            <label>Punkty aktywności:</label>
+                            <input type="number" id="e-punkty" min="0" placeholder="—">
+                        </div>
+                        <div class="edit-sekcja">
+                            <h4>Aktywność</h4>
+                            <div class="edit-grid" id="eg-aktywnosc"></div>
+                        </div>
+                        <div class="edit-sekcja">
+                            <h4>Prace kontrolne</h4>
+                            <div class="edit-grid" id="eg-prace"></div>
+                        </div>
+                        <div class="edit-sekcja">
+                            <h4>Kartkówki</h4>
+                            <div class="edit-grid" id="eg-kartkowki"></div>
+                        </div>
+                        <div class="edit-przyciski">
+                            <button class="btn-zapisz" onclick="zapiszOceny()">Zapisz</button>
+                            <button class="btn-anuluj" onclick="anulujEdycje()">Anuluj</button>
+                        </div>
+                        <div id="editKomunikat"></div>
+                    </div>
+
                     <button class="btn-wyloguj" onclick="wyloguj()">Wyloguj się</button>
                 </div>
             </div>
@@ -208,12 +339,91 @@
                         <td>${u.nazwisko || '—'}</td>
                         <td>${u.klasa || '—'}</td>
                         <td>${u.plec === 'K' ? 'Kobieta' : u.plec === 'M' ? 'Mężczyzna' : '—'}</td>
+                        <td><button class="btn-edytuj" onclick="edytuj('${u.id}','${u.imie || ''} ${u.nazwisko || ''}','${u.nr ?? ''}')">Edytuj</button></td>
                     </tr>`).join('');
             }
 
             async function wyloguj() {
                 await sb.auth.signOut();
                 window.location.href = 'login.html';
+            }
+
+            let edytowanyProfilId = null;
+
+            async function edytuj(profilId, nazwa, nr) {
+                edytowanyProfilId = profilId;
+                document.getElementById('editTytuł').textContent =
+                    `Edytujesz: ${nazwa.trim()}${nr ? ' (nr: ' + nr + ')' : ''}`;
+                document.getElementById('editKomunikat').textContent = '';
+
+                // Generuj pola wejściowe
+                function polaBuduj(containerId, prefix, count, etykieta) {
+                    const el = document.getElementById(containerId);
+                    el.innerHTML = '';
+                    for (let i = 1; i <= count; i++) {
+                        const div = document.createElement('div');
+                        div.className = 'edit-pole';
+                        div.innerHTML = `<label>${etykieta} ${i}</label><input type="number" id="e-${prefix}-${i}" step="1" placeholder="—">`;
+                        el.appendChild(div);
+                    }
+                }
+                polaBuduj('eg-aktywnosc', 'akt', 5, 'Aktywność');
+                polaBuduj('eg-prace', 'pk', 4, 'Praca kontr.');
+                polaBuduj('eg-kartkowki', 'kart', 8, 'Kartkówka');
+
+                // Pobierz istniejące oceny
+                const { data: sem1 } = await sb.from('semestr1')
+                    .select('*').eq('profil_id', profilId).single();
+
+                function ustaw(id, val) {
+                    const el = document.getElementById(id);
+                    if (el) el.value = (val !== null && val !== undefined) ? val : '';
+                }
+
+                if (sem1) {
+                    ustaw('e-punkty', sem1.punkty_aktywnosci);
+                    for (let i = 1; i <= 5; i++) ustaw(`e-akt-${i}`, sem1[`aktywnosc_${i}`]);
+                    for (let i = 1; i <= 4; i++) ustaw(`e-pk-${i}`, sem1[`praca_kontrolna_${i}`]);
+                    for (let i = 1; i <= 8; i++) ustaw(`e-kart-${i}`, sem1[`kartkowka_${i}`]);
+                }
+
+                document.getElementById('editPanel').style.display = 'block';
+                document.getElementById('editPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+
+            async function zapiszOceny() {
+                if (!edytowanyProfilId) return;
+                const kom = document.getElementById('editKomunikat');
+                kom.style.color = 'gray';
+                kom.textContent = 'Zapisywanie...';
+
+                function pobierz(id) {
+                    const val = document.getElementById(id)?.value;
+                    return val !== '' && val !== undefined ? parseInt(val) : null;
+                }
+
+                const dane = {
+                    profil_id: edytowanyProfilId,
+                    punkty_aktywnosci: pobierz('e-punkty'),
+                };
+                for (let i = 1; i <= 5; i++) dane[`aktywnosc_${i}`] = pobierz(`e-akt-${i}`);
+                for (let i = 1; i <= 4; i++) dane[`praca_kontrolna_${i}`] = pobierz(`e-pk-${i}`);
+                for (let i = 1; i <= 8; i++) dane[`kartkowka_${i}`] = pobierz(`e-kart-${i}`);
+
+                const { error } = await sb.from('semestr1').upsert(dane, { onConflict: 'profil_id' });
+
+                if (error) {
+                    kom.style.color = 'red';
+                    kom.textContent = 'Błąd zapisu: ' + error.message;
+                } else {
+                    kom.style.color = 'green';
+                    kom.textContent = 'Zapisano pomyślnie.';
+                }
+            }
+
+            function anulujEdycje() {
+                document.getElementById('editPanel').style.display = 'none';
+                edytowanyProfilId = null;
             }
 
             init();
