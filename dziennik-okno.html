@@ -11,7 +11,8 @@
         body {
             font-family: 'Courier New', Courier, monospace;
             background: #eef2f5;
-            overflow-x: hidden;
+            overflow: hidden;  /* tabela scrolluje się wewnątrz table-wrap */
+            height: 100vh;
         }
 
         /* ── Górny pasek ── */
@@ -59,8 +60,8 @@
 
         /* ── Tabela ── */
         .table-wrap {
-            padding: 18px 14px 30px;
-            overflow-x: auto;
+            height: calc(100vh - 52px);
+            overflow: auto;  /* obie osie — sticky działa poprawnie */
         }
 
         table {
@@ -78,7 +79,7 @@
             text-align: center;
             white-space: nowrap;
             position: sticky;
-            top: 52px;
+            top: 0;
             z-index: 10;
             border-right: 1px solid rgba(255,255,255,0.1);
         }
@@ -86,11 +87,11 @@
         th.th-niebieski { background: rgb(11, 105, 148); }
         th.th-czerwony  { background: #b52a1e; }
 
-        /* Sticky lewe kolumny — nagłówki (róg = oba sticky) */
+        /* Sticky lewe kolumny — nagłówki (róg = sticky top + left) */
         th.th-nr {
             background: #2d2d2d;
             position: sticky;
-            top: 52px;
+            top: 0;
             left: 0;
             z-index: 30;
             min-width: 52px;
@@ -99,7 +100,7 @@
         th.th-uczen {
             background: #2d2d2d;
             position: sticky;
-            top: 52px;
+            top: 0;
             left: 52px;
             z-index: 30;
             text-align: left;
