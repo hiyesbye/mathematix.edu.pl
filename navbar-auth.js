@@ -1,12 +1,13 @@
 (async () => {
     if (typeof sb === 'undefined') return;
     const { data: { session } } = await sb.auth.getSession();
+
+    const loginLi  = document.querySelector('#navbar a[href="login.html"]')?.closest('li');
+    const signupA  = document.querySelector('#navbar a[href="signup.html"]');
+
     if (!session) return;
 
     const login = session.user.email.split('@')[0];
-
-    const loginLi = document.querySelector('#navbar a[href="login.html"]')?.closest('li');
-    const signupLi = document.querySelector('#navbar a[href="signup.html"]')?.closest('li');
 
     if (loginLi) {
         loginLi.innerHTML = `<a href="profil.html" style="color:rgb(12,200,200);">Mój profil [${login}]</a>`;
@@ -19,5 +20,7 @@
             window.location.reload();
         });
     }
-    if (signupLi) signupLi.remove();
+
+    const { data: adminRow } = await sb.from('admins').select('id').eq('id', session.user.id).single();
+    if (adminRow && signupA) signupA.style.display = 'inline-block';
 })();

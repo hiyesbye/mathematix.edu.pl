@@ -2,6 +2,9 @@
     margin: 0;
 }
 
+/* Rejestracja widoczna tylko dla admina (pokazywana przez navbar-auth.js) */
+#navbar a[href="signup.html"] { display: none; }
+
 iframe {
     display: none;
 }
