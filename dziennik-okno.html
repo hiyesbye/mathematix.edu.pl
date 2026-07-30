@@ -211,11 +211,15 @@
             document.getElementById('tytul').textContent = `Klasa ${klasa} — ${t.label}`;
             document.title = `Dziennik: ${klasa} / ${t.label}`;
 
+            // Poczekaj na przywrócenie sesji z localStorage zanim Supabase RLS przepuści zapytanie
+            await sb.auth.getSession();
+
             const { data: profiles, error: pe } = await sb.from('profiles')
                 .select('*').eq('klasa', klasa).order('nr');
 
             if (pe || !profiles || profiles.length === 0) {
-                document.getElementById('ladowanie').textContent = 'Brak uczniów w tej klasie.';
+                document.getElementById('ladowanie').textContent =
+                    pe ? 'Błąd: ' + pe.message : 'Brak uczniów w tej klasie.';
                 return;
             }
 
