@@ -72,6 +72,9 @@
             .ocena-nazwa { color: #555; }
             .ocena-wartosc { font-weight: bold; color: #000; }
             .ocena-wartosc.brak { color: #aaa; font-weight: normal; }
+            .ocena-wartosc.zielony { color: #1a7a2e; text-shadow: 0 0 6px rgba(42,157,63,0.35); }
+            .ocena-wartosc.czerwony { color: #b52a1e; text-shadow: 0 0 6px rgba(192,57,43,0.35); }
+            .ocena-wartosc.niebieski { color: #0a6a96; text-shadow: 0 0 6px rgba(11,105,148,0.35); }
             .punkty-row {
                 display: flex;
                 justify-content: space-between;
@@ -242,11 +245,12 @@
                     .eq('profil_id', session.user.id)
                     .single();
 
-                function kafelek(nazwa, wartosc) {
+                function kafelek(nazwa, wartosc, kolor) {
                     const val = (wartosc !== null && wartosc !== undefined) ? wartosc : null;
+                    const cls = val === null ? 'brak' : (kolor || '');
                     return `<div class="ocena-kafelek">
                         <span class="ocena-nazwa">${nazwa}</span>
-                        <span class="ocena-wartosc${val === null ? ' brak' : ''}">${val !== null ? val : '—'}</span>
+                        <span class="ocena-wartosc ${cls}">${val !== null ? val : '—'}</span>
                     </div>`;
                 }
 
@@ -254,15 +258,15 @@
                 document.getElementById('p-punkty').textContent = pkt !== null && pkt !== undefined ? pkt : '—';
 
                 let aktHtml = '';
-                for (let i = 1; i <= 5; i++) aktHtml += kafelek(`Aktywność ${i}`, sem1?.[`aktywnosc_${i}`]);
+                for (let i = 1; i <= 5; i++) aktHtml += kafelek(`Aktywność ${i}`, sem1?.[`aktywnosc_${i}`], 'zielony');
                 document.getElementById('grid-aktywnosc').innerHTML = aktHtml;
 
                 let pkHtml = '';
-                for (let i = 1; i <= 4; i++) pkHtml += kafelek(`Praca kontr. ${i}`, sem1?.[`praca_kontrolna_${i}`]);
+                for (let i = 1; i <= 4; i++) pkHtml += kafelek(`Praca kontr. ${i}`, sem1?.[`praca_kontrolna_${i}`], 'czerwony');
                 document.getElementById('grid-prace').innerHTML = pkHtml;
 
                 let kartHtml = '';
-                for (let i = 1; i <= 8; i++) kartHtml += kafelek(`Kartkówka ${i}`, sem1?.[`kartkowka_${i}`]);
+                for (let i = 1; i <= 8; i++) kartHtml += kafelek(`Kartkówka ${i}`, sem1?.[`kartkowka_${i}`], 'niebieski');
                 document.getElementById('grid-kartkowki').innerHTML = kartHtml;
 
                 const { data: adminRow } = await sb.from('admins').select('id').eq('id', session.user.id).single();
