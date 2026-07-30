@@ -59,22 +59,37 @@
                 flex-wrap: wrap;
                 gap: 8px;
             }
-            .ocena-kafelek {
-                background: white;
+            .ocena-para {
+                display: flex;
+                gap: 4px;
+                align-items: stretch;
+            }
+            .ocena-nazwa-box {
+                background: #ebebeb;
                 border: 1px solid #ccc;
                 border-radius: 6px;
-                padding: 6px 12px;
-                min-width: 110px;
+                padding: 6px 10px;
+                font-size: 14px;
+                color: #444;
                 display: flex;
-                justify-content: space-between;
-                gap: 10px;
+                align-items: center;
             }
-            .ocena-nazwa { color: #555; }
-            .ocena-wartosc { font-weight: bold; color: #000; }
-            .ocena-wartosc.brak { color: #aaa; font-weight: normal; }
-            .ocena-wartosc.zielony { color: #1a7a2e; text-shadow: 0 0 6px rgba(42,157,63,0.35); }
-            .ocena-wartosc.czerwony { color: #b52a1e; text-shadow: 0 0 6px rgba(192,57,43,0.35); }
-            .ocena-wartosc.niebieski { color: #0a6a96; text-shadow: 0 0 6px rgba(11,105,148,0.35); }
+            .ocena-wartosc-box {
+                background: white;
+                border: 2px solid #ccc;
+                border-radius: 6px;
+                padding: 6px 14px;
+                font-weight: bold;
+                font-size: 17px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                min-width: 42px;
+            }
+            .ocena-wartosc-box.brak { color: #bbb; font-weight: normal; border-color: #ddd; }
+            .ocena-wartosc-box.zielony { color: #1a7a2e; border-color: #2a9d3f; text-shadow: 0 0 6px rgba(42,157,63,0.4); }
+            .ocena-wartosc-box.czerwony { color: #b52a1e; border-color: #c0392b; text-shadow: 0 0 6px rgba(192,57,43,0.4); }
+            .ocena-wartosc-box.niebieski { color: #0a6a96; border-color: rgb(11,105,148); text-shadow: 0 0 6px rgba(11,105,148,0.4); }
             .punkty-row {
                 display: flex;
                 justify-content: space-between;
@@ -248,9 +263,9 @@
                 function kafelek(nazwa, wartosc, kolor) {
                     const val = (wartosc !== null && wartosc !== undefined) ? wartosc : null;
                     const cls = val === null ? 'brak' : (kolor || '');
-                    return `<div class="ocena-kafelek">
-                        <span class="ocena-nazwa">${nazwa}</span>
-                        <span class="ocena-wartosc ${cls}">${val !== null ? val : '—'}</span>
+                    return `<div class="ocena-para">
+                        <div class="ocena-nazwa-box">${nazwa}</div>
+                        <div class="ocena-wartosc-box ${cls}">${val !== null ? val : '—'}</div>
                     </div>`;
                 }
 
