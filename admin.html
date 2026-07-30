@@ -113,6 +113,7 @@
                         <table id="tabela">
                             <thead>
                                 <tr>
+                                    <th onclick="sortuj('nr')">Nr ↕</th>
                                     <th onclick="sortuj('login')">Login ↕</th>
                                     <th onclick="sortuj('imie')">Imię ↕</th>
                                     <th onclick="sortuj('nazwisko')">Nazwisko ↕</th>
@@ -201,6 +202,7 @@
                 const tbody = document.getElementById('tbody');
                 tbody.innerHTML = posortowana.map(u => `
                     <tr>
+                        <td>${u.nr !== null && u.nr !== undefined ? u.nr : '—'}</td>
                         <td>${u.login || '—'}</td>
                         <td>${u.imie || '—'}</td>
                         <td>${u.nazwisko || '—'}</td>

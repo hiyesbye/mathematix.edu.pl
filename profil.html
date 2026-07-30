@@ -148,6 +148,10 @@
                     <div class="profil-box">
                         <h2>Mój profil</h2>
                         <div class="profil-row">
+                            <span class="profil-label">Nr:</span>
+                            <span class="profil-value" id="p-nr"></span>
+                        </div>
+                        <div class="profil-row">
                             <span class="profil-label">Login:</span>
                             <span class="profil-value" id="p-login"></span>
                         </div>
@@ -224,6 +228,7 @@
                     return;
                 }
 
+                document.getElementById('p-nr').textContent = profil.nr !== null && profil.nr !== undefined ? profil.nr : '—';
                 document.getElementById('p-login').textContent = profil.login;
                 document.getElementById('p-imie').textContent = profil.imie || '—';
                 document.getElementById('p-nazwisko').textContent = profil.nazwisko || '—';
