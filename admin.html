@@ -179,6 +179,73 @@
             }
             .btn-anuluj:hover { background: #666; }
             #editKomunikat { font-size: 15px; margin-top: 10px; }
+
+            /* ── Dziennik ocen ── */
+            .dziennik-filtry {
+                display: flex;
+                gap: 12px;
+                margin-bottom: 14px;
+                flex-wrap: wrap;
+                align-items: center;
+            }
+            .dziennik-filtry select {
+                padding: 8px 12px;
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 16px;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+            }
+            .btn-zapisz-dz {
+                padding: 8px 22px;
+                background: #2a9d3f;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 15px;
+                font-weight: bold;
+                cursor: pointer;
+            }
+            .btn-zapisz-dz:hover { background: #1e7a30; }
+            #dz-tabela {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 15px;
+                background: #f9f9f9;
+            }
+            #dz-tabela th {
+                background: #333;
+                color: white;
+                padding: 9px 10px;
+                text-align: center;
+                white-space: nowrap;
+                user-select: none;
+            }
+            #dz-tabela th.th-zielony   { background: #1a7a2e; }
+            #dz-tabela th.th-niebieski { background: rgb(11, 105, 148); }
+            #dz-tabela th.th-czerwony  { background: #b52a1e; }
+            #dz-tabela td {
+                padding: 5px 8px;
+                border-bottom: 1px solid #ddd;
+                text-align: center;
+            }
+            #dz-tabela td:first-child,
+            #dz-tabela td:nth-child(2) { text-align: left; white-space: nowrap; }
+            #dz-tabela tr:hover td { background: #e8f4fd; }
+            .dz-input {
+                width: 54px;
+                padding: 5px 4px;
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 15px;
+                text-align: center;
+                border: 2px solid #ccc;
+                border-radius: 4px;
+                box-sizing: border-box;
+            }
+            .dz-input.kolor-zielony   { border-color: #2a9d3f; background: #f0fff3; }
+            .dz-input.kolor-niebieski { border-color: rgb(11, 105, 148); background: #f0f7fb; }
+            .dz-input.kolor-czerwony  { border-color: #c0392b; background: #fff4f3; }
+            #dz-komunikat { font-size: 15px; min-height: 20px; }
         </style>
     </head>
     <body>
@@ -260,7 +327,31 @@
                         <div id="editKomunikat"></div>
                     </div>
 
-                    <button class="btn-wyloguj" onclick="wyloguj()">Wyloguj się</button>
+                    <div id="dziennikPanel" style="margin-top: 28px; border-top: 2px solid #ccc; padding-top: 20px;">
+                        <h3 style="font-size: 20px; margin-bottom: 16px;">Dziennik ocen</h3>
+                        <div class="dziennik-filtry">
+                            <select id="dz-klasa" onchange="odswiezDziennik()">
+                                <option value="">Wybierz klasę...</option>
+                            </select>
+                            <select id="dz-typ" onchange="odswiezDziennik()">
+                                <option value="">Wybierz formę sprawdzenia...</option>
+                                <option value="aktywnosc">Aktywność</option>
+                                <option value="kartkowka">Kartkówki</option>
+                                <option value="praca_kontrolna">Prace kontrolne</option>
+                                <option value="punkty">Punkty aktywności</option>
+                            </select>
+                            <button class="btn-zapisz-dz" id="btnZapiszDz" onclick="zapiszDziennik()" style="display:none;">Zapisz wszystkie</button>
+                        </div>
+                        <div id="dz-komunikat"></div>
+                        <div style="overflow-x: auto; margin-top: 10px;">
+                            <table id="dz-tabela" style="display:none;">
+                                <thead id="dz-thead"></thead>
+                                <tbody id="dz-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <button class="btn-wyloguj" onclick="wyloguj()" style="margin-top: 28px;">Wyloguj się</button>
                 </div>
             </div>
         </div>
@@ -315,11 +406,12 @@
                 }));
 
                 const klasy = [...new Set(wszyscyUczniowie.map(u => u.klasa).filter(Boolean))].sort();
-                const sel = document.getElementById('filterKlasa');
                 klasy.forEach(k => {
-                    const opt = document.createElement('option');
-                    opt.value = k; opt.textContent = k;
-                    sel.appendChild(opt);
+                    ['filterKlasa', 'dz-klasa'].forEach(id => {
+                        const opt = document.createElement('option');
+                        opt.value = k; opt.textContent = k;
+                        document.getElementById(id).appendChild(opt);
+                    });
                 });
 
                 renderuj(wszyscyUczniowie);
@@ -457,6 +549,102 @@
             function anulujEdycje() {
                 document.getElementById('editPanel').style.display = 'none';
                 edytowanyProfilId = null;
+            }
+
+            // ── Dziennik ocen ──
+            const TYPY_DZ = {
+                aktywnosc:       { prefix: 'aktywnosc_',       count: 5, label: 'Aktywność',    kolor: 'zielony',   thKolor: 'th-zielony'   },
+                kartkowka:       { prefix: 'kartkowka_',        count: 8, label: 'Kartkówka',    kolor: 'niebieski', thKolor: 'th-niebieski' },
+                praca_kontrolna: { prefix: 'praca_kontrolna_',  count: 4, label: 'Praca kontr.', kolor: 'czerwony',  thKolor: 'th-czerwony'  },
+                punkty:          { prefix: 'punkty_aktywnosci', count: 1, label: 'Pkt. akt.',    kolor: '',          thKolor: ''             },
+            };
+            let dzDane = [];
+            let dzTyp = '';
+
+            async function odswiezDziennik() {
+                const klasa = document.getElementById('dz-klasa').value;
+                dzTyp = document.getElementById('dz-typ').value;
+                const tabela = document.getElementById('dz-tabela');
+                const btn = document.getElementById('btnZapiszDz');
+                const kom = document.getElementById('dz-komunikat');
+                kom.textContent = '';
+                tabela.style.display = 'none';
+                btn.style.display = 'none';
+
+                if (!klasa || !dzTyp) return;
+
+                kom.style.color = 'gray';
+                kom.textContent = 'Wczytywanie...';
+
+                const { data: profiles } = await sb.from('profiles').select('*').eq('klasa', klasa).order('nr');
+                if (!profiles || profiles.length === 0) {
+                    kom.textContent = 'Brak uczniów w tej klasie.';
+                    return;
+                }
+
+                const ids = profiles.map(p => p.id);
+                const { data: semData } = await sb.from('semestr1').select('*').in('profil_id', ids);
+                const semMap = {};
+                (semData || []).forEach(row => { semMap[row.profil_id] = row; });
+
+                dzDane = profiles.map(p => ({ profil: p, sem1: semMap[p.id] || null }));
+                kom.textContent = '';
+                renderujDziennik();
+                tabela.style.display = 'table';
+                btn.style.display = 'inline-block';
+            }
+
+            function renderujDziennik() {
+                const typ = TYPY_DZ[dzTyp];
+                if (!typ) return;
+                const thead = document.getElementById('dz-thead');
+                const tbody = document.getElementById('dz-tbody');
+
+                let thRow = '<tr><th>Nr</th><th>Uczeń</th>';
+                for (let i = 1; i <= typ.count; i++) {
+                    const etykieta = typ.count > 1 ? `${typ.label} ${i}` : typ.label;
+                    thRow += `<th class="${typ.thKolor}">${etykieta}</th>`;
+                }
+                thead.innerHTML = thRow + '</tr>';
+
+                tbody.innerHTML = dzDane.map(({ profil, sem1 }) => {
+                    let tds = `<td>${profil.nr ?? '—'}</td><td>${profil.imie || ''} ${profil.nazwisko || ''}</td>`;
+                    for (let i = 1; i <= typ.count; i++) {
+                        const field = typ.count === 1 ? typ.prefix : `${typ.prefix}${i}`;
+                        const val = sem1?.[field];
+                        const displayed = (val !== null && val !== undefined) ? val : '';
+                        const colorCls = typ.kolor ? `kolor-${typ.kolor}` : '';
+                        tds += `<td><input class="dz-input ${colorCls}" type="number" id="dz-${profil.id}-${i}" step="1" value="${displayed}" placeholder="—"></td>`;
+                    }
+                    return `<tr>${tds}</tr>`;
+                }).join('');
+            }
+
+            async function zapiszDziennik() {
+                if (!dzTyp || dzDane.length === 0) return;
+                const typ = TYPY_DZ[dzTyp];
+                const kom = document.getElementById('dz-komunikat');
+                kom.style.color = 'gray';
+                kom.textContent = 'Zapisywanie...';
+
+                const toUpsert = dzDane.map(({ profil }) => {
+                    const row = { profil_id: profil.id };
+                    for (let i = 1; i <= typ.count; i++) {
+                        const field = typ.count === 1 ? typ.prefix : `${typ.prefix}${i}`;
+                        const val = document.getElementById(`dz-${profil.id}-${i}`)?.value;
+                        row[field] = (val !== '' && val !== undefined) ? parseInt(val) : null;
+                    }
+                    return row;
+                });
+
+                const { error } = await sb.from('semestr1').upsert(toUpsert, { onConflict: 'profil_id' });
+                if (error) {
+                    kom.style.color = 'red';
+                    kom.textContent = 'Błąd zapisu: ' + error.message;
+                } else {
+                    kom.style.color = 'green';
+                    kom.textContent = `Zapisano pomyślnie (${toUpsert.length} uczniów).`;
+                }
             }
 
             init();
