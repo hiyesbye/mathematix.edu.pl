@@ -127,11 +127,14 @@
                 padding: 6px 8px;
                 font-family: 'Courier New', Courier, monospace;
                 font-size: 15px;
-                border: 1px solid #ccc;
+                border: 2px solid #ccc;
                 border-radius: 4px;
                 width: 100%;
                 box-sizing: border-box;
             }
+            .kolor-zielony .edit-pole input { border-color: #2a9d3f; background: #f0fff3; }
+            .kolor-niebieski .edit-pole input { border-color: rgb(11, 105, 148); background: #f0f7fb; }
+            .kolor-czerwony .edit-pole input { border-color: #c0392b; background: #fff4f3; }
             .edit-punkty {
                 display: flex;
                 align-items: center;
@@ -238,15 +241,15 @@
                         </div>
                         <div class="edit-sekcja">
                             <h4>Aktywność</h4>
-                            <div class="edit-grid" id="eg-aktywnosc"></div>
+                            <div class="edit-grid kolor-zielony" id="eg-aktywnosc"></div>
                         </div>
                         <div class="edit-sekcja">
                             <h4>Prace kontrolne</h4>
-                            <div class="edit-grid" id="eg-prace"></div>
+                            <div class="edit-grid kolor-czerwony" id="eg-prace"></div>
                         </div>
                         <div class="edit-sekcja">
                             <h4>Kartkówki</h4>
-                            <div class="edit-grid" id="eg-kartkowki"></div>
+                            <div class="edit-grid kolor-niebieski" id="eg-kartkowki"></div>
                         </div>
                         <div class="edit-przyciski">
                             <button class="btn-zapisz" onclick="zapiszOceny()">Zapisz</button>
