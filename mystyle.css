@@ -8,6 +8,7 @@ iframe {
 
 body{
     background-image: url('tlo2.jpg');
+    overflow-x: hidden;
 }
 
 .container {
@@ -226,4 +227,23 @@ li.dropdown{
 .container:hover .obrazek-kolor {
     filter: brightness(1.3);
     transform: scale(1.03);
+}
+
+@media (max-width: 450px) {
+    .container {
+        float: none;
+        left: 0;
+        box-sizing: border-box;
+        width: 100%;
+        margin: 0 0 6px 0;
+    }
+    .obrazek,
+    .obrazek-kolor {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 397 / 280;
+    }
+    .centered {
+        font-size: clamp(14px, 4.5vw, 20px);
+    }
 }
