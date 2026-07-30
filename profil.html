@@ -114,6 +114,7 @@
                         <span class="profil-label">Płeć:</span>
                         <span class="profil-value" id="p-plec"></span>
                     </div>
+                    <a id="linkAdmin" href="admin.html" style="display:none; text-align:center; margin-top:14px; font-size:18px; font-family:'Courier New',monospace; font-weight:bold; color:rgb(11,105,148);">&#9654; Panel admina</a>
                     <button class="btn-wyloguj" onclick="wyloguj()">Wyloguj się</button>
                 </div>
             </div>
@@ -146,6 +147,9 @@
                 document.getElementById('p-klasa').textContent = profil.klasa || '—';
                 document.getElementById('p-plec').textContent =
                     profil.plec === 'K' ? 'Kobieta' : profil.plec === 'M' ? 'Mężczyzna' : '—';
+
+                const { data: adminRow } = await sb.from('admins').select('id').eq('id', session.user.id).single();
+                if (adminRow) document.getElementById('linkAdmin').style.display = 'block';
 
                 document.getElementById('profilContent').style.display = 'block';
             }
