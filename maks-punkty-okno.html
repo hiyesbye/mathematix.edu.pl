@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html>
+<meta charset="utf-8">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maks. punkty</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <style>
+        * { margin: 0; box-sizing: border-box; }
+        body { font-family: 'Courier New', Courier, monospace; background: #eef2f5; }
+
+        .topbar {
+            position: sticky; top: 0; z-index: 100;
+            background: #1c1c1c; color: white;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 20px; height: 52px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+        .topbar-left { display: flex; align-items: center; gap: 14px; }
+        .topbar-title { font-size: 17px; font-weight: bold; letter-spacing: 0.5px; }
+        .topbar-right { display: flex; align-items: center; gap: 14px; }
+        #komunikat { font-size: 14px; min-width: 180px; text-align: right; }
+
+        .btn-powrot {
+            padding: 7px 16px; background: transparent; color: #ccc;
+            border: 1px solid #555; border-radius: 5px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px; cursor: pointer;
+        }
+        .btn-powrot:hover { background: #444; color: white; }
+        .btn-zastosuj {
+            padding: 7px 22px; background: #2a9d3f; color: white;
+            border: none; border-radius: 5px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px; font-weight: bold; cursor: pointer; white-space: nowrap;
+        }
+        .btn-zastosuj:hover { background: #1e7a30; }
+
+        .content {
+            max-width: 540px; margin: 28px auto; padding: 0 20px 48px;
+        }
+
+        .klasa-row {
+            display: flex; align-items: center; gap: 14px;
+            margin-bottom: 28px;
+        }
+        .klasa-row label { font-size: 17px; font-weight: bold; color: #333; white-space: nowrap; }
+        .klasa-row select {
+            flex: 1; padding: 10px 14px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 17px; border: 2px solid #aaa; border-radius: 6px;
+            background: white; cursor: pointer;
+        }
+        .klasa-row select:focus { outline: none; border-color: rgb(11,105,148); }
+
+        .sekcja { margin-bottom: 28px; }
+        .sekcja-naglowek {
+            font-size: 14px; font-weight: bold; text-transform: uppercase;
+            letter-spacing: 1.5px; color: white; padding: 10px 18px;
+            border-radius: 6px 6px 0 0;
+        }
+        .sekcja-naglowek.niebieski { background: rgb(11, 105, 148); }
+        .sekcja-naglowek.czerwony  { background: #b52a1e; }
+
+        .sekcja-body {
+            background: white; border: 2px solid #ddd; border-top: none;
+            border-radius: 0 0 6px 6px;
+        }
+
+        .pkt-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 11px 18px; border-bottom: 1px solid #f0f0f0;
+        }
+        .pkt-row:last-child { border-bottom: none; }
+        .pkt-label { font-size: 17px; color: #222; }
+
+        .pkt-input-wrap { display: flex; align-items: center; gap: 8px; }
+        .pkt-input-wrap input {
+            width: 80px; padding: 7px 6px; text-align: center;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 18px; font-weight: bold;
+            border: 2px solid #ccc; border-radius: 5px;
+        }
+        .pkt-input-wrap input:focus { outline: none; }
+        .pkt-input-wrap.niebieski input { border-color: rgb(11,105,148); background: #f0f7fb; }
+        .pkt-input-wrap.niebieski input:focus { border-color: rgb(8,80,115); box-shadow: 0 0 0 2px rgba(11,105,148,0.2); }
+        .pkt-input-wrap.czerwony  input { border-color: #c0392b; background: #fff4f3; }
+        .pkt-input-wrap.czerwony  input:focus { border-color: #8e1e15; box-shadow: 0 0 0 2px rgba(192,57,43,0.2); }
+        .pkt-unit { font-size: 15px; color: #888; }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="topbar-left">
+            <button class="btn-powrot" onclick="window.opener && !window.opener.closed ? window.close() : window.location.href='admin.html'">&#8592; Powrót</button>
+            <span class="topbar-title">Maks. punkty dla klasy</span>
+        </div>
+        <div class="topbar-right">
+            <span id="komunikat"></span>
+            <button class="btn-zastosuj" onclick="zastosuj()">Zastosuj do klasy</button>
+        </div>
+    </div>
+
+    <div class="content">
+        <div class="klasa-row">
+            <label>Klasa:</label>
+            <select id="klasa-sel" onchange="zaladujMaksima()">
+                <option value="">— wybierz klasę —</option>
+            </select>
+        </div>
+
+        <div class="sekcja">
+            <div class="sekcja-naglowek niebieski">Kartkówki — maks. punkty</div>
+            <div class="sekcja-body" id="kart-body"></div>
+        </div>
+
+        <div class="sekcja">
+            <div class="sekcja-naglowek czerwony">Prace kontrolne — maks. punkty</div>
+            <div class="sekcja-body" id="klas-body"></div>
+        </div>
+    </div>
+
+    <script src="supabase-config.js"></script>
+    <script>
+        function buduj(containerId, prefix, count, etykieta, kolor) {
+            const el = document.getElementById(containerId);
+            let html = '';
+            for (let i = 1; i <= count; i++) {
+                html += `<div class="pkt-row">
+                    <span class="pkt-label">${etykieta} ${i}</span>
+                    <div class="pkt-input-wrap ${kolor}">
+                        <input type="number" id="m-${prefix}-${i}" min="0" step="1" placeholder="—">
+                        <span class="pkt-unit">pkt</span>
+                    </div>
+                </div>`;
+            }
+            el.innerHTML = html;
+        }
+
+        async function zaladujMaksima() {
+            const klasa = document.getElementById('klasa-sel').value;
+            const kom = document.getElementById('komunikat');
+            if (!klasa) return;
+
+            kom.style.color = '#ccc';
+            kom.textContent = 'Ładowanie...';
+
+            const { data: profiles } = await sb.from('profiles').select('id').eq('klasa', klasa);
+            if (!profiles || profiles.length === 0) {
+                kom.style.color = '#ff7070'; kom.textContent = 'Brak uczniów.'; return;
+            }
+
+            const { data: pktData } = await sb.from('Punktysem1').select('*').in('profil_id', profiles.map(p => p.id));
+
+            const maxKart = Array(9).fill(null);
+            const maxKlas = Array(5).fill(null);
+            for (const row of (pktData || [])) {
+                for (let i = 1; i <= 8; i++) {
+                    if (maxKart[i] == null && row[`kartmax${i}`] != null && row[`kartmax${i}`] > 0)
+                        maxKart[i] = row[`kartmax${i}`];
+                }
+                for (let i = 1; i <= 4; i++) {
+                    if (maxKlas[i] == null && row[`klasmax${i}`] != null && row[`klasmax${i}`] > 0)
+                        maxKlas[i] = row[`klasmax${i}`];
+                }
+            }
+
+            for (let i = 1; i <= 8; i++) {
+                const inp = document.getElementById(`m-kart-${i}`);
+                if (inp) inp.value = maxKart[i] !== null ? maxKart[i] : '';
+            }
+            for (let i = 1; i <= 4; i++) {
+                const inp = document.getElementById(`m-klas-${i}`);
+                if (inp) inp.value = maxKlas[i] !== null ? maxKlas[i] : '';
+            }
+
+            kom.textContent = '';
+        }
+
+        function punktyNaOcene(pkt, max) {
+            if (max == null || max <= 0 || pkt == null) return null;
+            const proc = Math.round((pkt / max) * 100);
+            if (proc < 0 || proc > 100) return null;
+            if (proc < 30) return 1; if (proc < 50) return 2;
+            if (proc < 70) return 3; if (proc < 87) return 4;
+            if (proc < 97) return 5; return 6;
+        }
+
+        async function zastosuj() {
+            const klasa = document.getElementById('klasa-sel').value;
+            const kom = document.getElementById('komunikat');
+            if (!klasa) { kom.style.color = '#ff7070'; kom.textContent = 'Wybierz klasę.'; return; }
+
+            kom.style.color = '#ccc';
+            kom.textContent = 'Zapisywanie...';
+
+            function pobierz(id) {
+                const val = document.getElementById(id)?.value;
+                return val !== '' && val !== undefined ? parseInt(val) : null;
+            }
+
+            const maks = {};
+            for (let i = 1; i <= 8; i++) maks[`kartmax${i}`] = pobierz(`m-kart-${i}`);
+            for (let i = 1; i <= 4; i++) maks[`klasmax${i}`]  = pobierz(`m-klas-${i}`);
+
+            const { data: profiles } = await sb.from('profiles').select('id').eq('klasa', klasa);
+            if (!profiles || profiles.length === 0) {
+                kom.style.color = '#ff7070'; kom.textContent = 'Brak uczniów.'; return;
+            }
+
+            const rows = profiles.map(p => ({ profil_id: p.id, ...maks }));
+            const { error } = await sb.from('Punktysem1').upsert(rows, { onConflict: 'profil_id' });
+            if (error) { kom.style.color = '#ff7070'; kom.textContent = 'Błąd: ' + error.message; return; }
+
+            // Przelicz oceny dla uczniów z wpisanymi punktami
+            kom.textContent = 'Przeliczanie ocen...';
+            const ids = profiles.map(p => p.id);
+            const { data: pktData } = await sb.from('Punktysem1').select('*').in('profil_id', ids);
+            if (pktData && pktData.length > 0) {
+                const semRows = [];
+                for (const pkt of pktData) {
+                    const row = { profil_id: pkt.profil_id };
+                    let hasAny = false;
+                    for (let i = 1; i <= 8; i++) {
+                        const pts = pkt[`kartp${i}`];
+                        const max = maks[`kartmax${i}`];
+                        if (pts !== null && pts !== undefined && max) {
+                            const oc = punktyNaOcene(pts, max);
+                            row[`kartkowka_${i}`] = typeof oc === 'number' ? oc : null;
+                            hasAny = true;
+                        }
+                    }
+                    for (let i = 1; i <= 4; i++) {
+                        const pts = pkt[`klasp${i}`];
+                        const max = maks[`klasmax${i}`];
+                        if (pts !== null && pts !== undefined && max) {
+                            const oc = punktyNaOcene(pts, max);
+                            row[`praca_kontrolna_${i}`] = typeof oc === 'number' ? oc : null;
+                            hasAny = true;
+                        }
+                    }
+                    if (hasAny) semRows.push(row);
+                }
+                if (semRows.length > 0) {
+                    await sb.from('semestr1').upsert(semRows, { onConflict: 'profil_id' });
+                }
+            }
+
+            kom.style.color = '#6dcc80';
+            kom.textContent = `✓ Zapisano dla ${rows.length} uczniów z klasy ${klasa}`;
+            setTimeout(() => { kom.textContent = ''; }, 4000);
+        }
+
+        async function init() {
+            await sb.auth.getSession();
+            buduj('kart-body', 'kart', 8, 'Kartkówka', 'niebieski');
+            buduj('klas-body', 'klas', 4, 'Praca kontr.', 'czerwony');
+
+            const { data: profiles } = await sb.from('profiles').select('klasa').order('klasa');
+            const klasy = [...new Set((profiles || []).map(p => p.klasa).filter(Boolean))].sort();
+            const sel = document.getElementById('klasa-sel');
+            klasy.forEach(k => {
+                const opt = document.createElement('option');
+                opt.value = k; opt.textContent = `Klasa ${k}`;
+                sel.appendChild(opt);
+            });
+
+            // Jeśli klasa przekazana w URL — załaduj od razu
+            const urlKlasa = new URLSearchParams(window.location.search).get('klasa');
+            if (urlKlasa) { sel.value = urlKlasa; zaladujMaksima(); }
+        }
+
+        init();
+    </script>
+</body>
+</html>

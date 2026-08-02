@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+<meta charset="utf-8">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dziennik punktów</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <style>
+        * { margin: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            background: #eef2f5;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: #1c1c1c;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            height: 52px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+        .topbar-title { font-size: 17px; font-weight: bold; letter-spacing: 0.5px; }
+        .topbar-right { display: flex; align-items: center; gap: 14px; }
+        #komunikat { font-size: 14px; min-width: 160px; text-align: right; }
+        .btn-zapisz {
+            padding: 7px 22px; background: #2a9d3f; color: white;
+            border: none; border-radius: 5px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px; font-weight: bold; cursor: pointer; white-space: nowrap;
+        }
+        .btn-zapisz:hover { background: #1e7a30; }
+        .btn-powrot {
+            padding: 7px 16px; background: transparent; color: #ccc;
+            border: 1px solid #555; border-radius: 5px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px; cursor: pointer;
+        }
+        .btn-powrot:hover { background: #444; color: white; }
+
+        .table-wrap {
+            height: calc(100vh - 52px);
+            overflow: auto;
+        }
+
+        table {
+            border-collapse: collapse;
+            font-size: 15px;
+            background: white;
+            min-width: 100%;
+            box-shadow: 0 1px 6px rgba(0,0,0,0.1);
+        }
+
+        th {
+            background: #2d2d2d; color: white;
+            padding: 10px 12px; text-align: center; white-space: nowrap;
+            position: sticky; top: 0; z-index: 10;
+            border-right: 1px solid rgba(255,255,255,0.1);
+        }
+        th.th-niebieski { background: rgb(11, 105, 148); }
+        th.th-czerwony  { background: #b52a1e; }
+
+        th.th-nr {
+            background: #2d2d2d; position: sticky; top: 0; left: 0; z-index: 30;
+            min-width: 52px; border-right: 2px solid #555;
+        }
+        th.th-uczen {
+            background: #2d2d2d; position: sticky; top: 0; left: 52px; z-index: 30;
+            text-align: left; padding-left: 14px; min-width: 180px;
+            border-right: 2px solid #555;
+        }
+
+        td {
+            padding: 5px 8px; border-bottom: 1px solid #e8e8e8;
+            border-right: 1px solid #f0f0f0;
+            text-align: center; vertical-align: middle;
+        }
+        td.td-nr {
+            position: sticky; left: 0; background: #f5f7f9; z-index: 5;
+            font-weight: bold; color: #444; border-right: 2px solid #ddd; min-width: 52px;
+        }
+        td.td-uczen {
+            position: sticky; left: 52px; background: #f5f7f9; z-index: 5;
+            text-align: left; padding: 6px 14px; white-space: nowrap;
+            border-right: 2px solid #ddd; min-width: 180px;
+        }
+        tr:nth-child(even) td { background: #fafbfc; }
+        tr:nth-child(even) td.td-nr,
+        tr:nth-child(even) td.td-uczen { background: #eff2f5; }
+        tr:hover td { background: #ddeef9 !important; }
+
+        /* Komórka pkt / max */
+        .dpkt-cell { display: flex; align-items: center; gap: 3px; justify-content: center; }
+        .dpkt-cell input {
+            width: 48px; padding: 4px 3px; text-align: center;
+            font-family: 'Courier New', Courier, monospace; font-size: 14px;
+            border: 2px solid #ccc; border-radius: 4px;
+            transition: border-color 0.15s;
+        }
+        .dpkt-cell input:focus { outline: none; }
+        .dpkt-cell .dpkt-sep { color: #888; font-weight: bold; }
+        .dpkt-cell.niebieski input { border-color: rgb(11,105,148); background: #f0f7fb; }
+        .dpkt-cell.niebieski input:focus { border-color: rgb(8,80,115); box-shadow: 0 0 0 2px rgba(11,105,148,0.25); }
+        .dpkt-cell.czerwony  input { border-color: #c0392b; background: #fff4f3; }
+        .dpkt-cell.czerwony  input:focus { border-color: #8e1e15; box-shadow: 0 0 0 2px rgba(192,57,43,0.25); }
+
+        #ladowanie { text-align: center; padding: 60px 20px; font-size: 20px; color: #555; }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div style="display:flex; align-items:center; gap:14px;">
+            <button class="btn-powrot" onclick="window.opener && !window.opener.closed ? window.close() : window.location.href='admin.html'">&#8592; Powrót</button>
+            <span class="topbar-title" id="tytul">Dziennik punktów</span>
+        </div>
+        <div class="topbar-right">
+            <span id="komunikat"></span>
+            <button class="btn-zapisz" onclick="zapisz()">Zapisz wszystkie</button>
+        </div>
+    </div>
+
+    <div id="ladowanie">Wczytywanie...</div>
+    <div class="table-wrap" id="tableWrap" style="display:none;">
+        <table>
+            <thead id="thead"></thead>
+            <tbody id="tbody"></tbody>
+        </table>
+    </div>
+
+    <script src="supabase-config.js"></script>
+    <script>
+        const TYPY = {
+            kartkowka:       { count: 8, prefix: 'kartp',  prefixMax: 'kartmax',  label: 'Kart.',  kolor: 'niebieski', thKolor: 'th-niebieski' },
+            praca_kontrolna: { count: 4, prefix: 'klasp',  prefixMax: 'klasmax',  label: 'PK',     kolor: 'czerwony',  thKolor: 'th-czerwony'  },
+        };
+
+        const params = new URLSearchParams(window.location.search);
+        const klasa  = params.get('klasa') || '';
+        const typ    = params.get('typ')   || '';
+        const czyWszystkieKlasy = klasa === 'wszystkie_klasy';
+        let dane = [];
+
+        async function init() {
+            const t = TYPY[typ];
+            if (!klasa || !t) {
+                document.getElementById('ladowanie').textContent = 'Nieprawidłowe parametry.';
+                return;
+            }
+
+            const tytulKlasa = czyWszystkieKlasy ? 'Wszystkie klasy' : `Klasa ${klasa}`;
+            const tytulLabel = typ === 'kartkowka' ? 'Kartkówki' : 'Prace kontrolne';
+            document.getElementById('tytul').textContent = `${tytulKlasa} — ${tytulLabel}`;
+            document.title = `Punkty: ${czyWszystkieKlasy ? 'Wszystkie' : klasa} / ${tytulLabel}`;
+
+            await sb.auth.getSession();
+
+            let q = sb.from('profiles').select('*');
+            if (!czyWszystkieKlasy) q = q.eq('klasa', klasa);
+            const { data: profiles, error: pe } = await q.order('klasa').order('nr');
+
+            if (pe || !profiles || profiles.length === 0) {
+                document.getElementById('ladowanie').textContent =
+                    pe ? 'Błąd: ' + pe.message : 'Brak uczniów.';
+                return;
+            }
+
+            const ids = profiles.map(p => p.id);
+            const { data: pktData } = await sb.from('Punktysem1').select('*').in('profil_id', ids);
+            const pktMap = {};
+            (pktData || []).forEach(row => { pktMap[row.profil_id] = row; });
+
+            dane = profiles.map(p => ({ profil: p, pkt: pktMap[p.id] || null }));
+            renderuj(t);
+            document.getElementById('ladowanie').style.display = 'none';
+            document.getElementById('tableWrap').style.display = 'block';
+        }
+
+        function renderuj(t) {
+            const thead = document.getElementById('thead');
+            const tbody = document.getElementById('tbody');
+
+            let thRow = `<tr><th class="th-nr">Nr</th><th class="th-uczen">Uczeń</th>${czyWszystkieKlasy ? '<th>Klasa</th>' : ''}`;
+            for (let i = 1; i <= t.count; i++) {
+                thRow += `<th class="${t.thKolor}">${t.label} ${i}</th>`;
+            }
+            thead.innerHTML = thRow + '</tr>';
+
+            tbody.innerHTML = dane.map(({ profil, pkt }) => {
+                let tds = `<td class="td-nr">${profil.nr ?? '—'}</td>`;
+                tds += `<td class="td-uczen">${profil.imie || ''} ${profil.nazwisko || ''}</td>`;
+                if (czyWszystkieKlasy) tds += `<td>${profil.klasa || '—'}</td>`;
+                for (let i = 1; i <= t.count; i++) {
+                    const pVal = pkt?.[`${t.prefix}${i}`];
+                    const mVal = pkt?.[`${t.prefixMax}${i}`];
+                    const pDisp = (pVal !== null && pVal !== undefined) ? pVal : '';
+                    const mDisp = (mVal !== null && mVal !== undefined) ? mVal : '';
+                    tds += `<td><div class="dpkt-cell ${t.kolor}">
+                        <input type="number" id="dpkt-${profil.id}-p${i}" min="0" step="1" value="${pDisp}" placeholder="pkt">
+                        <span class="dpkt-sep">/</span>
+                        <input type="number" id="dpkt-${profil.id}-m${i}" min="0" step="1" value="${mDisp}" placeholder="max">
+                    </div></td>`;
+                }
+                return `<tr>${tds}</tr>`;
+            }).join('');
+        }
+
+        function punktyNaOcene(pkt, max) {
+            if (max == null || max <= 0 || pkt == null) return null;
+            const proc = Math.round((pkt / max) * 100);
+            if (proc < 0 || proc > 100) return null;
+            if (proc < 30) return 1; if (proc < 50) return 2;
+            if (proc < 70) return 3; if (proc < 87) return 4;
+            if (proc < 97) return 5; return 6;
+        }
+
+        async function zapisz() {
+            if (dane.length === 0) return;
+            const t = TYPY[typ];
+            const kom = document.getElementById('komunikat');
+            kom.style.color = '#ccc';
+            kom.textContent = 'Zapisywanie...';
+
+            function pobierz(id) {
+                const val = document.getElementById(id)?.value;
+                return val !== '' && val !== undefined ? parseInt(val) : null;
+            }
+
+            const rows = dane.map(({ profil }) => {
+                const row = { profil_id: profil.id };
+                for (let i = 1; i <= t.count; i++) {
+                    row[`${t.prefix}${i}`]    = pobierz(`dpkt-${profil.id}-p${i}`);
+                    row[`${t.prefixMax}${i}`] = pobierz(`dpkt-${profil.id}-m${i}`);
+                }
+                return row;
+            });
+
+            const { error } = await sb.from('Punktysem1').upsert(rows, { onConflict: 'profil_id' });
+            if (error) {
+                kom.style.color = '#ff7070';
+                kom.textContent = 'Błąd: ' + error.message;
+                return;
+            }
+
+            // Przelicz oceny w semestr1
+            const semRows = rows.map(row => {
+                const sem = { profil_id: row.profil_id };
+                if (typ === 'kartkowka') {
+                    for (let i = 1; i <= 8; i++) {
+                        const p = row[`kartp${i}`], m = row[`kartmax${i}`];
+                        if (p != null && m != null && m > 0)
+                            sem[`kartkowka_${i}`] = punktyNaOcene(p, m);
+                    }
+                } else {
+                    for (let i = 1; i <= 4; i++) {
+                        const p = row[`klasp${i}`], m = row[`klasmax${i}`];
+                        if (p != null && m != null && m > 0)
+                            sem[`praca_kontrolna_${i}`] = punktyNaOcene(p, m);
+                    }
+                }
+                return sem;
+            }).filter(r => Object.keys(r).length > 1);
+
+            if (semRows.length > 0)
+                await sb.from('semestr1').upsert(semRows, { onConflict: 'profil_id' });
+
+            kom.style.color = '#6dcc80';
+            kom.textContent = `Zapisano (${rows.length} uczniów) ✓`;
+            setTimeout(() => { kom.textContent = ''; }, 3000);
+        }
+
+        init();
+    </script>
+</body>
+</html>

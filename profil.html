@@ -118,6 +118,76 @@
             }
             .btn-wyloguj:hover { background: rgb(11, 105, 148); }
             #ladowanie { text-align:center; font-size:20px; padding:40px; font-family:monospace; }
+            #newsy { background-color: rgba(255, 246, 235, 0.88); }
+
+            /* ── Rozwijane karty kartkówek / PK ── */
+            .sprawdzian-lista { display: flex; flex-direction: column; gap: 6px; }
+            .sprawdzian-karta { border: 2px solid #ccc; border-radius: 6px; overflow: hidden; }
+            .sprawdzian-karta.niebieski { border-color: rgb(11, 105, 148); }
+            .sprawdzian-karta.czerwony  { border-color: #c0392b; }
+            .karta-naglowek {
+                display: flex; justify-content: space-between; align-items: center;
+                padding: 8px 14px; cursor: pointer; user-select: none;
+                background: #ebebeb; transition: background 0.15s;
+            }
+            .karta-naglowek:hover { background: #ddd; }
+            .karta-lewa { display: flex; align-items: center; gap: 10px; }
+            .karta-nazwa { font-size: 14px; color: #444; }
+            .karta-ocena-badge {
+                font-weight: bold; font-size: 15px; padding: 2px 9px;
+                border-radius: 4px; border: 2px solid; background: white;
+                min-width: 30px; text-align: center;
+            }
+            .karta-ocena-badge.niebieski { color: #0a6a96; border-color: rgb(11,105,148); }
+            .karta-ocena-badge.czerwony  { color: #b52a1e; border-color: #c0392b; }
+            .karta-strzalka { font-size: 11px; color: #888; transition: transform 0.2s; flex-shrink: 0; }
+            .karta-open .karta-strzalka { transform: rotate(180deg); }
+            .karta-szczegoly {
+                background: white; padding: 10px 16px;
+                border-top: 1px solid #ddd; display: none;
+            }
+            .karta-open .karta-szczegoly { display: block; }
+            .szcz-sekcja { margin-bottom: 10px; }
+            .szcz-sekcja:last-child { margin-bottom: 0; }
+            .szcz-sekcja-tytul {
+                font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
+                color: #888; margin-bottom: 5px; font-weight: bold;
+            }
+            /* Progress bar — RPG style */
+            .prog-label { font-size: 11px; color: #666; text-align: right; margin-bottom: 4px; font-weight: bold; letter-spacing: 0.3px; }
+            .prog-track {
+                height: 20px;
+                border-radius: 5px;
+                overflow: hidden;
+                margin-bottom: 10px;
+                background: #e8e8e8;
+                border: 1px solid #bbb;
+                box-shadow: inset 0 2px 5px rgba(0,0,0,0.18), inset 0 -1px 0 rgba(255,255,255,0.7), 0 1px 0 rgba(255,255,255,0.8);
+            }
+            .prog-fill {
+                height: 100%;
+                border-radius: 4px;
+                transition: width 0.5s ease;
+                background-image: linear-gradient(to bottom,
+                    rgba(255,255,255,0.48) 0%,
+                    rgba(255,255,255,0.14) 40%,
+                    transparent 62%,
+                    rgba(0,0,0,0.32) 100%);
+                box-shadow: inset 0 1px 0 rgba(255,255,255,0.45), inset -1px 0 2px rgba(0,0,0,0.2);
+            }
+
+            /* Wynik boxes */
+            .wynik-boxes { display: flex; gap: 7px; margin-top: 2px; }
+            .wynik-box { flex: 1; border: 2px solid; border-radius: 6px; padding: 7px 4px; text-align: center; background: white; }
+            .wynik-box-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #888; margin-bottom: 3px; }
+            .wynik-box-val { font-size: 16px; font-weight: bold; }
+            .wynik-box-val small { font-size: 11px; font-weight: normal; color: #888; }
+
+            /* Średnia boxes */
+            .srednia-boxes { display: flex; gap: 7px; margin-top: 2px; }
+            .srednia-box { flex: 1; border-radius: 6px; padding: 7px 4px; text-align: center; }
+            .srednia-box-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; opacity: 0.75; }
+            .srednia-box-val { font-size: 16px; font-weight: bold; }
         </style>
     </head>
     <body>
@@ -166,8 +236,8 @@
                     <div class="profil-box">
                         <h2>Mój profil</h2>
                         <div class="profil-row">
-                            <span class="profil-label">Nr:</span>
-                            <span class="profil-value" id="p-nr"></span>
+                            <span class="profil-label">Nr z dziennika:</span>
+                            <span class="profil-value" id="p-nr-dziennika"></span>
                         </div>
                         <div class="profil-row">
                             <span class="profil-label">Login:</span>
@@ -208,12 +278,12 @@
 
                         <div class="oceny-sekcja" style="margin-top: 16px;">
                             <h3>Kartkówki</h3>
-                            <div class="oceny-grid" id="grid-kartkowki"></div>
+                            <div id="lista-kartkowki"></div>
                         </div>
 
                         <div class="oceny-sekcja" style="margin-top: 16px;">
                             <h3>Prace kontrolne</h3>
-                            <div class="oceny-grid" id="grid-prace"></div>
+                            <div id="lista-prace"></div>
                         </div>
 
                         <div class="oceny-sekcja" style="margin-top: 22px;">
@@ -258,7 +328,7 @@
                     return;
                 }
 
-                document.getElementById('p-nr').textContent = profil.nr !== null && profil.nr !== undefined ? profil.nr : '—';
+                document.getElementById('p-nr-dziennika').textContent = profil.nr != null ? profil.nr % 100 : '—';
                 document.getElementById('p-login').textContent = profil.login;
                 document.getElementById('p-imie').textContent = profil.imie || '—';
                 document.getElementById('p-nazwisko').textContent = profil.nazwisko || '—';
@@ -266,11 +336,21 @@
                 document.getElementById('p-plec').textContent =
                     profil.plec === 'K' ? 'Kobieta' : profil.plec === 'M' ? 'Mężczyzna' : '—';
 
-                // Pobierz dane Semestr 1
-                const { data: sem1 } = await sb.from('semestr1')
-                    .select('*')
-                    .eq('profil_id', session.user.id)
-                    .single();
+                // Pobierz dane Semestr 1 i punkty ucznia równolegle
+                const [{ data: sem1 }, { data: pkt1 }] = await Promise.all([
+                    sb.from('semestr1').select('*').eq('profil_id', session.user.id).single(),
+                    sb.from('Punktysem1').select('*').eq('profil_id', session.user.id).single()
+                ]);
+
+                // Pobierz punkty całej klasy (do średnich)
+                let klasaPkt = [];
+                if (profil.klasa) {
+                    const { data: kp } = await sb.from('profiles').select('id').eq('klasa', profil.klasa);
+                    if (kp && kp.length > 0) {
+                        const { data: kpData } = await sb.from('Punktysem1').select('*').in('profil_id', kp.map(p => p.id));
+                        klasaPkt = kpData || [];
+                    }
+                }
 
                 function kafelek(nazwa, wartosc, kolor) {
                     if (wartosc === null || wartosc === undefined) return '';
@@ -287,19 +367,183 @@
                 for (let i = 1; i <= 5; i++) aktHtml += kafelek(`Aktywność ${i}`, sem1?.[`aktywnosc_${i}`], 'zielony');
                 document.getElementById('grid-aktywnosc').innerHTML = aktHtml;
 
-                let kartHtml = '';
-                for (let i = 1; i <= 8; i++) kartHtml += kafelek(`Kartkówka ${i}`, sem1?.[`kartkowka_${i}`], 'niebieski');
-                document.getElementById('grid-kartkowki').innerHTML = kartHtml;
+                function punktyNaOcene(pkt, max) {
+                    if (max == null || max <= 0 || pkt == null) return null;
+                    const proc = Math.round((pkt / max) * 100);
+                    if (proc < 0 || proc > 100) return null;
+                    if (proc < 30) return 1; if (proc < 50) return 2;
+                    if (proc < 70) return 3; if (proc < 87) return 4;
+                    if (proc < 97) return 5; return 6;
+                }
 
-                let pkHtml = '';
-                for (let i = 1; i <= 4; i++) pkHtml += kafelek(`Praca kont. ${i}`, sem1?.[`praca_kontrolna_${i}`], 'czerwony');
-                document.getElementById('grid-prace').innerHTML = pkHtml;
+                function barKolor(ocena) {
+                    const o = Number(ocena);
+                    if (isNaN(o)) return '#aaa';
+                    if (o <= 2) return '#c0392b';
+                    if (o === 3) return '#e67e22';
+                    if (o === 4) return '#0a6a96';
+                    return '#2a9d3f';
+                }
+
+                function intensityStyl(proc) {
+                    if (proc == null) return 'background:#f0f0f0;color:#888;';
+                    let hue, sat, bandMin, bandMax;
+                    if      (proc < 30) { hue = 4;   sat = 75; bandMin = 0;   bandMax = 30;  }
+                    else if (proc < 50) { hue = 25;  sat = 82; bandMin = 30;  bandMax = 50;  }
+                    else if (proc < 70) { hue = 43;  sat = 85; bandMin = 50;  bandMax = 70;  }
+                    else if (proc < 87) { hue = 201; sat = 72; bandMin = 70;  bandMax = 87;  }
+                    else if (proc < 97) { hue = 133; sat = 58; bandMin = 87;  bandMax = 97;  }
+                    else                { hue = 133; sat = 68; bandMin = 97;  bandMax = 101; }
+                    const ratio = (proc - bandMin) / (bandMax - bandMin);
+                    const L = Math.round(88 - ratio * 52);
+                    const textColor = L < 52 ? '#ffffff' : '#1a1a1a';
+                    return `background:hsl(${hue},${sat}%,${L}%);color:${textColor};`;
+                }
+
+                // Pre-oblicz procenty dla każdego ucznia w klasie
+                const klasaDane = klasaPkt.map(row => {
+                    const proc = {};
+                    for (let i = 1; i <= 8; i++) {
+                        const p = row[`kartp${i}`], m = row[`kartmax${i}`];
+                        proc[`kart${i}`] = (p != null && m != null && m > 0)
+                            ? Math.round(p / m * 100) : null;
+                    }
+                    for (let i = 1; i <= 4; i++) {
+                        const p = row[`klasp${i}`], m = row[`klasmax${i}`];
+                        proc[`klas${i}`] = (p != null && m != null && m > 0)
+                            ? Math.round(p / m * 100) : null;
+                    }
+                    return { ...row, proc };
+                });
+
+                // Funkcja licząca średnie klasy dla danej kartkówki/PK
+                function liczSrednieKlasy(prefixPkt, prefixMax, procKey, index) {
+                    // Znajdź wspólne maksimum klasy (wszystkie testy mają ten sam max)
+                    let commonMax = null;
+                    for (const row of klasaDane) {
+                        const m = row[`${prefixMax}${index}`];
+                        if (m != null && m > 0) { commonMax = m; break; }
+                    }
+
+                    let sumPkt = 0, cntPkt = 0, sumProc = 0, cntProc = 0, sumOcena = 0, cntOcena = 0;
+                    for (const row of klasaDane) {
+                        const p = row[`${prefixPkt}${index}`];
+                        if (p == null) continue;
+
+                        const m = row[`${prefixMax}${index}`];
+                        const effectiveMax = (m != null && m > 0) ? m : commonMax;
+
+                        sumPkt += p; cntPkt++;
+
+                        if (effectiveMax != null && effectiveMax > 0) {
+                            const proc = Math.round(p / effectiveMax * 100);
+                            if (proc >= 0 && proc <= 100) {
+                                sumProc += proc; cntProc++;
+                                const oc = punktyNaOcene(p, effectiveMax);
+                                if (typeof oc === 'number') { sumOcena += oc; cntOcena++; }
+                            }
+                        }
+                    }
+                    return {
+                        avgPkt:   cntPkt   ? (sumPkt   / cntPkt).toFixed(2)  : null,
+                        avgProc:  cntProc  ? Math.round(sumProc  / cntProc)   : null,
+                        avgOcena: cntOcena ? (sumOcena / cntOcena).toFixed(2) : null,
+                    };
+                }
+
+                function budujKarty(containerId, count, nazwaBase, kolor, prefixPkt, prefixMax, prefixSem, procKey) {
+                    const el = document.getElementById(containerId);
+                    let html = '<div class="sprawdzian-lista">';
+                    let any = false;
+
+                    for (let i = 1; i <= count; i++) {
+                        const myPkt   = pkt1?.[`${prefixPkt}${i}`];
+                        const myMax   = pkt1?.[`${prefixMax}${i}`];
+                        const myOcena = sem1?.[`${prefixSem}${i}`];
+                        if (myPkt == null && myOcena == null) continue;
+
+                        const hasPoints = myPkt != null && myMax != null && myMax > 0;
+                        const myProc    = hasPoints ? Math.round(myPkt / myMax * 100) : null;
+
+                        const { avgPkt, avgProc, avgOcena } = liczSrednieKlasy(prefixPkt, prefixMax, procKey, i);
+                        const hasKlasa = avgPkt !== null || avgProc !== null || avgOcena !== null;
+
+                        const id    = `karta-${prefixSem}${i}`;
+                        const badge = myOcena != null ? myOcena : '—';
+
+                        const bk = barKolor(badge);
+                        html += `<div class="sprawdzian-karta ${kolor}" id="${id}">
+                            <div class="karta-naglowek" onclick="toggleKarta('${id}')">
+                                <div class="karta-lewa">
+                                    <span class="karta-nazwa">${nazwaBase} ${i}</span>
+                                    <span class="karta-ocena-badge ${kolor}">${badge}</span>
+                                </div>
+                                <span class="karta-strzalka">▼</span>
+                            </div>
+                            <div class="karta-szczegoly">
+                                <div class="szcz-sekcja">
+                                    <div class="szcz-sekcja-tytul">Twój wynik</div>
+                                    ${hasPoints ? `
+                                    <div class="prog-label">${myPkt} / ${myMax} pkt &nbsp;·&nbsp; ${myProc}%</div>
+                                    <div class="prog-track"><div class="prog-fill" style="width:${myProc}%;background-color:${bk};"></div></div>` : ''}
+                                    <div class="wynik-boxes">
+                                        ${hasPoints ? `
+                                        <div class="wynik-box" style="border-color:${bk};color:${bk};">
+                                            <div class="wynik-box-label">Punkty</div>
+                                            <div class="wynik-box-val">${myPkt}<small> / ${myMax}</small></div>
+                                        </div>
+                                        <div class="wynik-box" style="border-color:${bk};color:${bk};">
+                                            <div class="wynik-box-label">Procent</div>
+                                            <div class="wynik-box-val">${myProc !== null ? myProc + '%' : '—'}</div>
+                                        </div>` : ''}
+                                        <div class="wynik-box" style="border-color:${bk};color:${bk};">
+                                            <div class="wynik-box-label">Ocena</div>
+                                            <div class="wynik-box-val">${badge}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                ${hasKlasa ? `<div class="szcz-sekcja">
+                                    <div class="szcz-sekcja-tytul">Średnia w klasie</div>
+                                    <div class="srednia-boxes">
+                                        ${avgPkt   !== null ? `<div class="srednia-box" style="${intensityStyl(avgProc)}"><div class="srednia-box-label">Śr. punkty</div><div class="srednia-box-val">${avgPkt} pkt</div></div>` : ''}
+                                        ${avgProc  !== null ? `<div class="srednia-box" style="${intensityStyl(avgProc)}"><div class="srednia-box-label">Śr. procent</div><div class="srednia-box-val">${avgProc}%</div></div>` : ''}
+                                        ${avgOcena !== null ? `<div class="srednia-box" style="${intensityStyl(avgProc)}"><div class="srednia-box-label">Śr. ocena</div><div class="srednia-box-val">${avgOcena}</div></div>` : ''}
+                                    </div>
+                                </div>` : ''}
+                            </div>
+                        </div>`;
+                        any = true;
+                    }
+
+                    html += '</div>';
+                    el.innerHTML = any ? html : '';
+                }
+
+                budujKarty('lista-kartkowki', 8, 'Kartkówka',  'niebieski', 'kartp', 'kartmax', 'kartkowka_',       'kart');
+                budujKarty('lista-prace',     4, 'Praca kont.', 'czerwony',  'klasp', 'klasmax', 'praca_kontrolna_', 'klas');
 
                 function liczSrednie(s) {
                     if (!s) return { aryt: null, waz: null };
-                    const akt = [1,2,3,4,5].map(i => s[`aktywnosc_${i}`]).filter(v => v !== null && v !== undefined);
-                    const aryt = akt.length ? akt.reduce((a, b) => a + b, 0) / akt.length : null;
-                    return { aryt, waz: aryt };
+                    const KATEGORIE = [
+                        { prefix: 'aktywnosc_',       count: 5, waga: 1 },
+                        { prefix: 'kartkowka_',        count: 8, waga: 2 },
+                        { prefix: 'praca_kontrolna_', count: 4, waga: 3 },
+                    ];
+                    let sumAryt = 0, cntAryt = 0, sumWaz = 0, sumWag = 0;
+                    for (const kat of KATEGORIE) {
+                        for (let i = 1; i <= kat.count; i++) {
+                            const v = s[`${kat.prefix}${i}`];
+                            if (v !== null && v !== undefined) {
+                                sumAryt += v; cntAryt++;
+                                sumWaz  += v * kat.waga;
+                                sumWag  += kat.waga;
+                            }
+                        }
+                    }
+                    return {
+                        aryt: cntAryt ? sumAryt / cntAryt : null,
+                        waz:  sumWag  ? sumWaz  / sumWag  : null,
+                    };
                 }
 
                 const { aryt, waz } = liczSrednie(sem1);
@@ -310,6 +554,10 @@
                 if (adminRow) document.getElementById('linkAdmin').style.display = 'block';
 
                 document.getElementById('profilContent').style.display = 'block';
+            }
+
+            function toggleKarta(id) {
+                document.getElementById(id).classList.toggle('karta-open');
             }
 
             async function wyloguj() {

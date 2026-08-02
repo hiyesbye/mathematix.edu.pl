@@ -10,10 +10,12 @@
     const login = session.user.email.split('@')[0];
 
     if (loginLi) {
-        loginLi.innerHTML = `<a href="profil.html" style="color:rgb(12,200,200);">Mój profil [${login}]</a>`;
-        const wylogujLi = document.createElement('li');
-        wylogujLi.innerHTML = `<a href="#" style="color:rgb(255,100,100);" id="navWyloguj">Wyloguj się</a>`;
-        loginLi.after(wylogujLi);
+        loginLi.className = 'dropdown';
+        loginLi.innerHTML = `
+            <a href="profil.html" style="color:rgb(12,200,200);" class="dropbtn">Mój profil [${login}]</a>
+            <div class="dropdown-content">
+                <a href="#" id="navWyloguj" style="color:rgb(220,60,60);">Wyloguj się</a>
+            </div>`;
         document.getElementById('navWyloguj').addEventListener('click', async (e) => {
             e.preventDefault();
             await sb.auth.signOut();
