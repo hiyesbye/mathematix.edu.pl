@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html>
+<meta charset="utf-8">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jak poprawić ocenę?</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <style>
+        * { margin: 0; box-sizing: border-box; }
+        body { font-family: 'Courier New', Courier, monospace; background: #eef2f5; }
+
+        .topbar {
+            position: sticky; top: 0; z-index: 100;
+            background: #1c1c1c; color: white;
+            display: flex; align-items: center; gap: 14px;
+            padding: 0 20px; height: 52px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+        .topbar-title { font-size: 17px; font-weight: bold; letter-spacing: 0.5px; }
+        .btn-powrot {
+            padding: 7px 16px; background: transparent; color: #ccc;
+            border: 1px solid #555; border-radius: 5px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px; cursor: pointer;
+        }
+        .btn-powrot:hover { background: #444; color: white; }
+
+        .content { max-width: 560px; margin: 24px auto; padding: 0 18px 48px; }
+
+        /* Info box */
+        .info-box {
+            background: white; border-radius: 8px; padding: 16px 20px;
+            margin-bottom: 22px; border: 1px solid #ddd; font-size: 15px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+        }
+        .info-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 7px 0; border-bottom: 1px dotted #eee;
+        }
+        .info-row:last-child { border-bottom: none; }
+        .info-label { color: #666; }
+        .info-val { font-weight: bold; white-space: nowrap; }
+        .info-val.green { color: #2a9d3f; }
+
+        /* Section title above accordions */
+        .sekcja-tytul {
+            font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px;
+            color: #888; font-weight: bold; margin-bottom: 10px;
+        }
+
+        /* Accordion */
+        .accordion { margin-bottom: 8px; border-radius: 8px; overflow: hidden; }
+
+        .acc-header {
+            background: white; border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 13px 18px; cursor: pointer;
+            display: flex; align-items: center; gap: 10px;
+            transition: background 0.15s;
+            user-select: none;
+        }
+        .acc-header.open {
+            border-radius: 8px 8px 0 0;
+            border-bottom-color: transparent;
+            background: #f5f7fa;
+        }
+        .acc-header:not(.open):hover { background: #f9fafb; }
+
+        .acc-left { flex: 1; min-width: 0; }
+        .acc-num {
+            font-size: 9px; text-transform: uppercase; letter-spacing: 1.5px;
+            color: #aaa; margin-bottom: 2px;
+        }
+        .acc-title { font-size: 15px; font-weight: bold; color: #222; }
+        .acc-sub { font-size: 11px; color: #999; margin-top: 2px; }
+
+        .acc-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+        .acc-badge {
+            font-size: 12px; font-weight: bold; color: #555;
+            background: #eef2f5; border-radius: 20px; padding: 3px 11px;
+            white-space: nowrap;
+        }
+        .acc-arrow { font-size: 12px; color: #bbb; transition: transform 0.2s; }
+        .acc-arrow.open { transform: rotate(180deg); }
+
+        .acc-body {
+            display: none;
+            background: #f8fafc;
+            border: 1px solid #ddd; border-top: none;
+            border-radius: 0 0 8px 8px;
+            padding: 10px 12px 4px;
+        }
+        .acc-body.open { display: block; }
+
+        /* Option cards inside accordion */
+        .opcja-card {
+            background: white; border-radius: 7px; overflow: hidden;
+            margin-bottom: 8px; border-left: 4px solid #ccc;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        }
+        .opcja-card.niebieski { border-left-color: rgb(11,105,148); }
+        .opcja-card.czerwony  { border-left-color: #c0392b; }
+        .opcja-card.zielony   { border-left-color: #2a9d3f; }
+
+        .opcja-header {
+            text-align: center; font-weight: bold; font-size: 17px;
+            padding: 9px 16px; letter-spacing: 0.3px;
+        }
+        .opcja-body {
+            display: flex; align-items: flex-start; justify-content: space-between;
+            gap: 12px; padding: 12px 16px 14px;
+        }
+        .opcja-lewa { flex: 1; }
+        .opcja-sub { color: #555; font-size: 14px; }
+        .opcja-pkt {
+            margin-top: 10px; font-size: 14px;
+            display: flex; flex-direction: column; gap: 5px;
+        }
+        .opcja-pkt div { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+        .pkt-key {
+            font-size: 10px; font-weight: bold; text-transform: uppercase;
+            letter-spacing: 0.8px; color: #5a47a0;
+            background: #eae7f7; border-radius: 8px; padding: 2px 9px;
+        }
+        .pkt-obecne { color: #333; font-weight: bold; }
+        .pkt-min    { color: #0a6a96; font-weight: bold; }
+        .pkt-delta  {
+            background: #fff0e8; color: #c0392b; border-radius: 4px;
+            padding: 2px 9px; font-weight: bold; font-size: 13px; white-space: nowrap;
+        }
+        .pkt-delta.ok { background: #e9f7ee; color: #2a9d3f; }
+
+        .opcja-ocena-box {
+            display: flex; flex-direction: column; align-items: center;
+            border: 2px solid; border-radius: 6px; padding: 6px 14px;
+            min-width: 60px; text-align: center; background: white; flex-shrink: 0;
+        }
+        .opcja-ocena-label { font-size: 9px; text-transform: uppercase; color: #aaa; margin-bottom: 2px; letter-spacing: 0.5px; }
+        .opcja-ocena-val { font-size: 24px; font-weight: bold; }
+
+        .brak  { color: #888; font-style: italic; text-align: center; padding: 28px 0; font-size: 15px; }
+        .sukces { color: #2a9d3f; font-weight: bold; text-align: center; padding: 28px 0; font-size: 16px; }
+        #ladowanie { text-align: center; padding: 50px; color: #888; font-size: 17px; }
+
+        .acc-badge-pa {
+            font-size: 12px; font-weight: bold; color: #9a6200;
+            background: #fef3e2; border-radius: 20px; padding: 3px 11px;
+            white-space: nowrap; border: 1px solid #f0c060;
+        }
+        .opcja-koszt {
+            margin-top: 9px; font-size: 13px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .koszt-key {
+            font-size: 10px; font-weight: bold; text-transform: uppercase;
+            letter-spacing: 0.8px; color: #5a47a0;
+            background: #eae7f7; border-radius: 8px; padding: 2px 9px;
+        }
+        .koszt-val {
+            background: #fef3e2; color: #9a6200; border-radius: 4px;
+            padding: 2px 9px; font-weight: bold; font-size: 13px;
+            border: 1px solid #f0c060; white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <button class="btn-powrot" onclick="window.location.href='profil.html'">&#8592; Powrót</button>
+        <span class="topbar-title">Jak poprawić ocenę?</span>
+    </div>
+    <div class="content">
+        <div id="ladowanie">Obliczanie...</div>
+        <div id="wynik" style="display:none;"></div>
+    </div>
+
+    <script src="supabase-config.js"></script>
+    <script>
+        const PROGI = [
+            { min: 1.0,  max: 1.5,  ocena: 1, nazwa: 'niedostateczny' },
+            { min: 1.5,  max: 2.6,  ocena: 2, nazwa: 'dopuszczający'  },
+            { min: 2.6,  max: 3.6,  ocena: 3, nazwa: 'dostateczny'    },
+            { min: 3.6,  max: 4.6,  ocena: 4, nazwa: 'dobry'          },
+            { min: 4.6,  max: 5.3,  ocena: 5, nazwa: 'bardzo dobry'   },
+            { min: 5.3,  max: 6.01, ocena: 6, nazwa: 'celujący'       },
+        ];
+
+        const KAT = [
+            { prefix: 'aktywnosc_',       count: 5, waga: 1 },
+            { prefix: 'kartkowka_',        count: 8, waga: 2 },
+            { prefix: 'praca_kontrolna_', count: 4, waga: 3 },
+        ];
+
+        function liczWaz(sem1) {
+            let sw = 0, sg = 0;
+            for (const k of KAT)
+                for (let i = 1; i <= k.count; i++) {
+                    const v = sem1?.[`${k.prefix}${i}`];
+                    if (v != null) { sw += v * k.waga; sg += k.waga; }
+                }
+            return { waz: sg ? sw / sg : null, sw, sg };
+        }
+
+        function propOcena(waz) {
+            if (waz == null) return null;
+            return PROGI.find(p => waz >= p.min && waz < p.max) ?? null;
+        }
+
+        function nowaWazFn(sw, sg, oldV, newV, w, isNew) {
+            if (isNew) return (sw + newV * w) / (sg + w);
+            return (sw - oldV * w + newV * w) / sg;
+        }
+
+        const PROGI_PKT = [0, 0.30, 0.50, 0.70, 0.87, 0.97];
+        function minPktNaOcene(ocena, max) {
+            return Math.ceil(PROGI_PKT[ocena - 1] * max * 4) / 4;
+        }
+        function formatPkt(v) {
+            return parseFloat(v.toFixed(2)).toString();
+        }
+
+        function ocenaKolor(o) {
+            if (o <= 2) return '#c0392b';
+            if (o === 3) return '#e67e22';
+            if (o === 4) return '#0a6a96';
+            return '#2a9d3f';
+        }
+
+        function budujKandydatow(sem1, pkt1) {
+            const c = [];
+            for (let i = 1; i <= 8; i++) {
+                const v = sem1?.[`kartkowka_${i}`];
+                if (v != null && v < 6)
+                    c.push({
+                        label: `Kartkówka ${i}`, sub: `Obecna ocena: ${v}`,
+                        obecna: v, waga: 2, isNew: false, kolor: 'niebieski', minStart: v + 1,
+                        pkt: pkt1?.[`kartp${i}`] ?? null,
+                        max: pkt1?.[`kartmax${i}`] ?? null,
+                    });
+            }
+            for (let i = 1; i <= 4; i++) {
+                const v = sem1?.[`praca_kontrolna_${i}`];
+                if (v != null && v < 6)
+                    c.push({
+                        label: `Praca kontrolna ${i}`, sub: `Obecna ocena: ${v}`,
+                        obecna: v, waga: 3, isNew: false, kolor: 'czerwony', minStart: v + 1,
+                        pkt: pkt1?.[`klasp${i}`] ?? null,
+                        max: pkt1?.[`klasmax${i}`] ?? null,
+                    });
+            }
+            for (let i = 1; i <= 5; i++) {
+                const v = sem1?.[`aktywnosc_${i}`];
+                if (v == null)
+                    c.push({ label: `Aktywność`, sub: 'Nowa ocena z aktywności', obecna: 0, waga: 1, isNew: true, kolor: 'zielony', minStart: 5 });
+                else if (v < 5)
+                    c.push({ label: `Aktywność`, sub: `Obecna ocena: ${v} → popraw`, obecna: v, waga: 1, isNew: false, kolor: 'zielony', minStart: 5 });
+            }
+            return c;
+        }
+
+        // Greedy minimum path for a given ordered candidate pool
+        // Returns array of chosen items, or null if target unreachable with this pool
+        function greedyKombo(candidates, sw0, sg0, targetWaz) {
+            let sw = sw0, sg = sg0;
+            const chosen = [];
+            for (const k of candidates) {
+                if (sw / sg >= targetWaz) break;
+                let gradeUsed = 6;
+                for (let g = k.minStart; g <= 6; g++) {
+                    if (nowaWazFn(sw, sg, k.obecna, g, k.waga, k.isNew) >= targetWaz) {
+                        gradeUsed = g; break;
+                    }
+                }
+                chosen.push({ ...k, nowaOcena: gradeUsed });
+                if (k.isNew) { sw += gradeUsed * k.waga; sg += k.waga; }
+                else         { sw = sw - k.obecna * k.waga + gradeUsed * k.waga; }
+            }
+            return (sw / sg >= targetWaz) ? chosen : null;
+        }
+
+        function identical(a, b) {
+            if (!a || !b || a.length !== b.length) return false;
+            const key = x => x.label + ':' + x.nowaOcena;
+            return a.map(key).sort().join('|') === b.map(key).sort().join('|');
+        }
+
+        function znajdz3Strategie(kandydaci, sw, sg, targetWaz) {
+            // Pool 1: max impact first (globally optimal)
+            const byImpact = [...kandydaci].sort((a, b) =>
+                (6 - b.obecna) * b.waga - (6 - a.obecna) * a.waga
+            );
+            // Pool 2: PK first (highest weight), then kartkówki, then activities
+            const byWeight = [...kandydaci].sort((a, b) =>
+                b.waga !== a.waga
+                    ? b.waga - a.waga
+                    : (6 - b.obecna) * b.waga - (6 - a.obecna) * a.waga
+            );
+            // Pool 3: activities first, then assessments by impact
+            const activFirst = [
+                ...byImpact.filter(k => k.kolor === 'zielony'),
+                ...byImpact.filter(k => k.kolor !== 'zielony'),
+            ];
+            // Pool 4: assessments only (no activities)
+            const assessOnly = byImpact.filter(k => k.kolor !== 'zielony');
+
+            const POOLS = [
+                { pool: byImpact,   label: 'Optymalna',             sublabel: 'Jak najmniej zmian, największy efekt' },
+                { pool: byWeight,   label: 'Przez prace kontrolne', sublabel: 'Zacznij od prac z największą wagą (3)' },
+                { pool: activFirst, label: 'Z aktywnościami',       sublabel: 'Aktywności na pierwszym miejscu' },
+                { pool: assessOnly, label: 'Tylko sprawdziany',     sublabel: 'Bez uwzględnienia aktywności' },
+            ];
+
+            const strats = [];
+            for (const { pool, label, sublabel } of POOLS) {
+                if (strats.length >= 3) break;
+                if (pool.length === 0) continue;
+                const combo = greedyKombo(pool, sw, sg, targetWaz);
+                if (!combo) continue;
+                if (strats.some(s => identical(s.combo, combo))) continue;
+                strats.push({ label, sublabel, combo });
+            }
+
+            // Sort by combo length so shortest (most optimal) is always first
+            strats.sort((a, b) => a.combo.length - b.combo.length);
+
+            return strats;
+        }
+
+        const HEADER_STYLE = {
+            niebieski: { bg: 'rgba(11,105,148,0.10)',  color: 'rgb(11,105,148)' },
+            czerwony:  { bg: 'rgba(192,57,43,0.10)',   color: '#c0392b'         },
+            zielony:   { bg: 'rgba(42,157,63,0.10)',   color: '#2a9d3f'         },
+        };
+
+        function renderKarta(opt) {
+            const kol = ocenaKolor(opt.nowaOcena);
+            const hs  = HEADER_STYLE[opt.kolor] || { bg: '#f0f0f0', color: '#222' };
+
+            let pktHtml = '';
+            if (!opt.isNew && opt.pkt != null && opt.max != null && opt.max > 0) {
+                const minPkt   = minPktNaOcene(opt.nowaOcena, opt.max);
+                const potrzeba = minPkt - opt.pkt;
+                const deltaHtml = potrzeba > 0
+                    ? `<span class="pkt-delta">+${formatPkt(potrzeba)} pkt</span>`
+                    : `<span class="pkt-delta ok">wystarczy</span>`;
+                pktHtml = `<div class="opcja-pkt">
+                    <div><span class="pkt-key">Masz:</span><span class="pkt-obecne">${formatPkt(opt.pkt)} / ${formatPkt(opt.max)} pkt</span></div>
+                    <div><span class="pkt-key">Potrzebujesz min.:</span><span class="pkt-min">${formatPkt(minPkt)} / ${formatPkt(opt.max)} pkt</span> ${deltaHtml}</div>
+                </div>`;
+            }
+            const kosztPA   = kosztPAItem(opt);
+            const kosztHtml = `<div class="opcja-koszt">
+                    <span class="koszt-key">Koszt poprawy:</span>
+                    <span class="koszt-val">${kosztPA} PA</span>
+                </div>`;
+            const subHtml = opt.isNew
+                ? `<div class="opcja-sub">${opt.sub}</div>`
+                : `<div class="opcja-sub"><span style="font-size:10px;font-weight:bold;text-transform:uppercase;letter-spacing:0.8px;color:#5a47a0;background:#eae7f7;border-radius:8px;padding:2px 9px;">Obecna ocena:</span> <span style="color:${ocenaKolor(opt.obecna)};font-weight:bold;font-size:17px;">${opt.obecna}</span></div>`;
+            return `
+                <div class="opcja-card ${opt.kolor}">
+                    <div class="opcja-header" style="background:${hs.bg}; color:${hs.color};">
+                        ${opt.label}
+                    </div>
+                    <div class="opcja-body">
+                        <div class="opcja-lewa">
+                            ${subHtml}
+                            ${pktHtml}
+                            ${kosztHtml}
+                        </div>
+                        <div class="opcja-ocena-box" style="border-color:${kol};color:${kol};">
+                            <div class="opcja-ocena-label">min. ocena</div>
+                            <div class="opcja-ocena-val">${opt.nowaOcena}</div>
+                        </div>
+                    </div>
+                </div>`;
+        }
+
+        function kosztPAItem(item) {
+            if (item.kolor === 'zielony') return item.nowaOcena >= 6 ? 10 : 5;
+            if (item.kolor === 'niebieski') return 2;
+            if (item.kolor === 'czerwony') return 4;
+            return 0;
+        }
+
+        function zmianLabel(n) {
+            if (n === 1) return '1 zmiana';
+            if (n <= 4) return `${n} zmiany`;
+            return `${n} zmian`;
+        }
+
+        function renderAccordion(strat, idx, expanded) {
+            const { label, sublabel, combo } = strat;
+            const cards = combo.map(renderKarta).join('');
+            const totalPA = combo.reduce((s, item) => s + kosztPAItem(item), 0);
+            return `
+                <div class="accordion">
+                    <div class="acc-header ${expanded ? 'open' : ''}" onclick="toggleAcc(this)">
+                        <div class="acc-left">
+                            <div class="acc-num">Opcja ${idx + 1}</div>
+                            <div class="acc-title">${label}</div>
+                            <div class="acc-sub">${sublabel}</div>
+                        </div>
+                        <div class="acc-right">
+                            <span class="acc-badge-pa">${totalPA} PA</span>
+                            <span class="acc-badge">${zmianLabel(combo.length)}</span>
+                            <span class="acc-arrow ${expanded ? 'open' : ''}">&#9660;</span>
+                        </div>
+                    </div>
+                    <div class="acc-body ${expanded ? 'open' : ''}">
+                        ${cards}
+                    </div>
+                </div>`;
+        }
+
+        function toggleAcc(header) {
+            const body = header.nextElementSibling;
+            const arrow = header.querySelector('.acc-arrow');
+            const isOpen = body.classList.contains('open');
+            body.classList.toggle('open', !isOpen);
+            header.classList.toggle('open', !isOpen);
+            arrow.classList.toggle('open', !isOpen);
+        }
+
+        async function init() {
+            const { data: { session } } = await sb.auth.getSession();
+            if (!session) { window.location.href = 'index.html'; return; }
+
+            const [{ data: sem1 }, { data: pkt1 }, { data: profil }] = await Promise.all([
+                sb.from('semestr1').select('*').eq('profil_id', session.user.id).single(),
+                sb.from('Punktysem1').select('*').eq('profil_id', session.user.id).single(),
+                sb.from('profiles').select('imie, nazwisko, klasa').eq('id', session.user.id).single(),
+            ]);
+
+            document.getElementById('ladowanie').style.display = 'none';
+            const wynik = document.getElementById('wynik');
+            wynik.style.display = 'block';
+
+            const { waz, sw, sg } = liczWaz(sem1);
+            const obecna = propOcena(waz);
+
+            let html = `<div class="info-box">
+                <div class="info-row"><span class="info-label">Uczeń:</span><span class="info-val">${profil?.imie || ''} ${profil?.nazwisko || ''} &nbsp;·&nbsp; kl. ${profil?.klasa || '—'}</span></div>
+                <div class="info-row"><span class="info-label">Śr. ważona:</span><span class="info-val">${waz?.toFixed(2) ?? '—'}</span></div>
+                <div class="info-row"><span class="info-label">Ocena proponowana:</span><span class="info-val">${obecna ? `${obecna.ocena} (${obecna.nazwa})` : '—'}</span></div>`;
+
+            if (!obecna || obecna.ocena >= 6) {
+                html += `</div>${obecna?.ocena === 6
+                    ? '<div class="sukces">Masz już ocenę celującą — nie ma wyżej!</div>'
+                    : '<div class="brak">Brak wystarczających danych do obliczenia.</div>'}`;
+                wynik.innerHTML = html;
+                return;
+            }
+
+            const nastepna = PROGI.find(p => p.ocena === obecna.ocena + 1);
+            const brakuje      = (nastepna.min - waz).toFixed(2);
+            const bandSize     = nastepna.min - obecna.min;
+            const procent      = Math.min(100, Math.round(((waz - obecna.min) / bandSize) * 100));
+            const brakujePct   = 100 - procent;
+            const KOLORY_BAR = { 1: '#c0392b', 2: '#e67e22', 3: '#d4ac0d', 4: '#0a6a96', 5: '#2a9d3f', 6: '#2a9d3f' };
+            const barKol    = KOLORY_BAR[obecna.ocena] || '#888';
+            html += `<div class="info-row"><span class="info-label">Cel:</span>
+                <span class="info-val green">${nastepna.ocena} (${nastepna.nazwa}) &nbsp;—&nbsp; co najmniej ${nastepna.min.toFixed(2)}</span></div>
+                <div class="info-row" style="flex-direction:column; align-items:stretch; gap:6px; padding-bottom:10px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span class="info-label">Brakuje:</span>
+                        <span style="display:flex; align-items:center; gap:20px;">
+                            <span style="font-size:22px; font-weight:bold; color:#c0392b; letter-spacing:0.3px; line-height:1;">${brakuje}</span>
+                            <span style="width:1px; height:22px; background:#ddd; display:inline-block; flex-shrink:0;"></span>
+                            <span style="color:#666; font-size:14px; font-weight:bold;">${brakujePct}% do celu</span>
+                        </span>
+                    </div>
+                    <div style="position:relative; height:18px; border-radius:4px; overflow:hidden; background:#e8e8e8; border:1px solid #bbb; box-shadow:inset 0 2px 5px rgba(0,0,0,0.18), inset 0 -1px 0 rgba(255,255,255,0.7), 0 1px 0 rgba(255,255,255,0.8);">
+                        <div style="width:${procent}%; height:100%; background-color:#c0392b; background-image:linear-gradient(to bottom, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.12) 40%, transparent 62%, rgba(0,0,0,0.28) 100%); border-radius:3px; box-shadow:inset 0 1px 0 rgba(255,255,255,0.4), inset -1px 0 2px rgba(0,0,0,0.18); transition:width 0.5s ease;"></div>
+                        <span style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:bold; color:white; text-shadow:0 1px 3px rgba(0,0,0,0.8), 0 0 6px rgba(0,0,0,0.7), 0 0 2px rgba(0,0,0,1); letter-spacing:0.5px;">${procent}%</span>
+                    </div>
+                </div>
+            </div>`;
+
+            const kandydaci = budujKandydatow(sem1, pkt1);
+            if (kandydaci.length === 0) {
+                html += '<div class="brak">Wszystkie oceny są już na poziomie 6 — brak możliwości poprawy.</div>';
+                wynik.innerHTML = html;
+                return;
+            }
+
+            const strats = znajdz3Strategie(kandydaci, sw, sg, nastepna.min);
+
+            if (strats.length === 0) {
+                html += '<div class="brak">Brak możliwości poprawy na podstawie dostępnych danych.</div>';
+            } else {
+                html += `<div class="sekcja-tytul">Dostępne ścieżki poprawy:</div>`;
+                strats.forEach((strat, i) => {
+                    html += renderAccordion(strat, i, false);
+                });
+            }
+
+            wynik.innerHTML = html;
+        }
+
+        init();
+    </script>
+</body>
+</html>

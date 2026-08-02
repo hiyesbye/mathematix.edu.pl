@@ -153,6 +153,22 @@
                 font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
                 color: #888; margin-bottom: 5px; font-weight: bold;
             }
+            /* Przycisk Poprawa */
+            .btn-poprawa {
+                display: inline-block;
+                padding: 9px 30px;
+                background: #1c1c1c;
+                color: #fff;
+                border: none;
+                border-radius: 6px;
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 14px;
+                font-weight: bold;
+                letter-spacing: 0.5px;
+                cursor: pointer;
+                transition: background 0.18s;
+            }
+            .btn-poprawa:hover { background: rgb(11,105,148); }
             /* Progress bar — RPG style */
             .prog-label { font-size: 11px; color: #666; text-align: right; margin-bottom: 4px; font-weight: bold; letter-spacing: 0.3px; }
             .prog-track {
@@ -295,6 +311,14 @@
                             <div class="punkty-row">
                                 <span>Śr. ważona:</span>
                                 <span id="p-sr-waz">—</span>
+                            </div>
+                            <div class="punkty-row" style="border-top: 2px solid #bbb; margin-top: 6px;">
+                                <span style="font-weight:bold; white-space:nowrap;">Ocena proponowana:</span>
+                                <span id="p-ocena-prop" style="font-size:18px; font-weight:bold; white-space:nowrap;">—</span>
+                            </div>
+                            <div id="poprawa-btn-wrap" style="display:none; margin-top:12px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+                                <button class="btn-poprawa" id="btn-poprawa" style="display:none;">Poprawa</button>
+                                <button class="btn-poprawa" id="btn-symulacja">Symulacja</button>
                             </div>
                         </div>
                     </div>
@@ -549,6 +573,37 @@
                 const { aryt, waz } = liczSrednie(sem1);
                 document.getElementById('p-sr-aryt').textContent = aryt !== null ? aryt.toFixed(2) : '—';
                 document.getElementById('p-sr-waz').textContent  = waz  !== null ? waz.toFixed(2)  : '—';
+
+                function ocenaProponowana(sr) {
+                    if (sr === null || sr < 1.0) return null;
+                    if (sr < 1.5) return { ocena: 1, nazwa: 'niedostateczny' };
+                    if (sr < 2.6) return { ocena: 2, nazwa: 'dopuszczający' };
+                    if (sr < 3.6) return { ocena: 3, nazwa: 'dostateczny' };
+                    if (sr < 4.6) return { ocena: 4, nazwa: 'dobry' };
+                    if (sr < 5.3) return { ocena: 5, nazwa: 'bardzo dobry' };
+                    if (sr <= 6.0) return { ocena: 6, nazwa: 'celujący' };
+                    return null;
+                }
+
+                const KOLORY_OCEN = { 1: '#c0392b', 2: '#c0392b', 3: '#e67e22', 4: '#0a6a96', 5: '#2a9d3f', 6: '#2a9d3f' };
+                const prop = ocenaProponowana(waz);
+                const propEl = document.getElementById('p-ocena-prop');
+                if (prop) {
+                    propEl.textContent = `${prop.ocena} (${prop.nazwa})`;
+                    propEl.style.color = KOLORY_OCEN[prop.ocena];
+                } else {
+                    propEl.textContent = '—';
+                }
+                if (waz != null) {
+                    document.getElementById('poprawa-btn-wrap').style.display = 'flex';
+                    document.getElementById('btn-symulacja').onclick = () =>
+                        window.open('symulacja.html', '_blank', 'width=620,height=760,resizable=yes,scrollbars=yes');
+                }
+                if (prop && prop.ocena < 6) {
+                    document.getElementById('btn-poprawa').style.display = 'inline-block';
+                    document.getElementById('btn-poprawa').onclick = () =>
+                        window.open('poprawa.html', '_blank', 'width=620,height=700,resizable=yes,scrollbars=yes');
+                }
 
                 const { data: adminRow } = await sb.from('admins').select('id').eq('id', session.user.id).single();
                 if (adminRow) document.getElementById('linkAdmin').style.display = 'block';

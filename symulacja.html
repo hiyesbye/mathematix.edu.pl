@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html>
+<meta charset="utf-8">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Symulacja ocen</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <style>
+        * { margin: 0; box-sizing: border-box; }
+        body { font-family: 'Courier New', Courier, monospace; background: #eef2f5; }
+
+        .topbar {
+            position: sticky; top: 0; z-index: 100;
+            background: #1c1c1c; color: white;
+            display: flex; align-items: center; gap: 14px;
+            padding: 0 20px; height: 52px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+        .topbar-title { font-size: 17px; font-weight: bold; letter-spacing: 0.5px; }
+        .btn-powrot {
+            padding: 7px 16px; background: transparent; color: #ccc;
+            border: 1px solid #555; border-radius: 5px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px; cursor: pointer;
+        }
+        .btn-powrot:hover { background: #444; color: white; }
+
+        /* Sticky avg panel */
+        .avg-panel {
+            position: sticky; top: 52px; z-index: 90;
+            background: white; border-bottom: 2px solid #e0e0e0;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.10);
+            padding: 16px 24px;
+            display: flex; align-items: center; justify-content: space-between; gap: 16px;
+        }
+        .avg-left { display: flex; align-items: center; gap: 28px; }
+        .avg-blok { display: flex; flex-direction: column; align-items: center; }
+        .avg-label {
+            font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px;
+            color: #888; font-weight: bold; margin-bottom: 3px;
+        }
+        .avg-val {
+            font-size: 48px; font-weight: bold; line-height: 1;
+            transition: color 0.2s;
+        }
+        .avg-divider { width: 1px; height: 60px; background: #e0e0e0; }
+        .avg-ocena { font-size: 19px; font-weight: bold; transition: color 0.2s; }
+        .avg-zmiany { font-size: 12px; color: #aaa; margin-top: 4px; }
+        .avg-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+        .btn-reset {
+            padding: 9px 20px; background: #333; color: white;
+            border: none; border-radius: 6px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px; font-weight: bold; cursor: pointer;
+            transition: background 0.15s;
+        }
+        .btn-reset:hover { background: rgb(11,105,148); }
+
+        .content { max-width: 560px; margin: 20px auto; padding: 0 18px 48px; }
+
+        .sekcja-tytul {
+            font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px;
+            color: #888; font-weight: bold; margin: 20px 0 8px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .sekcja-waga {
+            font-size: 10px; color: #bbb; font-weight: normal;
+            background: #eee; border-radius: 10px; padding: 1px 8px;
+            text-transform: none; letter-spacing: 0;
+        }
+
+        .sim-grid { display: flex; flex-direction: column; gap: 6px; }
+
+        .sim-karta {
+            background: white; border-radius: 7px;
+            border-left: 4px solid #ccc; overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            display: flex; align-items: center;
+            justify-content: space-between; gap: 12px;
+            padding: 10px 14px;
+            transition: border-left-color 0.15s, box-shadow 0.15s;
+        }
+        .sim-karta.niebieski { border-left-color: rgb(11,105,148); }
+        .sim-karta.czerwony  { border-left-color: #c0392b; }
+        .sim-karta.zielony   { border-left-color: #2a9d3f; }
+        .sim-karta.zmieniona { box-shadow: 0 0 0 2px rgba(230,126,34,0.4), 0 1px 4px rgba(0,0,0,0.08); }
+
+        .sim-info { flex: 1; min-width: 0; }
+        .sim-nazwa { font-weight: bold; font-size: 15px; color: #222; }
+        .sim-oryg  { font-size: 11px; color: #aaa; margin-top: 2px; transition: color 0.15s; }
+        .sim-oryg.zmieniona { color: #e67e22; }
+
+        .sim-controls { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+        .sim-btn {
+            width: 34px; height: 34px;
+            background: #f0f2f4; border: 1px solid #ccc; border-radius: 6px;
+            font-size: 20px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Courier New', Courier, monospace;
+            color: #555; transition: background 0.1s;
+            user-select: none;
+        }
+        .sim-btn:hover  { background: #e0e4e8; color: #222; }
+        .sim-btn:active { background: #d0d4d8; }
+        .sim-btn:disabled { opacity: 0.3; cursor: default; }
+
+        .sim-val {
+            font-size: 26px; font-weight: bold; min-width: 30px;
+            text-align: center; transition: color 0.15s;
+        }
+
+        #ladowanie { text-align: center; padding: 50px; color: #888; font-size: 17px; }
+
+        .btn-add-akt {
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            width: 100%; margin-top: 6px; padding: 10px 16px;
+            background: white; border: 2px dashed #c5e8c8; border-radius: 7px;
+            color: #2a9d3f; font-family: 'Courier New', Courier, monospace;
+            font-size: 14px; font-weight: bold; cursor: pointer;
+            transition: background 0.15s, border-color 0.15s;
+        }
+        .btn-add-akt:hover { background: #f0faf1; border-color: #2a9d3f; }
+
+        .btn-add-kart {
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            width: 100%; margin-top: 6px; padding: 10px 16px;
+            background: white; border: 2px dashed #b3d8e8; border-radius: 7px;
+            color: rgb(11,105,148); font-family: 'Courier New', Courier, monospace;
+            font-size: 14px; font-weight: bold; cursor: pointer;
+            transition: background 0.15s, border-color 0.15s;
+        }
+        .btn-add-kart:hover { background: #f0f7fa; border-color: rgb(11,105,148); }
+
+        .btn-add-pk {
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            width: 100%; margin-top: 6px; padding: 10px 16px;
+            background: white; border: 2px dashed #e8b3b3; border-radius: 7px;
+            color: #c0392b; font-family: 'Courier New', Courier, monospace;
+            font-size: 14px; font-weight: bold; cursor: pointer;
+            transition: background 0.15s, border-color 0.15s;
+        }
+        .btn-add-pk:hover { background: #fdf5f5; border-color: #c0392b; }
+
+        /* Modal */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.45); z-index: 300;
+            align-items: center; justify-content: center;
+        }
+        .modal-overlay.aktywny { display: flex; }
+        .modal-box {
+            background: white; border-radius: 12px;
+            padding: 28px 24px; width: 300px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+        }
+        .modal-tytul {
+            font-size: 16px; font-weight: bold; color: #222;
+            margin-bottom: 6px;
+        }
+        .modal-opis {
+            font-size: 12px; color: #888; margin-bottom: 16px;
+        }
+        .modal-input {
+            width: 100%; padding: 12px; font-size: 28px; font-weight: bold;
+            text-align: center; border: 2px solid #ddd; border-radius: 8px;
+            font-family: 'Courier New', Courier, monospace;
+            outline: none; transition: border-color 0.15s;
+        }
+        .modal-input:focus { border-color: #666; }
+        .modal-input.blad { border-color: #c0392b; }
+        .modal-blad-tekst {
+            font-size: 11px; color: #c0392b; margin-top: 5px;
+            min-height: 16px;
+        }
+        .modal-przyciski {
+            display: flex; gap: 10px; margin-top: 18px;
+        }
+        .modal-btn-anuluj {
+            flex: 1; padding: 10px; background: #f0f0f0; border: none;
+            border-radius: 7px; font-family: 'Courier New', Courier, monospace;
+            font-size: 14px; cursor: pointer; color: #555;
+            transition: background 0.12s;
+        }
+        .modal-btn-anuluj:hover { background: #e0e0e0; }
+        .modal-btn-ok {
+            flex: 1; padding: 10px; background: #333; color: white;
+            border: none; border-radius: 7px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px; font-weight: bold; cursor: pointer;
+            transition: background 0.12s;
+        }
+        .modal-btn-ok:hover { background: #111; }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <button class="btn-powrot" onclick="window.location.href='profil.html'">&#8592; Powrót</button>
+        <span class="topbar-title">Symulacja ocen</span>
+    </div>
+
+    <div class="avg-panel" id="avg-panel" style="display:none;">
+        <div class="avg-left">
+            <div class="avg-blok">
+                <div class="avg-label">Śr. ważona</div>
+                <div class="avg-val" id="sim-sr-val">—</div>
+            </div>
+            <div class="avg-divider"></div>
+            <div class="avg-blok">
+                <div class="avg-label">Ocena proponowana</div>
+                <div class="avg-ocena" id="sim-ocena-val">—</div>
+                <div class="avg-zmiany" id="sim-zmiany-info"></div>
+            </div>
+        </div>
+        <div class="avg-right">
+            <button class="btn-reset" onclick="resetSim()">&#8635; Reset</button>
+        </div>
+    </div>
+
+    <!-- Modal do wpisania oceny -->
+    <div class="modal-overlay" id="ocena-modal">
+        <div class="modal-box">
+            <div class="modal-tytul" id="modal-tytul">Dodaj ocenę</div>
+            <div class="modal-opis">Podaj ocenę (1–6):</div>
+            <input type="number" class="modal-input" id="modal-input"
+                   min="1" max="6" inputmode="numeric"
+                   oninput="modalResetBlad()"
+                   onkeydown="if(event.key==='Enter') modalZatwierdz(); if(event.key==='Escape') modalAnuluj();">
+            <div class="modal-blad-tekst" id="modal-blad"></div>
+            <div class="modal-przyciski">
+                <button class="modal-btn-anuluj" onclick="modalAnuluj()">Anuluj</button>
+                <button class="modal-btn-ok" onclick="modalZatwierdz()">Dodaj</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="content">
+        <div id="ladowanie">Ładowanie...</div>
+        <div id="sim-content" style="display:none;"></div>
+    </div>
+
+    <script src="supabase-config.js"></script>
+    <script>
+        const PROGI = [
+            { min: 1.0,  max: 1.5,  ocena: 1, nazwa: 'niedostateczny' },
+            { min: 1.5,  max: 2.6,  ocena: 2, nazwa: 'dopuszczający'  },
+            { min: 2.6,  max: 3.6,  ocena: 3, nazwa: 'dostateczny'    },
+            { min: 3.6,  max: 4.6,  ocena: 4, nazwa: 'dobry'          },
+            { min: 4.6,  max: 5.3,  ocena: 5, nazwa: 'bardzo dobry'   },
+            { min: 5.3,  max: 6.01, ocena: 6, nazwa: 'celujący'       },
+        ];
+        const KOLORY_OCEN = { 1: '#c0392b', 2: '#c0392b', 3: '#e67e22', 4: '#0a6a96', 5: '#2a9d3f', 6: '#2a9d3f' };
+
+        function ocenaProponowana(sr) {
+            if (sr == null) return null;
+            return PROGI.find(p => sr >= p.min && sr < p.max) ?? null;
+        }
+        function ocenaKolor(o) {
+            if (o <= 2) return '#c0392b';
+            if (o === 3) return '#e67e22';
+            if (o === 4) return '#0a6a96';
+            return '#2a9d3f';
+        }
+
+        const KATEGORIE = [
+            { prefix: 'aktywnosc_',       count: 5, waga: 1, nazwa: 'Aktywność',      kolor: 'zielony',   minOcena: 5, maxOcena: 6 },
+            { prefix: 'kartkowka_',        count: 8, waga: 2, nazwa: 'Kartkówka',       kolor: 'niebieski', minOcena: 1, maxOcena: 6 },
+            { prefix: 'praca_kontrolna_', count: 4, waga: 3, nazwa: 'Praca kontrolna', kolor: 'czerwony',  minOcena: 1, maxOcena: 6 },
+        ];
+
+        let simState   = {};
+        let aktCounter = 0;
+        let kartCounter = 0;
+        let pkCounter   = 0;
+
+        /* ---- Modal ---- */
+        let modalCallback = null;
+
+        function openOcenaModal(tytul, callback) {
+            modalCallback = callback;
+            document.getElementById('modal-tytul').textContent = tytul;
+            document.getElementById('modal-input').value = '';
+            document.getElementById('modal-blad').textContent = '';
+            document.getElementById('modal-input').classList.remove('blad');
+            document.getElementById('ocena-modal').classList.add('aktywny');
+            setTimeout(() => document.getElementById('modal-input').focus(), 50);
+        }
+
+        function modalAnuluj() {
+            document.getElementById('ocena-modal').classList.remove('aktywny');
+            modalCallback = null;
+        }
+
+        function modalResetBlad() {
+            document.getElementById('modal-input').classList.remove('blad');
+            document.getElementById('modal-blad').textContent = '';
+        }
+
+        function modalZatwierdz() {
+            const raw = document.getElementById('modal-input').value;
+            const val = parseInt(raw, 10);
+            if (!raw || isNaN(val) || val < 1 || val > 6) {
+                document.getElementById('modal-input').classList.add('blad');
+                document.getElementById('modal-blad').textContent = 'Wpisz liczbę od 1 do 6.';
+                document.getElementById('modal-input').focus();
+                return;
+            }
+            document.getElementById('ocena-modal').classList.remove('aktywny');
+            const cb = modalCallback;
+            modalCallback = null;
+            if (cb) cb(val);
+        }
+
+        /* ---- Helpers ---- */
+        function calcAvg() {
+            let sw = 0, sg = 0;
+            for (const k in simState) { sw += simState[k].val * simState[k].waga; sg += simState[k].waga; }
+            return sg ? sw / sg : null;
+        }
+
+        function countZmiany() {
+            return Object.values(simState).filter(s => s.isNew || s.val !== s.orig).length;
+        }
+
+        function updateAvgDisplay() {
+            const avg  = calcAvg();
+            const prop = ocenaProponowana(avg);
+            const kol  = prop ? KOLORY_OCEN[prop.ocena] : '#333';
+            document.getElementById('sim-sr-val').textContent    = avg != null ? avg.toFixed(2) : '—';
+            document.getElementById('sim-sr-val').style.color    = kol;
+            document.getElementById('sim-ocena-val').textContent = prop ? `${prop.ocena} (${prop.nazwa})` : '—';
+            document.getElementById('sim-ocena-val').style.color = kol;
+            const n = countZmiany();
+            document.getElementById('sim-zmiany-info').textContent = n > 0 ? `${n} zmienion${n === 1 ? 'a' : 'ych'}` : '';
+        }
+
+        function zmienOcene(key, delta) {
+            const item   = simState[key];
+            const nowVal = Math.max(item.minOcena, Math.min(item.maxOcena, item.val + delta));
+            if (nowVal === item.val) return;
+            item.val = nowVal;
+
+            document.getElementById(`sv-${key}`).textContent = nowVal;
+            document.getElementById(`sv-${key}`).style.color = ocenaKolor(nowVal);
+
+            const orygEl  = document.getElementById(`so-${key}`);
+            const kartaEl = document.getElementById(`sk-${key}`);
+            if (!item.isNew) {
+                if (nowVal !== item.orig) {
+                    orygEl.textContent = `Oryg.: ${item.orig} → zmieniona`;
+                    orygEl.classList.add('zmieniona');
+                    kartaEl.classList.add('zmieniona');
+                } else {
+                    orygEl.textContent = `Oryginalna: ${item.orig}`;
+                    orygEl.classList.remove('zmieniona');
+                    kartaEl.classList.remove('zmieniona');
+                }
+            }
+
+            document.getElementById(`sb-minus-${key}`).disabled = (nowVal <= item.minOcena);
+            document.getElementById(`sb-plus-${key}`).disabled  = (nowVal >= item.maxOcena);
+
+            updateAvgDisplay();
+        }
+
+        function resetSim() {
+            const toDelete = [];
+            for (const k in simState) {
+                if (simState[k].isNew) {
+                    document.getElementById(`sk-${k}`)?.remove();
+                    /* isNew synthetic keys — nothing to restore */
+                    toDelete.push(k);
+                } else {
+                    simState[k].val = simState[k].orig;
+                    document.getElementById(`sv-${k}`).textContent = simState[k].orig;
+                    document.getElementById(`sv-${k}`).style.color = ocenaKolor(simState[k].orig);
+                    const orygEl  = document.getElementById(`so-${k}`);
+                    const kartaEl = document.getElementById(`sk-${k}`);
+                    orygEl.textContent = `Oryginalna: ${simState[k].orig}`;
+                    orygEl.classList.remove('zmieniona');
+                    kartaEl.classList.remove('zmieniona');
+                    document.getElementById(`sb-minus-${k}`).disabled = (simState[k].orig <= simState[k].minOcena);
+                    document.getElementById(`sb-plus-${k}`).disabled  = (simState[k].orig >= simState[k].maxOcena);
+                }
+            }
+            toDelete.forEach(k => delete simState[k]);
+
+
+            updateAvgDisplay();
+        }
+
+        /* ---- Dodawanie nowych ocen ---- */
+        function _addNowa(key, nazwa, i, waga, minOcena, maxOcena, kolor, gridId, btnId, ocena) {
+            simState[key] = { val: ocena, orig: null, waga, minOcena, maxOcena, kolor, isNew: true };
+            const div = document.createElement('div');
+            div.innerHTML = `<div class="sim-karta ${kolor}" id="sk-${key}">
+                <div class="sim-info">
+                    <div class="sim-nazwa">${i != null ? nazwa + ' ' + i : nazwa}</div>
+                    <div class="sim-oryg" id="so-${key}">Nowa ocena</div>
+                </div>
+                <div class="sim-controls">
+                    <button class="sim-btn" id="sb-minus-${key}" onclick="zmienOcene('${key}', -1)" ${ocena <= minOcena ? 'disabled' : ''}>−</button>
+                    <span class="sim-val" id="sv-${key}" style="color:${ocenaKolor(ocena)};">${ocena}</span>
+                    <button class="sim-btn" id="sb-plus-${key}"  onclick="zmienOcene('${key}', +1)" ${ocena >= maxOcena ? 'disabled' : ''}>+</button>
+                </div>
+            </div>`;
+            document.getElementById(gridId).appendChild(div.firstElementChild);
+            updateAvgDisplay();
+        }
+
+        function addAktywnosc() {
+            aktCounter++;
+            const key = `akt_sim_${aktCounter}`;
+            _addNowa(key, 'Aktywność', null, 1, 5, 6, 'zielony', 'grid-akt', null, 5);
+        }
+
+        function addKartkowka() {
+            openOcenaModal('Dodaj kartkówkę', (ocena) => {
+                kartCounter++;
+                const key = `kart_sim_${kartCounter}`;
+                _addNowa(key, 'Kartkówka', null, 2, 1, 6, 'niebieski', 'grid-kart', null, ocena);
+            });
+        }
+
+        function addPracaKontrolna() {
+            openOcenaModal('Dodaj pracę kontrolną', (ocena) => {
+                pkCounter++;
+                const key = `pk_sim_${pkCounter}`;
+                _addNowa(key, 'Praca kontrolna', null, 3, 1, 6, 'czerwony', 'grid-pk', null, ocena);
+            });
+        }
+
+        /* ---- Init ---- */
+        async function init() {
+            const { data: { session } } = await sb.auth.getSession();
+            if (!session) { window.location.href = 'index.html'; return; }
+
+            const { data: sem1 } = await sb.from('semestr1').select('*').eq('profil_id', session.user.id).single();
+
+            document.getElementById('ladowanie').style.display   = 'none';
+            document.getElementById('avg-panel').style.display   = 'flex';
+            document.getElementById('sim-content').style.display = 'block';
+
+            simState = {};
+            for (const kat of KATEGORIE) {
+                for (let i = 1; i <= kat.count; i++) {
+                    const v = sem1?.[`${kat.prefix}${i}`];
+                    if (v != null) {
+                        const key = `${kat.prefix}${i}`;
+                        simState[key] = { val: v, orig: v, waga: kat.waga, minOcena: kat.minOcena, maxOcena: kat.maxOcena, kolor: kat.kolor };
+                    }
+                }
+            }
+
+            aktCounter  = 0;
+            kartCounter = 0;
+            pkCounter   = 0;
+
+            let html = '';
+            for (const kat of KATEGORIE) {
+                const isAkt  = kat.prefix === 'aktywnosc_';
+                const isKart = kat.prefix === 'kartkowka_';
+                const isPK   = kat.prefix === 'praca_kontrolna_';
+
+                const items = [];
+                for (let i = 1; i <= kat.count; i++) {
+                    const key = `${kat.prefix}${i}`;
+                    if (simState[key]) items.push({ key, i });
+                }
+                if (items.length === 0 && !isAkt && !isKart && !isPK) continue;
+
+                const gridId = isAkt ? 'grid-akt' : isKart ? 'grid-kart' : 'grid-pk';
+                html += `<div class="sekcja-tytul">${kat.nazwa} <span class="sekcja-waga">waga ${kat.waga}</span></div>`;
+                html += `<div class="sim-grid" id="${gridId}">`;
+                for (const { key, i } of items) {
+                    const item = simState[key];
+                    const atMin = item.val <= item.minOcena;
+                    const atMax = item.val >= item.maxOcena;
+                    html += `<div class="sim-karta ${kat.kolor}" id="sk-${key}">
+                        <div class="sim-info">
+                            <div class="sim-nazwa">${isAkt ? kat.nazwa : kat.nazwa + ' ' + i}</div>
+                            <div class="sim-oryg" id="so-${key}">Oryginalna: ${item.orig}</div>
+                        </div>
+                        <div class="sim-controls">
+                            <button class="sim-btn" id="sb-minus-${key}" onclick="zmienOcene('${key}', -1)" ${atMin ? 'disabled' : ''}>−</button>
+                            <span class="sim-val" id="sv-${key}" style="color:${ocenaKolor(item.val)};">${item.val}</span>
+                            <button class="sim-btn" id="sb-plus-${key}"  onclick="zmienOcene('${key}', +1)" ${atMax ? 'disabled' : ''}>+</button>
+                        </div>
+                    </div>`;
+                }
+                html += `</div>`;
+
+                if (isAkt)  html += `<button class="btn-add-akt"  id="btn-add-akt"  onclick="addAktywnosc()">＋ Dodaj aktywność</button>`;
+                if (isKart) html += `<button class="btn-add-kart" id="btn-add-kart" onclick="addKartkowka()">＋ Dodaj kartkówkę</button>`;
+                if (isPK)   html += `<button class="btn-add-pk"   id="btn-add-pk"   onclick="addPracaKontrolna()">＋ Dodaj pracę kontrolną</button>`;
+            }
+            document.getElementById('sim-content').innerHTML = html;
+            updateAvgDisplay();
+        }
+
+        init();
+    </script>
+</body>
+</html>
