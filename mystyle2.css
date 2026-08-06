@@ -29,12 +29,6 @@ h2 {
     rgb(87, 159, 187) 50%, rgb(115, 217, 235) 75%, rgb(159, 253, 255) 100%)
 }
 
-iframe {
-    display: none;
-}
-.widoczny {
-    display: block;
-}
 
 h2:hover {
     background: linear-gradient(180deg, rgb(214, 102, 102) 0%, rgb(212, 117, 117) 25%,
