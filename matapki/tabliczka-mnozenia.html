@@ -44,6 +44,7 @@
     border: 2px solid #1565c0;
     border-radius: 16px;
     text-align: center;
+    position: relative;
   }
   .title-text {
     color: #ffffff;
@@ -52,6 +53,14 @@
 
 
   }
+  .nav-app-btn {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    font-size: 0.6rem; font-weight: 700; color: rgba(255,255,255,0.75);
+    text-decoration: none; line-height: 1.25; text-align: right;
+    font-family: 'Nunito', "Segoe UI", sans-serif;
+    transition: color .15s;
+  }
+  .nav-app-btn:hover { color: #fff; }
 
   /* ── Mode row (label + tabs in one box) ──────────── */
   .mode-row {
