@@ -34,3 +34,18 @@ h2:hover {
     background: linear-gradient(180deg, rgb(214, 102, 102) 0%, rgb(212, 117, 117) 25%,
     rgb(255, 95, 95) 50%,  rgb(212, 117, 117) 75%,  rgb(214, 102, 102) 100%);
 }
+
+.powrot {
+    display: inline-block;
+    padding: 12px 35px;
+    background-color: #333;
+    color: white;
+    text-decoration: none;
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: bold;
+    font-size: 18px;
+    border-radius: 6px;
+}
+.powrot:hover {
+    background-color: rgb(11, 105, 148);
+}
