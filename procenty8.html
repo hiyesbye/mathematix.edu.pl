@@ -60,7 +60,7 @@
 
         <h2 class="jeden" onclick="window.open('https://www.youtube.com/watch?v=KnssowisKiQ', '_blank')">Powtórzenie wiadomości z działu "Zastosowania matematyki"</h2>
         <div style="clear:both; text-align:center; padding:20px 0 30px 0;">
-            <a href="index.html" class="powrot">&#8592; Powrót</a>
+            <a class="powrot" onclick="history.length > 1 ? history.back() : window.location.href='index.html'" style="cursor:pointer">&#8592; Powrót</a>
         </div>
     </body>
 </html>
