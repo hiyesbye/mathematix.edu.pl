@@ -2,391 +2,3902 @@
 <html lang="pl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔣</text></svg>">
+<meta name="theme-color" content="#f0faf0">
 <title>Wyrażenia algebraiczne</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg:       #e0f5f1;
+    --bg:       #f0faf0;
     --card:     #ffffff;
-    --primary:  #00897b;
-    --good:     #1e9e5a;
-    --bad:      #d64040;
-    --text:     #1a2e2b;
-    --score-bg:  #d6f5e6; --score-text: #1a7a44; --score-bdr: #a8e8c8;
-    --timer-bg:  #fff4d6; --timer-text: #b86b00; --timer-bdr: #ffd98a;
+    --text:     #0d1f0d;
+    --primary:  var(--mod-mid);
+    --good:     #1a7a3a;
+    --bad:      #b00020;
+    --score-bg: #e8f5e9; --score-text: #1b5e20; --score-bdr: #a5d6a7;
+    --timer-bg: #fff4e0; --timer-text: #8a5000; --timer-bdr: #ffd08a;
+    --mod-dark: #0097a7; --mod-mid: #26c6da; --mod-light: #b2ebf2;
+    --mod-bg: #e0f7fa; --mod-shadow: rgba(0,151,167,.2);
   }
-  * { box-sizing: border-box; }
+  *, *::before, *::after { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; background: var(--bg);
     font-family: "Segoe UI", Verdana, Arial, sans-serif; color: var(--text); }
   body { display: flex; align-items: center; justify-content: center;
-    min-height: 100vh; padding: 16px; }
+    min-height: 100vh; padding: 12px; }
 
   .card {
-    background: var(--card); width: 100%; max-width: 460px;
-    border-radius: 24px; box-shadow: 0 12px 36px rgba(0,80,64,.15);
-    padding: 28px 24px 28px; text-align: center;
-  }
-  h1 {
-    font-size: 1.4rem; font-weight: 900; margin: 0 0 16px;
-    padding: 13px 20px;
-    background: linear-gradient(135deg, #004d40, #00bcd4);
-    border: 2px solid #00695c; border-radius: 16px; color: #fff;
+    background: var(--card); width: 100%; max-width: 480px;
+    border-radius: 24px; padding: 22px 20px 26px;
+    box-shadow: 0 8px 36px rgba(46,125,50,.14), 0 2px 8px rgba(46,125,50,.08);
+    position: relative; overflow: hidden;
   }
 
-  /* ── mode tabs ─────────────────────────── */
+  .nav-app-btn {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    font-size: 0.6rem; font-weight: 700; color: rgba(255,255,255,0.75);
+    text-decoration: none; text-align: right; line-height: 1.2;
+    transition: color .15s;
+  }
+  .nav-app-btn:hover { color: #fff; }
+  .app-title {
+    font-family: 'Nunito', "Segoe UI", sans-serif;
+    font-size: 1.4rem; font-weight: 900; letter-spacing: -0.2px;
+    text-align: center; margin: 0 0 14px; padding: 12px 20px;
+    position: relative;
+    background: linear-gradient(135deg, #1b5e20, #43a047);
+    border: 2px solid #2e7d32; border-radius: 16px; color: #fff;
+  }
+
+  /* ── Tabs ─────────────────────────────────────── */
   .mode-row {
     display: flex; align-items: center; gap: 4px;
-    background: #d0efeb; border-radius: 14px;
-    padding: 4px; margin-bottom: 18px;
+    background: var(--mod-bg); border-radius: 15px;
+    padding: 5px 6px; margin-bottom: 8px;
+  }
+  .mode-title {
+    background: var(--mod-light); color: var(--mod-label-color, var(--mod-dark));
+    font-size: .72rem; font-weight: 700;
+    border-radius: 9px; padding: 6px 8px;
+    white-space: nowrap; flex-shrink: 0;
   }
   .tab {
     flex: 1; border: none; background: transparent; border-radius: 11px;
-    padding: 10px 4px; font-size: .85rem; font-weight: 700; color: #3a706a;
+    padding: 8px 3px; font-size: .68rem; font-weight: 700; color: var(--mod-mid);
     cursor: pointer; transition: background .18s, color .18s, box-shadow .18s;
+    line-height: 1.25; text-align: center;
   }
-  .tab:not([class*="active"]):hover { background: #a7d9d3; color: var(--text); }
-  .tab.active-obl { background: linear-gradient(135deg,#00897b,#26c6da); color:#fff; box-shadow:0 3px 10px rgba(0,137,123,.35); }
-  .tab.active-upr { background: linear-gradient(135deg,#5e35b1,#9c6ef0); color:#fff; box-shadow:0 3px 10px rgba(94,53,177,.35); }
-  .tab.active-roz { background: linear-gradient(135deg,#d84315,#ff8f00); color:#fff; box-shadow:0 3px 10px rgba(216,67,21,.35); }
-  button:disabled { opacity: .42; cursor: not-allowed; }
+  .mod-row {
+    display: flex; align-items: center; gap: 8px; overflow: hidden;
+    background: var(--mod-bg); border-radius: 15px;
+    padding: 6px 10px; margin-bottom: 8px;
+  }
+  .mod-select {
+    flex: 1; min-width: 0; border: 2px solid var(--mod-light); background: #fff; border-radius: 10px;
+    padding: 8px 32px 8px 12px; font-size: .82rem; font-weight: 700; color: var(--mod-dark);
+    cursor: pointer; outline: none;
+    appearance: none; -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24'%3E%3Cpath fill='%23424242' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 8px center; background-size: 20px;
+    font-family: inherit;
+  }
+  .mod-select:focus { border-color: var(--mod-mid); box-shadow: 0 0 0 2px rgba(0,0,0,.08); }
+  .tab:not([class*="active"]):hover { background: var(--mod-light); color: var(--text); }
 
-  /* ── stats ─────────────────────────────── */
-  .stats { display: flex; gap: 10px; margin-bottom: 18px; }
-  .stat-box { flex: 1; border-radius: 14px; padding: 10px 6px; font-weight: 700; }
-  .stat-label { font-size: .68rem; text-transform: uppercase; letter-spacing: .8px; opacity: .7; margin-bottom: 2px; }
+  .tab.active-lv { background: linear-gradient(135deg,var(--mod-dark),var(--mod-mid)); color:#fff; box-shadow:0 3px 10px var(--mod-shadow); }
+
+  /* ── M5: Sumę × sumę ───────────────────────────── */
+  .m5-factors { text-align:center; white-space:nowrap; overflow-x:auto; padding:4px 0; }
+  .m5-factor-tile { cursor:pointer; display:inline-block; padding:4px 0; border-radius:6px; background:rgba(255,255,255,.12); border:2px solid transparent; transition:all .15s; font-weight:700; user-select:none; -webkit-user-select:none; font-size:1.05em; }
+  .m5-factor-tile:hover { background:rgba(255,255,255,.22); }
+  .m5-factor-tile.sel { background:rgba(0,210,110,.28); border-color:rgba(0,210,110,.7); }
+  .m5-times { opacity:.65; margin:0 1px; font-size:.9em; }
+  .m5-remain-row { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:4px; margin-bottom:6px; font-size:1.05em; font-weight:700; }
+  .m5-select-hint { text-align:center; color:#9999bb; padding:18px 0; font-size:.88em; }
+  .m5-method-btns { display:flex; gap:14px; justify-content:center; margin:10px 0; flex-wrap:wrap; }
+  .m5-method-btn { padding:13px 30px; border-radius:12px; border:none; cursor:pointer; font-size:1rem; font-weight:700; background:var(--mod-mid); color:#fff; transition:background .15s; min-width:140px; }
+  .m5-method-btn:hover { background:var(--mod-dark); }
+  /* ── M5 Normal/Hard mode toggle ── */
+  .m5-mode-row { display:none; justify-content:center; align-items:center; gap:6px; padding:3px 0 5px; margin-bottom:8px; }
+  .m5-mode-lbl { font-size:.82rem; font-weight:600; color:#666; }
+  .m5-mode-btn { padding:3px 16px; border-radius:14px; border:2px solid var(--mod-mid); cursor:pointer; font-size:.82rem; font-weight:700; background:transparent; color:var(--mod-mid); transition:all .15s; }
+  .m5-mode-btn.active { background:var(--mod-mid); color:#fff; }
+  .m5-mode-btn.btn-hard { border-color:#c62828; color:#c62828; }
+  .m5-mode-btn.btn-hard.active { background:#c62828; border-color:#c62828; color:#fff; }
+  .m6-sq-fill { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:3px; padding:4px 0; }
+  .m6-sq-ctx { font-size:1.35rem; font-weight:700; color:#1e1535; padding:0 2px; white-space:nowrap; }
+
+  /* ── Stats ─────────────────────────────────────── */
+  .stats { display: flex; gap: 10px; margin-bottom: 14px; }
+  .stat-box { flex: 1; border-radius: 14px; padding: 10px 6px; font-weight: 700; text-align: center; }
+  .stat-label { font-size: .7rem; text-transform: uppercase; letter-spacing: .8px; opacity: .7; margin-bottom: 2px; }
   .stat-value { font-size: 1.35rem; }
   .score-box { background: var(--score-bg); color: var(--score-text); border: 2px solid var(--score-bdr); }
   .timer-box { background: var(--timer-bg); color: var(--timer-text); border: 2px solid var(--timer-bdr); }
-  .timer-box.urgent { background: #ffe5e5; color: var(--bad); border-color: #f5a0a0; }
 
-  /* ── question ───────────────────────────── */
+  /* ── Question box ───────────────────────────────── */
   .question-box {
-    background: linear-gradient(145deg, #004d40, #00796b);
-    color: #fff; border-radius: 18px;
-    padding: 22px 16px; margin-bottom: 18px;
-    box-shadow: 0 6px 22px rgba(0,77,64,.35);
-    min-height: 96px;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
+    background: linear-gradient(145deg,var(--mod-dark),var(--mod-mid)); color: #fff;
+    border-radius: 18px; padding: 18px 12px 16px; text-align: center; margin-bottom: 14px;
   }
-  .q-label { font-size: .8rem; opacity: .78; margin-bottom: 8px; }
-  .q-expr  { font-family: Georgia,'Times New Roman',serif; font-size: 1.7rem;
-              font-weight: bold; font-style: italic; line-height: 1.2; }
-  .q-sub   { font-size: .95rem; margin-top: 8px; opacity: .88; }
+  .q-label {
+    font-size: .76rem; font-weight: 600; opacity: .8; margin-bottom: 8px; letter-spacing: .2px;
+  }
+  .question {
+    font-family: "Bahnschrift","DIN Alternate","Trebuchet MS",sans-serif;
+    font-size: clamp(1.1rem, 5vw, 2rem); font-weight: 700;
+    line-height: 1.5; word-break: break-word;
+  }
+  .question sup { font-size: .6em; vertical-align: super; line-height: 0; }
 
-  /* ── answers ────────────────────────────── */
-  .answers { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
-  .ans-btn {
-    border: 2px solid #b2dfdb; background: #f1faf9; color: var(--text);
-    border-radius: 14px; padding: 14px 8px;
-    font-size: 1.1rem; font-weight: 700;
-    font-family: Georgia,'Times New Roman',serif; font-style: italic;
-    cursor: pointer; transition: background .15s, border-color .15s, transform .1s;
-    line-height: 1.2;
+  /* ── M1 multivar answer ─────────────────────────── */
+  .multivars-answer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px 8px;
+    margin-bottom: 12px;
+    padding: 4px 0;
   }
-  .ans-btn:hover:not(:disabled) { background: #b2dfdb; border-color: var(--primary); transform: translateY(-1px); }
-  .ans-btn.correct { background: #c8f5d8; border-color: var(--good); color: var(--good); }
-  .ans-btn.wrong   { background: #ffe0e0; border-color: var(--bad);  color: var(--bad); }
+  .ans-coeff-grp {
+    display: flex; flex-direction: column; align-items: center; gap: 3px; flex-shrink: 0;
+  }
+  .ans-label {
+    font-size: .6rem; font-weight: 700; color: #2e7d32; white-space: nowrap;
+  }
+  .ans-coeff-inp {
+    width: 62px; font-size: 1.1rem; text-align: center; padding: 8px 4px;
+    border: 2.5px solid #a5d6a7; border-radius: 12px;
+    font-family: inherit; outline: none; transition: border-color .2s;
+    -moz-appearance: textfield;
+  }
+  .ans-coeff-inp::-webkit-outer-spin-button,
+  .ans-coeff-inp::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .ans-coeff-inp:focus { border-color: var(--primary); }
+  .ans-dot {
+    font-size: 1.25rem; font-weight: 700; color: #388e3c; flex-shrink: 0; line-height: 1;
+  }
+  .ans-var-block {
+    display: inline-flex; align-items: flex-start; flex-shrink: 0; gap: 1px;
+  }
+  .ans-var-letter {
+    font-size: 4rem; font-weight: 700;
+    font-family: "Bahnschrift","DIN Alternate","Trebuchet MS",sans-serif;
+    color: #1e1535; line-height: 1;
+  }
+  .ans-exp-inp {
+    width: 28px; height: 22px;
+    font-size: 0.82rem; text-align: center; padding: 1px 0;
+    border: 2px solid #a5d6a7; border-radius: 6px;
+    font-family: inherit; outline: none; transition: border-color .2s;
+    margin-top: 2px;
+    -moz-appearance: textfield;
+  }
+  .ans-exp-inp::-webkit-outer-spin-button,
+  .ans-exp-inp::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .ans-exp-inp:focus { border-color: var(--primary); }
+  .ans-letter-inp {
+    width: 50px; font-size: 3rem; font-weight: 700; text-align: center; padding: 2px 0;
+    border: 2.5px solid #a5d6a7; border-radius: 12px; line-height: 1;
+    font-family: "Bahnschrift","DIN Alternate","Trebuchet MS",sans-serif;
+    color: #1e1535; outline: none; transition: border-color .2s;
+    -moz-appearance: textfield;
+  }
+  .ans-letter-inp:focus { border-color: var(--primary); }
 
-  /* ── feedback + next ────────────────────── */
-  .feedback { font-size: 1rem; font-weight: 700; min-height: 24px; margin-bottom: 10px; }
-  .feedback.ok  { color: var(--good); }
-  .feedback.err { color: var(--bad); }
-  .next-btn {
-    width: 100%; border: none;
-    background: linear-gradient(135deg, #00695c, #00bcd4);
-    color: #fff; border-radius: 14px;
-    padding: 13px; font-size: 1rem; font-weight: 800;
-    cursor: pointer; transition: opacity .15s, transform .15s;
-    margin-bottom: 16px;
+  /* ── Poly answer (M2-M5) ────────────────────────── */
+  .poly-inputs {
+    display: flex; align-items: center; justify-content: center;
+    flex-wrap: wrap; gap: 4px 4px; margin-bottom: 10px;
   }
-  .next-btn:hover:not(:disabled) { opacity: .9; transform: translateY(-1px); }
-
-  /* ── result screen ──────────────────────── */
-  .result-screen { display: none; text-align: center; padding: 12px 0; }
-  .result-emoji  { font-size: 3rem; margin-bottom: 8px; }
-  .result-score  {
-    font-size: 3rem; font-weight: 900; margin: 8px 0 4px;
-    background: linear-gradient(135deg,#004d40,#00bcd4);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  .coeff-group { display: flex; flex-direction: row; align-items: center; gap: 3px; }
+  .coeff-var {
+    font-size: 1.15rem; font-weight: 700; color: #1e1535;
+    font-family: "Bahnschrift","DIN Alternate","Trebuchet MS",sans-serif;
   }
-  .result-label  { font-size: .95rem; color: #555; margin-bottom: 20px; }
-  .restart-btn {
-    border: none; background: linear-gradient(135deg,#004d40,#26c6da);
-    color: #fff; border-radius: 14px; padding: 13px 32px;
-    font-size: 1rem; font-weight: 800; cursor: pointer;
+  .coeff-var sup { font-size: .6em; vertical-align: super; line-height: 0; }
+  .coeff-input {
+    width: 56px; font-size: 1.15rem; text-align: center; padding: 8px 4px;
+    border: 2.5px solid #a5d6a7; border-radius: 12px;
+    font-family: inherit; outline: none; transition: border-color .2s;
+    -moz-appearance: textfield;
+  }
+  .coeff-input::-webkit-outer-spin-button,
+  .coeff-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .coeff-input:focus { border-color: var(--primary); }
+  .plus-sep {
+    font-size: 1.1rem; font-weight: 700; color: #388e3c;
+    flex-shrink: 0; user-select: none;
   }
 
-  /* ── back link ──────────────────────────── */
-  .back-link {
-    display: block; margin-top: 6px;
-    font-size: .8rem; color: #888; text-decoration: none;
-    font-style: italic;
+  /* ── Term chips (M2 Lv2/3) ─────────────────────── */
+  .term-chips-area {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    justify-content: center; margin-bottom: 12px; padding: 4px 0;
   }
-  .back-link:hover { color: var(--primary); }
+  .term-chip {
+    padding: 8px 14px; border: 2.5px solid #a5d6a7; border-radius: 14px;
+    cursor: pointer; font-size: 1.25rem; font-weight: 700;
+    font-family: "Bahnschrift","DIN Alternate","Trebuchet MS",sans-serif;
+    background: #f1f8f1; color: #1e1535;
+    transition: all 0.15s; user-select: none; -webkit-user-select: none;
+  }
+  .term-chip sup { font-size: 0.55em; vertical-align: super; line-height: 0; }
+  .term-chip:hover { filter: brightness(0.95); }
+  .term-chip.sel  { border-color: var(--primary); background: #e8f5e9; color: #1b5e20; border-style: dashed; }
+  .term-chip.g0   { border-color: #0277bd; background: #e1f5fe; color: #01579b; border-style: solid; }
+  .term-chip.g1   { border-color: #c06000; background: #fff3e0; color: #7f4000; border-style: solid; }
+  .term-chip.g2   { border-color: #2e7d32; background: #e8f5e9; color: #1b5e20; border-style: solid; }
+  .term-chip.done { pointer-events: none; opacity: 0.85; }
+
+  /* Chipy wewnątrz question-box — styl inline (bez ramek, jak ciągłe wyrażenie) */
+  .question-box .term-chips-area { gap: 0; padding: 8px 0; align-items: baseline; flex-wrap: wrap; justify-content: center; overflow: visible; }
+
+  /* Przycisk zmiany znaku (+/−) w odpowiedzi */
+  .sign-btn {
+    min-width: 30px; height: 38px; padding: 0 5px;
+    font-size: 1.15rem; font-weight: 700; line-height: 1;
+    border: 2.5px solid #a5d6a7; border-radius: 10px;
+    background: #f1f8f1; color: var(--primary);
+    cursor: pointer; transition: all .15s; flex-shrink: 0;
+  }
+  .sign-btn:hover { background: #c8e6c9; }
+  .sign-btn.neg { background: #ffe8e8; border-color: #e57373; color: #c62828; }
+
+  /* ── M4 Lv4a/4b: multi-block phase 1 ─────────────── */
+  .m4-multiblock-answer { display: flex; flex-direction: column; gap: 6px; align-items: center; }
+  .m4-block-row { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; justify-content: center; }
+  .m4-block-num { font-size: 1.05rem; font-weight: 700; color: var(--primary); min-width: 22px; text-align: right; }
+  .m4-phase-label { font-size: 0.78rem; font-weight: 600; opacity: .7; text-align: center; margin-bottom: 2px; letter-spacing: .2px; }
+
+  /* ── M4 Lv6: fill-in answer ─────────────────────── */
+  .m4-fill-hint {
+    font-size: 0.8rem; color: var(--text-muted, #888); text-align: center;
+    margin: 4px 0 0; padding: 0;
+  }
+  .m4-fill-answer {
+    display: flex; flex-wrap: wrap; gap: 6px 8px;
+    align-items: center; justify-content: center; padding: 4px 0;
+  }
+  .m4-fill-term {
+    display: inline-flex; align-items: center; gap: 2px; flex-wrap: nowrap;
+  }
+  .m4-letter-inp {
+    width: 28px; height: 36px; font-size: 1rem; font-weight: 700;
+    text-align: center; padding: 0; border: 2px solid #a5d6a7; border-radius: 8px;
+    font-family: inherit; outline: none; color: var(--text);
+    -moz-appearance: textfield;
+  }
+  .m4-letter-inp:focus { border-color: var(--primary); }
+  .m4-exp-inp {
+    width: 22px; height: 22px; font-size: 0.72rem; font-weight: 700;
+    text-align: center; padding: 0; border: 2px solid #a5d6a7; border-radius: 6px;
+    font-family: inherit; outline: none; color: var(--text);
+    align-self: flex-start; margin-top: 1px;
+    -moz-appearance: textfield;
+  }
+  .m4-exp-inp:focus { border-color: var(--primary); }
+  .m4-exp-inp::-webkit-outer-spin-button,
+  .m4-exp-inp::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .m4-letter-inp::-webkit-outer-spin-button,
+  .m4-letter-inp::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+  /* ── M4: Ułamek ─────────────────────────────────── */
+  .m4-frac {
+    display: inline-flex; flex-direction: column; align-items: center;
+    vertical-align: middle; margin: 0 2px; gap: 0;
+  }
+  .m4-frac-num { padding: 0 6px 2px; }
+  .m4-frac-den { padding: 2px 6px 0; }
+  .m4-frac-bar { width: 100%; min-width: 1em; height: 2px; background: currentColor; flex-shrink: 0; }
+
+  /* ── M4 Lv7 ─────────────────────────────────────── */
+  .l7-el { cursor:pointer; border-radius:6px; padding:2px 5px; transition:background .12s, box-shadow .12s; }
+  .l7-el:hover { background:var(--mod-bg); }
+  .l7-el.l7-hl { background:var(--mod-bg) !important; box-shadow:0 0 0 2.5px var(--mod-mid); }
+  .l7-numer { display:inline; }
+  .l7-struck { text-decoration:line-through; color:var(--bad); opacity:.75; }
+  .l7-cancel-val { font-size:.72em; color:var(--good); font-weight:700; }
+  .l7-cancel-el { display:inline; }
+  .l7-simp-inp { width:32px; height:24px; font-size:.8rem; font-weight:700; text-align:center;
+    border:2px solid var(--mod-mid); border-radius:5px; background:#fff; outline:none;
+    -moz-appearance:textfield; vertical-align:baseline; }
+  .l7-simp-inp::-webkit-outer-spin-button,
+  .l7-simp-inp::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+  .l7-hint { opacity:.55; font-style:italic; }
+
+  /* ── M3: Usuwanie nawiasów ─────────────────────── */
+  .m3-var { font-size: 1.75em; line-height: 1; }
+  .m3-expr-wrap { display: block; }
+  .m4-2block-expr {
+    white-space: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+  }
+  .m3-step1-row {
+    display: flex; align-items: center; flex-wrap: wrap;
+    gap: 2px; justify-content: center; padding: 6px 2px;
+  }
+  .m3-step2-inputs .coeff-input { width: 56px; font-size: 1.35rem; }
+  .m3-step2-inputs .coeff-var   { font-size: 1.35rem; }
+  .m3-term-btn {
+    min-width: 24px; height: 36px; padding: 0 4px;
+    font-size: 1.1rem; font-weight: 700; line-height: 1;
+    border: 2.5px solid #a5d6a7; border-radius: 8px;
+    background: #f1f8f1; color: var(--primary);
+    cursor: pointer; transition: all .12s; flex-shrink: 0;
+  }
+  .m3-term-btn.neg { background: #ffe8e8; border-color: #e57373; color: #c62828; }
+  .m3-term-btn:hover { filter: brightness(.93); }
+  .m3-term-brk-unit { font-size: 1.05rem; font-weight: 400; opacity: .85; vertical-align: middle; }
+  .m3-term-val {
+    font-size: 1.35rem; font-weight: 700; padding: 0 2px;
+    font-family: "Bahnschrift","DIN Alternate","Trebuchet MS",sans-serif;
+  }
+  .m3-sign-hint {
+    font-size: .78rem; color: #6b7280; text-align: center;
+    margin: 4px 0 0; letter-spacing: .1px;
+  }
+  .m3-step2-var { font-size: 1em; }
+  .m3-chip-row {
+    display: flex; flex-wrap: wrap; justify-content: center;
+    align-items: center; gap: 3px 2px; padding: 4px 0;
+  }
+  .m3-chip-sep { color: rgba(255,255,255,0.85); font-size: clamp(0.8rem, 3.2vw, 0.95rem); font-weight: 700; padding: 0 1px; line-height: 1; }
+  .m3-chip {
+    display: inline-block;
+    padding: 2px 5px; border-radius: 20px; cursor: pointer;
+    font-size: clamp(0.8rem, 3.2vw, 0.95rem);
+    font-weight: 700; line-height: 1.2;
+    background: rgba(255,255,255,0.15); color: #fff;
+    border: 2px solid rgba(255,255,255,0.25);
+    transition: background .12s; user-select: none;
+    vertical-align: middle;
+  }
+  .m3-chip:hover { background: rgba(255,255,255,0.3); }
+  .m3-chip.gc0 { background: #a855f7; border-color: #9333ea; }
+  .m3-chip.gc1 { background: #f97316; border-color: #ea580c; }
+  .m3-chip.gc2 { background: #22c55e; border-color: #16a34a; color: #052e16; }
+  .m3-chip.gc3 { background: #ef4444; border-color: #dc2626; }
+  /* ── M3 Lv3 clickable bracket zones ─────────────── */
+  .m3-brk { cursor: pointer; border-radius: 3px; padding: 1px 3px; transition: background .15s, opacity .2s; user-select: none; background: transparent; }
+  .m3-brk.done   { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+  .m3-brk.active { outline: 2px solid rgba(255,255,255,0.55); outline-offset: 2px; }
+  .m3-brk-r:not(.done):hover,  .m3-brk-r.active  { background: rgba(251,191,36,0.30); }
+  .m3-brk-sq:not(.done):hover, .m3-brk-sq.active { background: rgba(96,165,250,0.22); }
+  .m3-brk-cu:not(.done):hover, .m3-brk-cu.active { background: rgba(248,113,113,0.18); }
+  /* bracket view: allow wrapping, never overflow box */
+  #question:has(.m3-brk) { overflow-wrap: anywhere; }
+  .m3-chip-hint { font-size: .7rem; color: rgba(255,255,255,0.65); text-align: center; margin: 5px 0 0; }
+  .question-box .term-chip {
+    border: none !important; background: transparent; color: #fff;
+    font-size: clamp(0.85rem, 3.4vw, 1.1rem); padding: 3px 4px; border-radius: 6px;
+    cursor: pointer; user-select: none; transition: background .12s;
+    white-space: nowrap; flex-shrink: 0;
+  }
+  .question-box .term-chip:hover { background: rgba(255,255,255,.14); }
+  .question-box .term-chip.sel  { background: rgba(46,125,50,.75); }
+  .question-box .term-chip.g0   { background: rgba(2,119,189,.85);  pointer-events:none; }
+  .question-box .term-chip.g1   { background: rgba(192,96,0,.85);   pointer-events:none; }
+  .question-box .term-chip.g2   { background: rgba(46,125,50,.85);  pointer-events:none; }
+  .question-box .term-chip.done { pointer-events:none; }
+
+  /* Litera i wykładnik w odpowiedzi poly (Lv1 blindVar + Phase2 group) */
+  .coeff-letter-inp {
+    width: 38px; font-size: 1.1rem; font-weight: 700; text-align: center; padding: 8px 2px;
+    border: 2.5px solid #a5d6a7; border-radius: 12px;
+    font-family: "Bahnschrift","DIN Alternate","Trebuchet MS",sans-serif;
+    color: #1e1535; outline: none; transition: border-color .2s;
+  }
+  .coeff-letter-inp:focus { border-color: var(--primary); }
+  .coeff-var-block { display: inline-flex; align-items: flex-start; gap: 2px; flex-shrink: 0; }
+  .coeff-exp-inp {
+    width: 26px; height: 20px; font-size: 0.78rem; text-align: center; padding: 1px 0;
+    border: 2px solid #a5d6a7; border-radius: 5px;
+    font-family: inherit; outline: none; transition: border-color .2s;
+    margin-top: 3px; -moz-appearance: textfield;
+  }
+  .coeff-exp-inp::-webkit-outer-spin-button,
+  .coeff-exp-inp::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .coeff-exp-inp:focus { border-color: var(--primary); }
+  .phase2-label { font-size: .7rem; font-weight: 700; color: #2e7d32; text-align:center; margin-bottom:4px; }
+
+  /* Większe elementy w odpowiedzi group-poly (M2 Lv2/Lv3) */
+  .group-poly-answer { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:6px 2px; margin-bottom:10px; }
+  .group-poly-answer .coeff-input { width:72px; font-size:2rem; padding:8px 4px; }
+  .group-poly-answer .coeff-var  { font-size:2.2rem; font-weight:700; }
+  .group-poly-answer .sign-btn   { min-width:38px; height:54px; font-size:1.5rem; }
+
+  /* Jedno pole tekstowe Lv1 (coefficient + variable razem) */
+  .text-mono-inp {
+    width:130px; font-size:2.4rem; font-weight:700; text-align:center; padding:8px 10px;
+    border:2.5px solid #a5d6a7; border-radius:16px; font-family:"Bahnschrift","DIN Alternate","Trebuchet MS",sans-serif;
+    color:#1e1535; outline:none; transition:border-color .2s;
+  }
+  .text-mono-inp:focus { border-color:var(--primary); }
+
+  /* ── Buttons ────────────────────────────────────── */
+  button[type="submit"] {
+    width: 100%; font-size: 1.05rem; font-weight: 700; padding: 13px 20px;
+    border: none; border-radius: 14px; cursor: pointer;
+    background: linear-gradient(135deg,var(--mod-dark),var(--mod-mid)); color: white;
+    box-shadow: 0 4px 16px var(--mod-shadow); transition: filter .2s;
+    margin-bottom: 6px;
+  }
+  button[type="submit"]:hover { filter: brightness(1.1); }
+  button[type="submit"]:disabled { opacity: 0.38; cursor: not-allowed; filter: none; box-shadow: none; }
+  button.secondary {
+    flex: 1; font-size: .9rem; font-weight: 600; padding: 10px 12px;
+    border-radius: 12px; cursor: pointer;
+    background: transparent; border: 2px solid var(--mod-light); color: var(--mod-mid);
+  }
+  button.secondary:hover { background: var(--mod-bg); }
+  button.secondary:disabled { opacity: 0.32; cursor: not-allowed; }
+  .btn-row { display: flex; gap: 8px; }
+
+  /* ── Feedback ───────────────────────────────────── */
+  .feedback {
+    min-height: 58px; font-size: .95rem; font-weight: 700;
+    border-radius: 14px; padding: 11px 14px; text-align: center;
+    margin-bottom: 10px; transition: all .2s; line-height: 1.5;
+  }
+  .feedback sup { font-size: .65em; vertical-align: super; line-height: 0; }
+  .feedback.empty  { background: transparent; border: 2px dashed #b2dfb2; color: transparent; }
+  .feedback.good { background: #d6f5e6; color: var(--good); border: 2px solid #a8e8c8; }
+  .feedback.bad  { background: #fde8e8; color: var(--bad);  border: 2px solid #f4b8b8; }
+
+  /* ── Anim layer ─────────────────────────────────── */
+  #animLayer {
+    position: absolute; inset: 0; pointer-events: none; z-index: 100;
+    border-radius: 24px; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .anim-ok {
+    font-size: 5rem; font-weight: 900; color: #fff; line-height: 1;
+    text-shadow: 0 0 10px #7fffb0,0 0 30px #50ff80,0 0 60px #20e860;
+    animation: popIn 1.3s cubic-bezier(.22,1,.36,1) forwards; z-index: 2;
+  }
+  @keyframes popIn {
+    0%   { opacity:0; transform:scale(.2) rotate(-8deg); }
+    28%  { opacity:1; transform:scale(1.2) rotate(2deg); }
+    55%  { transform:scale(.96) rotate(-1deg); }
+    75%  { opacity:1; transform:scale(1.04); }
+    100% { opacity:0; transform:scale(1.5); }
+  }
+  .particle {
+    position: absolute; font-size: 1.6rem; pointer-events: none;
+    animation: fly 1s ease-out forwards;
+    text-shadow: 0 0 8px rgba(80,255,140,.8);
+  }
+  @keyframes fly { 0%{opacity:1;transform:translate(0,0) scale(1);} 100%{opacity:0;transform:var(--tx) scale(.1);} }
+  .flash-ok {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center,rgba(40,220,100,.45) 0%,rgba(40,220,100,0) 70%);
+    animation: fade 1.3s ease-out forwards;
+  }
+  .anim-x {
+    font-size: 8rem; font-weight: 900; color: #ff2222;
+    position: absolute; z-index: 3;
+    animation: wrongPop 1.2s ease-out forwards;
+  }
+  @keyframes wrongPop {
+    0%  {opacity:0;transform:scale(.4);text-shadow:0 0 8px #f00;}
+    18% {opacity:1;transform:scale(1.1);text-shadow:0 0 8px #f00,0 0 40px #f22;}
+    70% {opacity:1;transform:scale(1.05);}
+    100%{opacity:0;transform:scale(1.3);}
+  }
+  .flash-bad {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center,rgba(220,0,0,.4) 0%,rgba(220,0,0,0) 70%);
+    animation: fade 1.2s ease-out forwards;
+  }
+  @keyframes fade { 0%{opacity:0;} 15%{opacity:1;} 100%{opacity:0;} }
 </style>
 </head>
 <body>
 <div class="card">
-  <h1>Wyrażenia algebraiczne</h1>
+  <div id="animLayer"></div>
+  <div class="app-title"><a class="nav-app-btn" href="../matapki.html">← MatApki</a>Wyrażenia algebraiczne</div>
 
-  <!-- mode tabs -->
-  <div class="mode-row" id="modeRow">
-    <button class="tab active-obl" onclick="setMode('oblicz')">Oblicz</button>
-    <button class="tab"            onclick="setMode('uprość')">Uprość</button>
-    <button class="tab"            onclick="setMode('rozwiń')">Rozwiń</button>
+  <div class="mod-row">
+    <span class="mode-title">Moduł:</span>
+    <select class="mod-select" id="modSelect" onchange="switchModule(parseInt(this.value))">
+      <option value="2">Redukcja wyrazów podobnych</option>
+      <option value="1" selected>Porządkowanie jednomianów</option>
+      <option value="3">Usuwanie nawiasów w dodawaniu i odejmowaniu sum</option>
+      <option value="4">Mnożenie sum przez jednomian</option>
+      <option value="5">Mnożenie sum algebraicznych</option>
+    </select>
   </div>
 
-  <!-- stats -->
+  <div class="mode-row">
+    <span class="mode-title">Poziom:</span>
+    <button class="tab active-lv" id="lv1Btn" onclick="switchLevel(1)">Lv 1</button>
+    <button class="tab" id="lv2Btn" onclick="switchLevel(2)">Lv 2</button>
+    <button class="tab" id="lv3Btn" onclick="switchLevel(3)">Lv 3</button>
+    <button class="tab" id="lv4Btn" onclick="switchLevel(4)">Lv 4</button>
+    <button class="tab" id="lv4aBtn" onclick="switchLevel(4)" style="display:none">Lv 4</button>
+    <button class="tab" id="lv4bBtn" onclick="switchLevel(5)" style="display:none">Lv 5</button>
+    <button class="tab" id="lv6Btn" onclick="switchLevel(6)" style="display:none">Lv 6</button>
+    <button class="tab" id="lv7Btn" onclick="switchLevel(7)" style="display:none">Lv 7</button>
+    <button class="tab" id="m5lv3Btn" onclick="switchLevel(3)" style="display:none">Lv 3</button>
+    <button class="tab" id="m5lv4Btn" onclick="switchLevel(4)" style="display:none">Lv 4</button>
+    <button class="tab" id="m5lv5Btn" onclick="switchLevel(5)" style="display:none">Lv 5</button>
+    <button class="tab" id="m5lv6Btn" onclick="switchLevel(6)" style="display:none">Lv 6</button>
+  </div>
+
+  <div class="m5-mode-row" id="m5ModeRow">
+    <span class="m5-mode-lbl">Tryb:</span>
+    <button id="m5BtnNormal" class="m5-mode-btn active" onclick="m5SetMode('normal')">Normal</button>
+    <button id="m5BtnHard" class="m5-mode-btn btn-hard" onclick="m5SetMode('hard')">Hard</button>
+  </div>
+
   <div class="stats">
-    <div class="stat-box score-box">
-      <div class="stat-label">Wynik</div>
-      <div class="stat-value" id="score">0</div>
-    </div>
-    <div class="stat-box timer-box" id="timerBox">
-      <div class="stat-label">Czas</div>
-      <div class="stat-value" id="timer">60</div>
-    </div>
+    <div class="stat-box score-box"><div class="stat-label">Wynik</div><div class="stat-value" id="score">0 / 0</div></div>
+    <div class="stat-box timer-box"><div class="stat-label">Czas</div><div class="stat-value" id="timer">0 s</div></div>
   </div>
 
-  <!-- game -->
-  <div id="gameArea">
-    <div class="question-box">
-      <div class="q-label" id="qLabel"></div>
-      <div class="q-expr"  id="qExpr"></div>
-      <div class="q-sub"   id="qSub"></div>
-    </div>
-
-    <div class="answers">
-      <button class="ans-btn" id="a0" onclick="selectAnswer(0)"></button>
-      <button class="ans-btn" id="a1" onclick="selectAnswer(1)"></button>
-      <button class="ans-btn" id="a2" onclick="selectAnswer(2)"></button>
-      <button class="ans-btn" id="a3" onclick="selectAnswer(3)"></button>
-    </div>
-
-    <div class="feedback" id="feedback"></div>
-    <button class="next-btn" id="nextBtn" onclick="nextQ()" disabled>Następne →</button>
+  <div class="question-box">
+    <div class="q-label" id="qLabel"></div>
+    <div class="question" id="question">?</div>
   </div>
 
-  <!-- result -->
-  <div class="result-screen" id="resultScreen">
-    <div class="result-emoji" id="resultEmoji">🎉</div>
-    <div class="result-score" id="resultScore"></div>
-    <div class="result-label" id="resultLabel"></div>
-    <button class="restart-btn" onclick="restart()">Zagraj jeszcze raz</button>
+  <form id="mainForm" autocomplete="off">
+    <div class="answer-area" id="answerArea"></div>
+    <p id="m4FillHint" class="m4-fill-hint" style="display:none">
+      Duże pole → współczynnik &nbsp;·&nbsp; Małe kwadrat → litera &nbsp;·&nbsp; Miniaturka → potęga
+    </p>
+    <button type="submit" id="submitBtn" disabled>Sprawdź</button>
+  </form>
+  <div class="feedback empty" id="feedback">–</div>
+  <div class="btn-row">
+    <button type="button" class="secondary" id="resetBtn" onclick="fullReset()" disabled>Resetuj wynik</button>
+    <button type="button" class="secondary" id="nextBtn" onclick="newQuestion()" style="display:none">Następne →</button>
   </div>
-
-  <a class="back-link" href="../matapki.html">← Powrót do MatApek</a>
 </div>
 
 <script>
-/* ── helpers ─────────────────────────────── */
-const ri  = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
-const rp  = (arr) => arr[Math.floor(Math.random() * arr.length)];
-const shuf = arr => {
-  const a = [...arr];
+// ── State ────────────────────────────────────────────
+let M = 1, L = 1;
+let ok = 0, tot = 0;
+let timerID = null, t0 = 0;
+let mode = 'ask';
+let task = null;
+let autoAdv = null;
+let recentKeys = [];
+let chipState = [];   // null | 'sel' | 0 | 1 | 2  (per term)
+let chipGroupIdx = 0; // current group color index
+let signState = [];   // +1 | -1 per group (answer sign toggle)
+let termSignState = []; // +1 | -1 per flatTerm (M3 step 1)
+let m3step2Signs = [];       // +1 | -1 per degree group (M3 step 2)
+let m3nestedTermSigns = [];  // +1 | -1 per term (M3 Lv3 bracket steps)
+let m3ChipAssign = [];       // -1 | 0..3 color group per flat term (M3 chip step)
+let m3bracketActive = null;  // 'r' | 'sq' | 'cu' | null
+let m4MultiSigns = [];       // +1 | -1 per result term (M4 Lv3/4)
+let m4l7Signs    = [];       // +1 | -1 per Lv7 intermediate input
+let m5ChipAssign = [];       // chip color index per term in M5 reduce step
+let m5Mode = 'normal';      // 'normal' | 'hard'
+let m3bracketDone = {};      // { r, sq, cu } booleans
+
+// ── Utils ─────────────────────────────────────────────
+const rnd   = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+const pick  = arr => arr[Math.floor(Math.random() * arr.length)];
+const rndNZ = (a, b) => { let v; do { v = rnd(a, b); } while (v === 0); return v; };
+const shuffle = a => {
   for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
+    const j = rnd(0, i); [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
 };
-const VARS = ['x', 'a', 'n', 'm'];
 
-/* ── state ───────────────────────────────── */
-let mode = 'oblicz', score = 0, timeLeft = 60;
-let timerInterval = null, answered = false, correctIdx = -1;
+// ── Polynomial ops (M2–M5) ────────────────────────────
+const pAdd   = (a, b) => { const r = {...a}; for (const [d,c] of Object.entries(b)) r[d] = (r[d]||0)+c; return r; };
+const pScale = (p, k) => { const r = {}; for (const [d,c] of Object.entries(p)) r[d] = c*k; return r; };
+const pMul   = (a, b) => {
+  const r = {};
+  for (const [da,ca] of Object.entries(a))
+    for (const [db,cb] of Object.entries(b)) { const d = +da + +db; r[d] = (r[d]||0)+ca*cb; }
+  return r;
+};
+const pClean  = p => { const r = {}; for (const [d,c] of Object.entries(p)) if (c!==0) r[d]=c; return r; };
+const pMaxDeg = p => { const nz = Object.keys(p).map(Number).filter(d => p[d]!==0); return nz.length ? Math.max(...nz) : 0; };
 
-/* ── mode switching ──────────────────────── */
-function setMode(m) {
-  if (timerInterval) clearInterval(timerInterval);
-  mode = m; score = 0;
-  document.getElementById('score').textContent = '0';
-  document.getElementById('gameArea').style.display = '';
-  document.getElementById('resultScreen').style.display = 'none';
+function varStr(d) {
+  if (d === 0) return '';
+  if (d === 1) return 'x';
+  return `x<sup>${d}</sup>`;
+}
+function polyHTML(p) {
+  const degs = Object.keys(p).map(Number).filter(d => p[d]!==0).sort((a,b) => b-a);
+  if (!degs.length) return '0';
+  return degs.map((d,i) => {
+    const c=p[d], abs=Math.abs(c), neg=c<0;
+    const sign = neg ? (i?' − ':'−') : (i?' + ':'');
+    const cs = (abs===1&&d>0)?'':String(abs);
+    return sign+cs+varStr(d);
+  }).join('');
+}
+function polyHTMLv(p, v) {
+  const vStr = d => d===0?'':d===1?v:`${v}<sup>${d}</sup>`;
+  const degs = Object.keys(p).map(Number).filter(d=>p[d]!==0).sort((a,b)=>b-a);
+  if (!degs.length) return '0';
+  return degs.map((d,i) => {
+    const c=p[d], abs=Math.abs(c), neg=c<0;
+    const sign = neg?(i?' − ':'−'):(i?' + ':'');
+    const cs=(abs===1&&d>0)?'':String(abs);
+    return sign+cs+vStr(d);
+  }).join('');
+}
+function monoHTML(c, d, wrapNeg=true) {
+  const abs=Math.abs(c), neg=c<0;
+  const cs=(abs===1&&d>0)?'':String(abs);
+  const inner=(neg?'−':'')+cs+varStr(d);
+  return (neg&&wrapNeg)?'('+inner+')':inner;
+}
+function termsHTML(terms) {
+  return terms.map((t,i) => {
+    const abs=Math.abs(t.c), neg=t.c<0;
+    const sign=neg?(i?' − ':'−'):(i?' + ':'');
+    const cs=(abs===1&&t.d>0)?'':String(abs);
+    return sign+cs+varStr(t.d);
+  }).join('');
+}
 
-  const modeNames = ['oblicz', 'uprość', 'rozwiń'];
-  const activeClasses = ['active-obl', 'active-upr', 'active-roz'];
-  document.querySelectorAll('#modeRow .tab').forEach((t, i) => {
-    t.className = 'tab' + (modeNames[i] === m ? ' ' + activeClasses[i] : '');
+// ── M1: Multivar monomial ─────────────────────────────
+const VARS = ['a','b','k','m','n','p','r','s','t','u','x','y','z'];
+
+function pickVars(maxN = 4) {
+  const r = Math.random();
+  const n = r < 0.38 ? 2 : (r < 0.82 ? 3 : 4);
+  return shuffle([...VARS]).slice(0, Math.min(n, maxN));
+}
+
+// Coefficient for one factor
+function rndFactorCoeff(allowNeg, maxC = 6) {
+  const r = Math.random();
+  if (!allowNeg) {
+    return r < 0.30 ? 1 : rnd(2, maxC);
+  }
+  if (r < 0.22) return 1;      // no explicit coeff
+  if (r < 0.38) return -1;     // solo minus
+  const c = rnd(2, maxC);
+  return r < 0.72 ? c : -c;
+}
+
+function multiplyFactors(factors) {
+  let coeff = 1;
+  const vars = {};
+  for (const f of factors) {
+    coeff *= f.coeff;
+    for (const [v, e] of Object.entries(f.vars)) {
+      if (e > 0) vars[v] = (vars[v] || 0) + e;
+    }
+  }
+  return { coeff, vars };
+}
+
+function renderFactor(f) {
+  const abs = Math.abs(f.coeff), neg = f.coeff < 0;
+  const sv = Object.keys(f.vars).sort().filter(v => f.vars[v] > 0);
+  const varPart = sv.map(v => {
+    const e = f.vars[v];
+    return e === 1 ? v : `${v}<sup>${e}</sup>`;
+  }).join('');
+  const cs = (abs === 1 && varPart) ? '' : String(abs);
+  const inner = (cs + varPart) || '1';
+  return neg ? '(−' + inner + ')' : inner;
+}
+
+function renderTargetMono(target) {
+  const abs = Math.abs(target.coeff), neg = target.coeff < 0;
+  const sv = Object.keys(target.vars).sort().filter(v => target.vars[v] > 0);
+  const varPart = sv.map(v => {
+    const e = target.vars[v];
+    return e === 1 ? v : `${v}<sup>${e}</sup>`;
+  }).join('');
+  const cs = (abs === 1 && varPart) ? '' : String(abs);
+  return (neg ? '−' : '') + cs + varPart;
+}
+
+function buildM1Task(factors, target) {
+  const targetVars = Object.keys(target.vars).sort().filter(v => target.vars[v] > 0);
+  return {
+    qHTML: factors.map(renderFactor).join(' · '),
+    qLabel: 'Uporządkuj jednomian:',
+    type: 'multivar-mono',
+    target, targetVars,
+    solHTML: renderTargetMono(target),
+    key: factors.map(f => f.coeff + ':' + Object.entries(f.vars).sort().map(([v,e])=>v+e).join('')).join('|')
+  };
+}
+
+function genM1() {
+  let result, tries = 0;
+  do {
+    tries++;
+    if (L === 1) result = _genM1Lv1();
+    else if (L === 2) result = _genM1Lv2();
+    else if (L === 3) result = _genM1Lv3();
+    else {
+      const sub = rnd(1, 3);
+      result = sub === 1 ? _genM1Lv1() : sub === 2 ? _genM1Lv2() : _genM1Lv3();
+      result.blindVars = true;
+    }
+  } while (result.targetVars.length < 2 && tries < 40);
+  return result;
+}
+
+function _genM1Lv1() {
+  // 2 factors: factor A has ONE variable at degree 2–3 (rest at 1),
+  //            factor B has ALL variables at degree ≤ 1 only
+  const vars = pickVars();
+  const highVar = pick(vars);
+
+  // Factor A
+  const fAVars = { [highVar]: rnd(2, 3) };
+  for (const v of vars.filter(w => w !== highVar)) {
+    if (Math.random() < 0.50) fAVars[v] = 1;
+  }
+
+  // Factor B (max degree 1)
+  const fBVars = {};
+  for (const v of vars) {
+    if (Math.random() < 0.55) fBVars[v] = 1;
+  }
+  if (!Object.keys(fBVars).length) fBVars[pick(vars)] = 1;
+
+  const fA = { coeff: rndFactorCoeff(true), vars: fAVars };
+  const fB = { coeff: rndFactorCoeff(true), vars: fBVars };
+  // Ensure at least one factor has a numeric magnitude > 1
+  if (Math.abs(fA.coeff) === 1 && Math.abs(fB.coeff) === 1 && Math.random() < 0.65) {
+    const f = Math.random() < 0.5 ? fA : fB;
+    const c = rnd(2, 6);
+    f.coeff = Math.random() < 0.38 ? -c : c;
+  }
+
+  return buildM1Task([fA, fB], multiplyFactors([fA, fB]));
+}
+
+function _genM1Lv2() {
+  // 2–4 factors; each variable appears at degree > 1 in at most ONE factor
+  const vars = pickVars();
+  const numFactors = rnd(2, 4);
+  const highVarUsed = new Set();
+  const factors = [];
+
+  for (let i = 0; i < numFactors; i++) {
+    const fVars = {};
+    let eligible = vars.filter(() => Math.random() < 0.62);
+    if (!eligible.length) eligible = [pick(vars)];
+
+    const canBeHigh = eligible.filter(v => !highVarUsed.has(v));
+    if (canBeHigh.length > 0 && Math.random() < 0.55) {
+      const hv = pick(canBeHigh);
+      fVars[hv] = rnd(2, 3);
+      highVarUsed.add(hv);
+      for (const v of eligible.filter(w => w !== hv)) fVars[v] = 1;
+    } else {
+      for (const v of eligible) fVars[v] = 1;
+    }
+
+    factors.push({ coeff: rndFactorCoeff(true), vars: fVars });
+  }
+
+  return buildM1Task(factors, multiplyFactors(factors));
+}
+
+function _genM1Lv3() {
+  // 2–4 factors; no restrictions on variable degrees; max 3 vars, coeff ≤ 5
+  const vars = pickVars(3);
+  const numFactors = rnd(2, 4);
+
+  const factors = Array.from({ length: numFactors }, () => {
+    const fVars = {};
+    for (const v of vars) {
+      if (Math.random() < 0.60) fVars[v] = rnd(1, 3);
+    }
+    if (!Object.keys(fVars).length) fVars[pick(vars)] = rnd(1, 3);
+    return { coeff: rndFactorCoeff(true, 5), vars: fVars };
   });
 
-  startTimer();
-  nextQ();
+  return buildM1Task(factors, multiplyFactors(factors));
 }
 
-/* ── timer ───────────────────────────────── */
+// ── M2: Redukcja wyrazów podobnych ───────────────────
+const M2_VARS = ['a','b','k','m','n','p','r','s','t','u','x','y','z'];
+
+function genM2() {
+  if (L === 1) return genM2Lv1();
+  return _genM2Interactive(L === 2 ? 1 : 3);
+}
+
+function genM2Lv1() {
+  const v = pick(M2_VARS);
+  const n = rnd(2, 4);
+  let coeffs = Array.from({length: n}, () => rndNZ(-9, 9));
+  let sum = coeffs.reduce((a, b) => a + b, 0);
+  if (sum === 0) { coeffs[0] += rndNZ(1, 3) * (Math.random() < 0.5 ? 1 : -1); sum = coeffs.reduce((a,b)=>a+b,0); }
+  const qHTML = coeffs.map((c, i) => {
+    const sign = c < 0 ? (i > 0 ? ' − ' : '−') : (i > 0 ? ' + ' : '');
+    const abs = Math.abs(c);
+    return sign + (abs === 1 ? '' : abs) + v;
+  }).join('');
+  const abs = Math.abs(sum);
+  const solHTML = (sum < 0 ? '−' : '') + (abs === 1 ? '' : abs) + v;
+  return {
+    qHTML, qLabel: 'Zredukuj wyrazy podobne:',
+    type: 'poly', var: v, textInput: true,
+    answer: {1: sum}, maxDeg: 1, minDeg: 1,
+    solHTML, key: qHTML
+  };
+}
+
+function _genM2Interactive(maxDeg) {
+  const numTypes = rnd(2, 3);
+  const typeList = [];
+  const usedKeys = new Set();
+  for (let ti = 0; ti < numTypes; ti++) {
+    let v, deg, key, attempts = 0;
+    do { v = pick(M2_VARS); deg = maxDeg === 1 ? 1 : rnd(1, maxDeg); key = v + deg; attempts++; }
+    while (usedKeys.has(key) && attempts < 20);
+    usedKeys.add(key);
+    const n = rnd(2, 3);
+    const cs = Array.from({length: n}, () => rndNZ(-9, 9));
+    let sum = cs.reduce((a, b) => a + b, 0);
+    let adj = 0;
+    while (sum === 0 && adj < 10) { cs[0] += rndNZ(1, 3) * (Math.random() < .5 ? 1 : -1); sum = cs.reduce((a,b)=>a+b,0); adj++; }
+    typeList.push({ var: v, deg, coeffs: cs, sum });
+  }
+  const terms = [];
+  for (const type of typeList)
+    for (const c of type.coeffs) terms.push({ coeff: c, deg: type.deg, var: type.var });
+  shuffle(terms);
+  terms.forEach((t, i) => { t.id = i; });
+  const groups = typeList.map(t => ({ var: t.var, deg: t.deg, sum: t.sum }))
+    .sort((a, b) => a.var.localeCompare(b.var) || a.deg - b.deg);
+  const qHTML = terms.map((t, i) => {
+    const sign = t.coeff < 0 ? (i > 0 ? ' − ' : '−') : (i > 0 ? ' + ' : '');
+    const abs = Math.abs(t.coeff);
+    const cs = abs === 1 ? '' : String(abs);
+    const vp = t.deg === 1 ? t.var : `${t.var}<sup>${t.deg}</sup>`;
+    return sign + cs + vp;
+  }).join('');
+  const solHTML = groups.map((g, i) => {
+    const abs = Math.abs(g.sum), neg = g.sum < 0;
+    const cs = abs === 1 ? '' : String(abs);
+    const vp = g.deg === 1 ? g.var : `${g.var}<sup>${g.deg}</sup>`;
+    return (i > 0 ? (neg ? ' − ' : ' + ') : (neg ? '−' : '')) + cs + vp;
+  }).join('');
+  return {
+    qHTML, qLabel: 'Zaznacz wyrazy podobne, potem wpisz wynik:',
+    type: 'group-poly', terms, groups, numGroups: numTypes,
+    phase: 1, solHTML, key: qHTML
+  };
+}
+
+function pKey(p) {
+  const c = pClean(p);
+  return Object.keys(c).sort().map(d => d+':'+c[d]).join('|');
+}
+
+// ── M3: Usuwanie nawiasów ─────────────────────────────
+
+// Helper with m3-var span — for step 1 answer area (large variable letters)
+function m3tH(coeff, deg, v, first) {
+  const abs=Math.abs(coeff), neg=coeff<0;
+  const sign=first?(neg?'−':''):(neg?' − ':' + ');
+  const cs=(abs===1&&deg>0)?'':String(abs);
+  const vs=deg===0?'':`<span class="m3-var">${deg===1?v:v+'<sup>'+deg+'</sup>'}</span>`;
+  return sign+cs+vs;
+}
+// Plain helper — for question box (normal size)
+function m3tHp(coeff, deg, v, first) {
+  const abs=Math.abs(coeff), neg=coeff<0;
+  const sign=first?(neg?'−':''):(neg?' − ':' + ');
+  const cs=(abs===1&&deg>0)?'':String(abs);
+  const vs=deg===0?'':(deg===1?v:`${v}<sup>${deg}</sup>`);
+  return sign+cs+vs;
+}
+
+function genM3() {
+  if (L === 1) return genM3Lv1();
+  if (L === 2) return genM3Lv2();
+  return genM3Lv3();
+}
+
+function genM3Lv1() {
+  const v = pick(M2_VARS);
+  let attempts = 0;
+  while (attempts++ < 60) {
+    const bSign = pick([1, -1]);
+    const nInside = rnd(2, 3); // max 3 to allow unique degrees {0,1,2}
+    const insideDegs = shuffle([0, 1, 2]).slice(0, nInside);
+    const inside = insideDegs.map(d => ({coeff: rndNZ(-6,6), deg: d}));
+    shuffle(inside);
+    const outside = [];
+    if (Math.random() < 0.55) outside.push({coeff: rndNZ(-5,5), deg: 1});
+    if (Math.random() < 0.35) outside.push({coeff: rndNZ(-5,5), deg: 0});
+    shuffle(outside);
+    const raw = {};
+    for (const t of outside) raw[t.deg] = (raw[t.deg]||0) + t.coeff;
+    for (const t of inside)  raw[t.deg] = (raw[t.deg]||0) + bSign * t.coeff;
+    const answer = pClean(raw);
+    if (!Object.keys(answer).length) continue;
+    // flatTerms: sign that each term gets after bracket removal
+    const flatTerms = [];
+    for (const t of outside) flatTerms.push({absCoeff: Math.abs(t.coeff), deg: t.deg, var: v, effectiveSign: Math.sign(t.coeff)});
+    for (const t of inside)  flatTerms.push({absCoeff: Math.abs(t.coeff), deg: t.deg, var: v, effectiveSign: Math.sign(bSign * t.coeff)});
+    const outsideHTML = outside.map((t,i)=>m3tHp(t.coeff,t.deg,v,i===0)).join('');
+    const insideHTML  = inside.map((t,i)=>m3tHp(t.coeff,t.deg,v,i===0)).join('');
+    const sep = outside.length ? (bSign===1?' + ':' − ') : (bSign===1?'':'−');
+    return {
+      qHTML: outsideHTML+sep+'('+insideHTML+')',
+      qLabel: 'Usuń nawiasy:',
+      type: 'remove-brackets', phase: 1, flatTerms,
+      answer, maxDeg: Math.max(...Object.keys(answer).map(Number)), var: v,
+      solHTML: polyHTMLv(answer, v),
+      key: outsideHTML+sep+insideHTML
+    };
+  }
+}
+
+function genM3Lv2() {
+  const v = pick(M2_VARS);
+  let attempts = 0;
+  while (attempts++ < 60) {
+    const nBrackets = rnd(2, 4);
+    const brackets = [];
+    for (let b = 0; b < nBrackets; b++) {
+      const bSign = pick([1, -1]);
+      const inside = [];
+      const degs = shuffle([0, 1, 2]).slice(0, 2);
+      degs.forEach(d => inside.push({coeff: rndNZ(-7,7), deg: d}));
+      brackets.push({sign: bSign, inside});
+    }
+    const raw = {};
+    for (const br of brackets)
+      for (const t of br.inside)
+        raw[t.deg] = (raw[t.deg]||0) + br.sign * t.coeff;
+    const answer = pClean(raw);
+    if (!Object.keys(answer).length) continue;
+    const flatTerms = [];
+    for (const br of brackets)
+      for (const t of br.inside)
+        flatTerms.push({absCoeff: Math.abs(t.coeff), deg: t.deg, var: v, effectiveSign: Math.sign(br.sign * t.coeff)});
+    let expr = '';
+    for (let b = 0; b < brackets.length; b++) {
+      const {sign, inside} = brackets[b];
+      const iH = inside.map((t,i)=>m3tHp(t.coeff,t.deg,v,i===0)).join('');
+      expr += b===0 ? (sign===1?'':'−')+'('+iH+')' : (sign===1?' + ':' − ')+'('+iH+')';
+    }
+    return {
+      qHTML: expr,
+      qLabel: 'Usuń nawiasy:',
+      type: 'remove-brackets', phase: 1, flatTerms,
+      answer, maxDeg: Math.max(...Object.keys(answer).map(Number)), var: v,
+      solHTML: polyHTMLv(answer, v), key: expr
+    };
+  }
+}
+
+function genM3Lv3() {
+  const v = pick(M2_VARS);
+  const depth = rnd(2, 3); // 2 = [()], 3 = {[()]}
+
+  function uTerms(n, range) {
+    return shuffle([0, 1, 2]).slice(0, Math.min(n, 3))
+      .map(d => ({coeff: rndNZ(-range, range), deg: d}));
+  }
+
+  let attempts = 0;
+  while (attempts++ < 100) {
+    const roundSign = pick([1, -1]);
+    const nRound = rnd(1, 3);
+    const roundTerms = uTerms(nRound, 5);
+    if (nRound === 1 && roundTerms[0].coeff > 0) roundTerms[0].coeff *= -1;
+
+    const squareSign = pick([1, -1]);
+    const squareOwnTerms = uTerms(rnd(0, 2), 5);
+
+    const curlySign = depth === 3 ? pick([1, -1]) : 1;
+    const curlyOwnTerms = depth === 3 ? uTerms(rnd(1, 2), 5) : [];
+
+    const outerTerms = uTerms(rnd(0, 2), 5);
+
+    const totalTerms = roundTerms.length + squareOwnTerms.length + curlyOwnTerms.length + outerTerms.length;
+    if (totalTerms < 3) continue;
+
+    // Effective sign multipliers
+    const effR  = depth === 3 ? curlySign * squareSign * roundSign : squareSign * roundSign;
+    const effSq = depth === 3 ? curlySign * squareSign : squareSign;
+
+    const raw = {};
+    for (const t of outerTerms)    raw[t.deg] = (raw[t.deg]||0) + t.coeff;
+    for (const t of roundTerms)    raw[t.deg] = (raw[t.deg]||0) + effR  * t.coeff;
+    for (const t of squareOwnTerms) raw[t.deg] = (raw[t.deg]||0) + effSq * t.coeff;
+    for (const t of curlyOwnTerms)  raw[t.deg] = (raw[t.deg]||0) + curlySign * t.coeff;
+
+    const answer = pClean(raw);
+    if (!Object.keys(answer).length) continue;
+    const maxDeg = Math.max(...Object.keys(answer).map(Number));
+
+    // Helper: render list of {coeff,deg} terms as HTML
+    const tH = (terms, atStart) => {
+      let first = atStart;
+      return terms.map(t => { const h = m3tHp(t.coeff, t.deg, v, first); first = false; return h; }).join('');
+    };
+    const sep = (sign, atStart) => atStart ? (sign > 0 ? '' : '−') : (sign > 0 ? ' + ' : ' − ');
+
+    // Build plain key (no clickable spans) for duplicate detection
+    const rH = tH(roundTerms, true);
+    let sqInner = '';
+    let sqAt = true;
+    if (squareOwnTerms.length) { sqInner += tH(squareOwnTerms, true); sqAt = false; }
+    sqInner += sep(roundSign, sqAt) + '(' + rH + ')';
+    const sqBracket = '[' + sqInner + ']';
+    let qHTML1;
+    if (depth === 3) {
+      let cuInner = '';
+      let cuAt = true;
+      if (curlyOwnTerms.length) { cuInner += tH(curlyOwnTerms, true); cuAt = false; }
+      cuInner += sep(squareSign, cuAt) + sqBracket;
+      qHTML1 = sep(curlySign, true) + '{' + cuInner + '}';
+    } else {
+      qHTML1 = sep(squareSign, true) + sqBracket;
+    }
+    if (outerTerms.length) qHTML1 += tH(outerTerms, false);
+
+    // computeStateHTML: build clickable expression HTML for any combination of removed brackets.
+    // effRS = sign distributed by () removal; effSS = sign distributed by [] removal.
+    // curlySign contributes to effRS only when [] is also removed (sq is already done).
+    const computeStateHTML = (rD, sqD, cuD) => {
+      const effRS = roundSign * (sqD ? squareSign * (cuD ? curlySign : 1) : 1);
+      const effSS = squareSign * (cuD ? curlySign : 1);
+
+      const rSp = !rD
+        ? `<span class="m3-brk m3-brk-r" data-brk="r" onclick="selectM3Bracket('r',event)">(${tH(roundTerms, true)})</span>`
+        : null;
+
+      let sqSp = null;
+      if (!sqD) {
+        let si = ''; let sa = true;
+        if (squareOwnTerms.length) { si += tH(squareOwnTerms, true); sa = false; }
+        if (rD) {
+          roundTerms.forEach(t => { si += m3tHp(roundSign * t.coeff, t.deg, v, sa); sa = false; });
+        } else {
+          si += sep(roundSign, sa) + rSp;
+        }
+        sqSp = `<span class="m3-brk m3-brk-sq" data-brk="sq" onclick="selectM3Bracket('sq',event)">[${si}]</span>`;
+      }
+
+      let cuSp = null;
+      if (depth === 3 && !cuD) {
+        let ci = ''; let ca = true;
+        if (curlyOwnTerms.length) { ci += tH(curlyOwnTerms, true); ca = false; }
+        if (sqD) {
+          squareOwnTerms.forEach(t => { ci += m3tHp(squareSign * t.coeff, t.deg, v, ca); ca = false; });
+          if (rD) {
+            roundTerms.forEach(t => { ci += m3tHp(squareSign * roundSign * t.coeff, t.deg, v, ca); ca = false; });
+          } else {
+            ci += sep(squareSign * roundSign, ca) + rSp; ca = false;
+          }
+        } else {
+          ci += sep(squareSign, ca) + sqSp; ca = false;
+        }
+        cuSp = `<span class="m3-brk m3-brk-cu" data-brk="cu" onclick="selectM3Bracket('cu',event)">{${ci}}</span>`;
+      }
+
+      let html = ''; let at = true;
+      if (depth === 3) {
+        if (cuD) {
+          curlyOwnTerms.forEach(t => { html += m3tHp(curlySign * t.coeff, t.deg, v, at); at = false; });
+          if (!sqD) {
+            html += sep(effSS, at) + sqSp; at = false;
+          } else {
+            squareOwnTerms.forEach(t => { html += m3tHp(effSS * t.coeff, t.deg, v, at); at = false; });
+            if (rD) {
+              roundTerms.forEach(t => { html += m3tHp(effRS * t.coeff, t.deg, v, at); at = false; });
+            } else {
+              html += sep(effRS, at) + rSp; at = false;
+            }
+          }
+        } else {
+          html += sep(curlySign, at) + cuSp; at = false;
+        }
+      } else {
+        if (!sqD) {
+          html += sep(squareSign, at) + sqSp; at = false;
+        } else {
+          squareOwnTerms.forEach(t => { html += m3tHp(effSS * t.coeff, t.deg, v, at); at = false; });
+          if (rD) {
+            roundTerms.forEach(t => { html += m3tHp(effRS * t.coeff, t.deg, v, at); at = false; });
+          } else {
+            html += sep(effRS, at) + rSp; at = false;
+          }
+        }
+      }
+      outerTerms.forEach(t => { html += m3tHp(t.coeff, t.deg, v, at); at = false; });
+      return html;
+    };
+
+    // Pre-compute HTML for all 2^depth bracket-removal states (key = "rDsqDcuD" as "0"/"1")
+    const allStates = depth === 2
+      ? [[0,0,0],[1,0,0],[0,1,0],[1,1,0]]
+      : [[0,0,0],[1,0,0],[0,1,0],[1,1,0],[0,0,1],[1,0,1],[0,1,1],[1,1,1]];
+    const stateHTMLs = {};
+    for (const [rD, sqD, cuD] of allStates) stateHTMLs[`${rD}${sqD}${cuD}`] = computeStateHTML(rD, sqD, cuD);
+
+    // Final flat terms (for chip + answer step after all brackets removed)
+    const allFlat = [
+      ...curlyOwnTerms.map(t => ({coeff: curlySign * t.coeff, deg: t.deg})),
+      ...squareOwnTerms.map(t => ({coeff: effSq * t.coeff, deg: t.deg})),
+      ...roundTerms.map(t => ({coeff: effR * t.coeff, deg: t.deg})),
+      ...outerTerms,
+    ];
+
+    return {
+      type: 'remove-brackets-nested',
+      var: v, depth,
+      answer, maxDeg,
+      solHTML: polyHTMLv(answer, v),
+      qHTML: stateHTMLs['000'],
+      qLabel: 'Usuń nawiasy:',
+      key: qHTML1,
+      rTermsRaw: roundTerms,
+      sqOwnTermsRaw: squareOwnTerms,
+      cuOwnTermsRaw: curlyOwnTerms,
+      outerTermsRaw: outerTerms,
+      roundSign, squareSign, curlySign,
+      stateHTMLs,
+      bracketLabels: {r: 'Usuń nawiasy okrągłe ():', sq: 'Usuń nawiasy kwadratowe []:', cu: 'Usuń nawiasy sześcienne {}:'},
+      finalLabel: 'Zredukuj wyrazy podobne:',
+      finalFlatTerms: allFlat.map(t => ({coeff: t.coeff, deg: t.deg, var: v})),
+    };
+  }
+  return genM3Lv1();
+}
+
+// ── M3 step-1 UI ──────────────────────────────────────
+function buildM3Step1UI() {
+  termSignState = task.flatTerms.map(() => 1);
+  const area = document.getElementById('answerArea');
+  let html = '<div class="m3-step1-row" id="m3FlatRow">';
+  task.flatTerms.forEach((t, i) => {
+    const cs = (t.absCoeff===1&&t.deg>0)?'':String(t.absCoeff);
+    const vs = t.deg===0?'':(t.deg===1?t.var:`${t.var}<sup>${t.deg}</sup>`);
+    html += `<button class="m3-term-btn" data-tidx="${i}" type="button" onclick="toggleTermSign(${i})">+</button><span class="m3-term-val">${cs}${vs}</span>`;
+  });
+  html += '</div><p class="m3-sign-hint">Kliknij + lub − przy każdym wyrazie, aby zmienić znak</p>';
+  area.innerHTML = html;
+  updateSubmit();
+}
+
+function toggleTermSign(i) {
+  termSignState[i] = -termSignState[i];
+  const btn = document.querySelector(`[data-tidx="${i}"].m3-term-btn`);
+  if (!btn) return;
+  const neg = termSignState[i] < 0;
+  btn.textContent = neg ? '−' : '+';
+  btn.className = 'm3-term-btn' + (neg ? ' neg' : '');
+}
+
+function transitionM3ToPhase2() {
+  task.phase = 2;
+  const finalTerms = task.flatTerms.map((t, i) => ({
+    coeff: termSignState[i] * t.absCoeff, deg: t.deg, var: t.var
+  }));
+  document.getElementById('qLabel').innerHTML = 'Zredukuj wyrazy podobne:';
+  buildM3ChipQuestion(finalTerms);
+  feedbackEl.className = 'feedback empty';
+  feedbackEl.textContent = '–';
+  buildM3Step2AnswerUI();
+}
+
+function toggleM3Sign(idx) {
+  m3step2Signs[idx] = -m3step2Signs[idx];
+  const btn = document.querySelector(`[data-m3sign="${idx}"].sign-btn`);
+  if (!btn) return;
+  const neg = m3step2Signs[idx] < 0;
+  btn.textContent = neg ? '−' : '+';
+  btn.className = 'sign-btn' + (neg ? ' neg' : '');
+}
+
+function buildM3Step2AnswerUI() {
+  const area = document.getElementById('answerArea');
+  const v = task.var;
+  const nGroups = task.maxDeg + 1;
+  m3step2Signs = new Array(nGroups).fill(1);
+  let html = '<div class="poly-inputs m3-step2-inputs">';
+  for (let d = task.maxDeg; d >= 0; d--) {
+    const idx = task.maxDeg - d;
+    if (idx > 0) html += '<span class="plus-sep">&thinsp;</span>';
+    const vl = d===0?'':(d===1
+      ? `<span class="m3-step2-var">${v}</span>`
+      : `<span class="m3-step2-var">${v}<sup>${d}</sup></span>`);
+    html += `<div class="coeff-group">
+      <button class="sign-btn" data-m3sign="${idx}" type="button" onclick="toggleM3Sign(${idx})">+</button>
+      <input class="coeff-input" data-deg="${d}" type="number" inputmode="numeric">
+      ${vl?`<span class="coeff-var">${vl}</span>`:''}
+    </div>`;
+  }
+  html += '</div>';
+  area.innerHTML = html;
+  area.querySelectorAll('input').forEach(inp => inp.addEventListener('input', updateSubmit));
+  updateSubmit();
+  const first = area.querySelector('input');
+  if (first) setTimeout(() => first.focus(), 50);
+}
+
+// ── M4 Lv3/4 multi-variable UI ───────────────────────
+function buildM4MultiBlockPhase1UI() {
+  const area = document.getElementById('answerArea');
+  document.getElementById('m4FillHint').style.display = 'none';
+  const flat = task.blockResultTerms.flat();
+  m4MultiSigns = flat.map(() => 1);
+  const nums = ['①','②','③'];
+  let html = '<div class="m4-multiblock-answer">';
+  html += '<div class="m4-phase-label">Zapisz wynik każdego mnożenia:</div>';
+  let fi = 0;
+  task.blockResultTerms.forEach((bTerms, b) => {
+    html += `<div class="m4-block-row"><span class="m4-block-num">${nums[b]}</span>`;
+    bTerms.forEach((t, ti) => {
+      if (ti > 0) html += '<span class="plus-sep">&thinsp;</span>';
+      html += `<div class="coeff-group">
+        <button class="sign-btn" data-m4sign="${fi}" type="button" onclick="toggleM4Sign(${fi})">+</button>
+        <input class="coeff-input" data-m4idx="${fi}" type="number" inputmode="numeric">`;
+      if (task.multiVarAnswer) {
+        Object.entries(t.vars).sort().filter(([,e])=>e>0).forEach(([letter, exp], j) => {
+          html += `<input class="m4-letter-inp" data-m4letter="${fi}-${j}" type="text" maxlength="1" autocomplete="off" spellcheck="false">`;
+          if (exp > 1) html += `<input class="m4-exp-inp" data-m4exp="${fi}-${j}" type="number" inputmode="numeric">`;
+        });
+      } else {
+        html += t.varsDisplay ? `<span class="coeff-var">${t.varsDisplay}</span>` : '';
+      }
+      html += `</div>`;
+      fi++;
+    });
+    html += '</div>';
+  });
+  html += '</div>';
+  area.innerHTML = html;
+  area.querySelectorAll('input').forEach(inp => inp.addEventListener('input', updateSubmit));
+  updateSubmit();
+  const first = area.querySelector('input');
+  if (first) setTimeout(() => first.focus(), 50);
+}
+function transitionM4ToPhase2() {
+  task.phase = 2;
+  document.getElementById('qLabel').innerHTML = 'Zredukuj wyrazy podobne:';
+  document.getElementById('question').innerHTML = task.phase2QHTML;
+  const feedbackEl = document.getElementById('feedback');
+  feedbackEl.className = 'feedback ok';
+  feedbackEl.innerHTML = '✅ Dobrze! Teraz zredukuj wyrazy podobne.';
+  buildM4MultiUI();
+}
+
+function buildM4MultiUI() {
+  const area = document.getElementById('answerArea');
+  document.getElementById('m4FillHint').style.display = 'none';
+  m4MultiSigns = task.resultTerms.map(() => 1);
+  let html = '<div class="poly-inputs m3-step2-inputs">';
+  task.resultTerms.forEach((t, i) => {
+    if (i > 0) html += '<span class="plus-sep">&thinsp;</span>';
+    html += `<div class="coeff-group">
+      <button class="sign-btn" data-m4sign="${i}" type="button" onclick="toggleM4Sign(${i})">+</button>
+      <input class="coeff-input" data-m4idx="${i}" type="number" inputmode="numeric">`;
+    if (task.multiVarAnswer) {
+      Object.entries(t.vars).sort().filter(([,e])=>e>0).forEach(([letter, exp], j) => {
+        html += `<input class="m4-letter-inp" data-m4letter="${i}-${j}" type="text" maxlength="1" autocomplete="off" spellcheck="false">`;
+        if (exp > 1) html += `<input class="m4-exp-inp" data-m4exp="${i}-${j}" type="number" inputmode="numeric">`;
+      });
+    } else {
+      html += t.varsDisplay ? `<span class="coeff-var">${t.varsDisplay}</span>` : '';
+    }
+    html += `</div>`;
+  });
+  html += '</div>';
+  area.innerHTML = html;
+  area.querySelectorAll('input').forEach(inp => inp.addEventListener('input', updateSubmit));
+  updateSubmit();
+  const first = area.querySelector('input');
+  if (first) setTimeout(() => first.focus(), 50);
+}
+function toggleM4Sign(i) {
+  m4MultiSigns[i] = -m4MultiSigns[i];
+  const btn = document.querySelector(`[data-m4sign="${i}"].sign-btn`);
+  if (!btn) return;
+  const neg = m4MultiSigns[i] < 0;
+  btn.textContent = neg ? '−' : '+';
+  btn.className = 'sign-btn' + (neg ? ' neg' : '');
+}
+
+function buildM4FillUI() {
+  const area = document.getElementById('answerArea');
+  document.getElementById('m4FillHint').style.display = '';
+  m4MultiSigns = task.fillTerms.map(() => 1);
+  let html = '<div class="m4-fill-answer">';
+  task.fillTerms.forEach((t, ti) => {
+    html += `<div class="m4-fill-term">
+      <button class="sign-btn" data-m4sign="${ti}" type="button" onclick="toggleM4Sign(${ti})">+</button>
+      <input class="coeff-input" data-m4idx="${ti}" type="number" inputmode="numeric">`;
+    t.vars.forEach((v, vi) => {
+      html += `<input class="m4-letter-inp" data-fti="${ti}" data-fvi="${vi}" type="text" maxlength="1" autocomplete="off" spellcheck="false">`;
+      if (v.e > 1) html += `<input class="m4-exp-inp" data-fti="${ti}" data-fvi="${vi}" data-fexp="1" type="number" inputmode="numeric">`;
+    });
+    html += `</div>`;
+  });
+  html += '</div>';
+  area.innerHTML = html;
+  area.querySelectorAll('input').forEach(inp => inp.addEventListener('input', updateSubmit));
+  updateSubmit();
+  const first = area.querySelector('input');
+  if (first) setTimeout(() => first.focus(), 50);
+}
+
+// ── M3 Lv3 nested-bracket UI ─────────────────────────
+function buildM3NestedSignUI(flatTerms) {
+  m3nestedTermSigns = flatTerms.map(() => 1);
+  const area = document.getElementById('answerArea');
+  let html = '<div class="m3-step1-row" id="m3FlatRow">';
+  flatTerms.forEach((t, i) => {
+    let valHTML;
+    if (t.kind === 'bracket') {
+      valHTML = `<span class="m3-term-val m3-term-brk-unit">${t.displayHTML}</span>`;
+    } else {
+      const cs = (t.absCoeff===1&&t.deg>0)?'':String(t.absCoeff);
+      const vs = t.deg===0?'':(t.deg===1?t.var:`${t.var}<sup>${t.deg}</sup>`);
+      valHTML = `<span class="m3-term-val">${cs}${vs}</span>`;
+    }
+    html += `<button class="m3-term-btn" data-ntidx="${i}" type="button" onclick="toggleNestedSign(${i})">+</button>${valHTML}`;
+  });
+  html += '</div><p class="m3-sign-hint">Kliknij + lub − przy każdym elemencie, aby zmienić znak</p>';
+  area.innerHTML = html;
+  updateSubmit();
+}
+
+function toggleNestedSign(i) {
+  m3nestedTermSigns[i] = -m3nestedTermSigns[i];
+  const btn = document.querySelector(`[data-ntidx="${i}"].m3-term-btn`);
+  if (!btn) return;
+  const neg = m3nestedTermSigns[i] < 0;
+  btn.textContent = neg ? '−' : '+';
+  btn.className = 'm3-term-btn' + (neg ? ' neg' : '');
+}
+
+function showM3BracketWaitUI() {
+  document.getElementById('answerArea').innerHTML =
+    '<p class="m3-sign-hint" style="padding:14px 0">Kliknij nawiasy w przykładzie powyżej, aby ustawić znaki</p>';
+  updateSubmit();
+}
+
+function m3StateKey() {
+  return `${m3bracketDone.r?1:0}${m3bracketDone.sq?1:0}${m3bracketDone.cu?1:0}`;
+}
+
+// Plain (non-clickable) HTML for a bracket's current content — used in sign-selection UI.
+function getBracketDisplayHTML(type) {
+  const { rTermsRaw: rt, sqOwnTermsRaw: sqOwn, roundSign: rs, squareSign: ss, var: v } = task;
+  const D = m3bracketDone;
+  function tH(t, first) { return m3tHp(t.coeff, t.deg, v, first); }
+  function mySep(sign, atStart) { return atStart ? (sign > 0 ? '' : '−') : (sign > 0 ? ' + ' : ' − '); }
+  if (type === 'r') {
+    let s = ''; let a = true;
+    rt.forEach(t => { s += tH(t, a); a = false; });
+    return `(${s})`;
+  }
+  // type === 'sq'
+  let s = ''; let a = true;
+  sqOwn.forEach(t => { s += tH(t, a); a = false; });
+  if (D.r) {
+    rt.forEach(t => { s += m3tHp(rs * t.coeff, t.deg, v, a); a = false; });
+  } else {
+    s += mySep(rs, a) + getBracketDisplayHTML('r');
+  }
+  return `[${s}]`;
+}
+
+// Compute flat terms for sign-selection when removing bracket `type`.
+// Effective sign accounts for which parent brackets have already been removed.
+// curlySign contributes to () only after [] is also done (it can't reach () while [] is still wrapping it).
+function getM3StepFlatTerms(type) {
+  const { rTermsRaw: rt, sqOwnTermsRaw: sqOwn, cuOwnTermsRaw: cuOwn,
+          roundSign: rs, squareSign: ss, curlySign: cs, var: v } = task;
+  const D = m3bracketDone;
+  // Each item is either a term {kind:'term', absCoeff, deg, var, effectiveSign}
+  // or an inner bracket unit {kind:'bracket', bracketType, effectiveSign, displayHTML}.
+  const term = (coeff, deg, s) => ({kind:'term', absCoeff: Math.abs(coeff), deg, var: v, effectiveSign: Math.sign(s * coeff) || 1});
+  const brk  = (bracketType, effSign) => ({kind:'bracket', bracketType, effectiveSign: effSign, displayHTML: getBracketDisplayHTML(bracketType)});
+
+  if (type === 'r') {
+    const s = rs * (D.sq ? ss * (D.cu ? cs : 1) : 1);
+    return rt.map(t => term(t.coeff, t.deg, s));
+  }
+  if (type === 'sq') {
+    const s = ss * (D.cu ? cs : 1);
+    const items = sqOwn.map(t => term(t.coeff, t.deg, s));
+    if (D.r) {
+      rt.forEach(t => items.push(term(rs * t.coeff, t.deg, s)));
+    } else {
+      // () bracket as a unit — user confirms its sign after [] distribution
+      items.push(brk('r', Math.sign(s * rs) || 1));
+    }
+    return items;
+  }
+  // type === 'cu'
+  const s = cs;
+  const items = cuOwn.map(t => term(t.coeff, t.deg, s));
+  if (D.sq) {
+    sqOwn.forEach(t => items.push(term(ss * t.coeff, t.deg, s)));
+    if (D.r) {
+      rt.forEach(t => items.push(term(ss * rs * t.coeff, t.deg, s)));
+    } else {
+      items.push(brk('r', Math.sign(s * ss * rs) || 1));
+    }
+  } else {
+    // [] bracket (possibly containing ()) as a unit
+    items.push(brk('sq', Math.sign(s * ss) || 1));
+  }
+  return items;
+}
+
+function updateM3BracketVisuals() {
+  document.querySelectorAll('#question .m3-brk[data-brk]').forEach(el => {
+    const t = el.dataset.brk;
+    el.classList.toggle('done',   !!m3bracketDone[t]);
+    el.classList.toggle('active', m3bracketActive === t);
+  });
+}
+
+function selectM3Bracket(type, event) {
+  event.stopPropagation();
+  if (m3bracketDone[type]) return;
+
+  const flatTerms = getM3StepFlatTerms(type);
+
+  // If this bracket has no own terms, remove it immediately (trivial distribution)
+  if (flatTerms.length === 0) {
+    m3bracketDone[type] = true;
+    document.getElementById('question').innerHTML = task.stateHTMLs[m3StateKey()];
+    updateM3BracketVisuals();
+    requestAnimationFrame(fitM3Question);
+    feedbackEl.className = 'feedback ok';
+    feedbackEl.innerHTML = '✅ Dobrze! Kliknij kolejne nawiasy.';
+    const needCu = task.depth === 3;
+    const allDone = m3bracketDone.r && m3bracketDone.sq && (!needCu || m3bracketDone.cu);
+    if (allDone) {
+      document.getElementById('qLabel').innerHTML = task.finalLabel;
+      buildM3ChipQuestion(task.finalFlatTerms);
+      buildM3Step2AnswerUI();
+    } else {
+      document.getElementById('qLabel').innerHTML = 'Usuń nawiasy:';
+      showM3BracketWaitUI();
+    }
+    return;
+  }
+
+  m3bracketActive = type;
+  updateM3BracketVisuals();
+  feedbackEl.className = 'feedback empty';
+  feedbackEl.textContent = '–';
+  document.getElementById('qLabel').innerHTML = task.bracketLabels[type];
+  buildM3NestedSignUI(flatTerms);
+}
+
+function advanceM3Nested() {
+  task.currentStep++;
+  document.getElementById('qLabel').innerHTML = task.stepLabels[task.currentStep];
+  feedbackEl.className = 'feedback empty';
+  feedbackEl.textContent = '–';
+  if (task.currentStep < task.totalSteps - 1) {
+    document.getElementById('question').innerHTML = task.stepQHTMLs[task.currentStep];
+    buildM3NestedSignUI();
+    requestAnimationFrame(fitM3Question);
+  } else {
+    buildM3ChipQuestion(task.finalFlatTerms);
+    buildM3Step2AnswerUI();
+  }
+}
+
+// ── M3 chip mechanic (Zredukuj step) ─────────────────
+function buildM3ChipQuestion(terms) {
+  m3ChipAssign = terms.map(() => -1);
+  const q = document.getElementById('question');
+  q.style.fontSize = '';
+  q.style.whiteSpace = '';
+  let html = '<div class="m3-chip-row">';
+  terms.forEach((t, i) => {
+    const abs = Math.abs(t.coeff);
+    const cs = (abs===1&&t.deg>0)?'':String(abs);
+    const vs = t.deg===0?'':(t.deg===1?t.var:`${t.var}<sup>${t.deg}</sup>`);
+    if (i > 0) html += `<span class="m3-chip-sep">${t.coeff >= 0 ? '+' : '−'}</span>`;
+    else if (t.coeff < 0) html += '<span class="m3-chip-sep">−</span>';
+    html += `<span class="m3-chip" data-cidx="${i}" onclick="cycleM3Chip(${i})">${cs}${vs}</span>`;
+  });
+  html += '</div><p class="m3-chip-hint">Kliknij kilka razy, aby zmienić kolor wyrazu</p>';
+  q.innerHTML = html;
+}
+
+function cycleM3Chip(i) {
+  m3ChipAssign[i] = (m3ChipAssign[i] + 2) % 5 - 1; // cycles: -1→0→1→2→3→-1
+  const chip = document.querySelector(`.m3-chip[data-cidx="${i}"]`);
+  if (chip) chip.className = 'm3-chip' + (m3ChipAssign[i] >= 0 ? ' gc' + m3ChipAssign[i] : '');
+}
+
+// ── M3 auto-fit ───────────────────────────────────────
+function fitM3Question() {
+  if (M !== 3) return;
+  const q = document.getElementById('question');
+  if (!q || q.querySelector('.m3-chip-row')) return; // skip chip views
+  q.style.fontSize = '';
+  const avail = q.parentElement ? q.parentElement.clientWidth - 20 : 0;
+  if (!avail) return;
+  q.style.whiteSpace = 'nowrap';
+  const natural = q.scrollWidth;
+  if (natural <= 0) return;
+  const fs0 = parseFloat(getComputedStyle(q).fontSize); // px at CSS default
+  const ratio = avail / natural;
+  // clamp: don't shrink below 50% or grow above 180% of CSS font size
+  const targetPx = Math.min(fs0 * 1.8, Math.max(fs0 * 0.5, fs0 * ratio));
+  q.style.fontSize = targetPx.toFixed(1) + 'px';
+}
+
+// ── M3 auto-fit helpers ───────────────────────────────
+function fitElemToWidth(el, maxW, startRem) {
+  el.style.fontSize = '';
+  if (!maxW || el.scrollWidth <= maxW) return;
+  let fs = startRem;
+  while (el.scrollWidth > maxW && fs > 0.45) {
+    fs = Math.round((fs - 0.04) * 100) / 100;
+    el.style.fontSize = fs + 'rem';
+  }
+}
+function fitM3QuestionToLine() {
+  const wrap = document.querySelector('#question .m3-expr-wrap');
+  if (wrap) fitElemToWidth(wrap, document.getElementById('question').offsetWidth - 8, 1.6);
+}
+function fitM3Step1ToLine() {
+  const row = document.getElementById('m3FlatRow');
+  if (row) fitElemToWidth(row, document.getElementById('answerArea').offsetWidth - 8, 1.35);
+}
+function fitM4BlockQuestion() {
+  const wrap = document.querySelector('#question .m4-2block-expr');
+  if (!wrap) return;
+  wrap.style.fontSize = '';
+  if (wrap.scrollWidth <= wrap.clientWidth) return;
+  const fs0 = parseFloat(getComputedStyle(wrap).fontSize);
+  const ratio = wrap.clientWidth / wrap.scrollWidth;
+  wrap.style.fontSize = Math.max(fs0 * 0.45, fs0 * ratio).toFixed(1) + 'px';
+}
+
+// ── M4: Jednomian × sumę ──────────────────────────────
+
+// Multi-variable helpers
+function mvarsKey(vars) {
+  return Object.entries(vars).sort((a,b)=>a[0].localeCompare(b[0]))
+    .filter(([,e])=>e>0).map(([l,e])=>l+(e===1?'':String(e))).join('');
+}
+function mvarsHTML(vars) {
+  return Object.entries(vars).sort((a,b)=>a[0].localeCompare(b[0]))
+    .filter(([,e])=>e>0).map(([l,e])=>e===1?l:`${l}<sup>${e}</sup>`).join('');
+}
+function monoMulVars(v1, v2) {
+  const r = {...v1};
+  for (const [l,e] of Object.entries(v2)) r[l] = (r[l]||0)+e;
+  return r;
+}
+function monoMultiHTML(coeff, vars, wrapNeg=true) {
+  const abs = Math.abs(coeff), neg = coeff < 0;
+  const hasV = Object.keys(vars).length > 0;
+  const cs = (abs===1 && hasV) ? '' : String(abs);
+  const inner = (neg?'−':'') + cs + mvarsHTML(vars);
+  return (neg && wrapNeg) ? '('+inner+')' : inner;
+}
+function multiTermsHTML(terms) {
+  return terms.map((t, i) => {
+    const abs = Math.abs(t.coeff), neg = t.coeff < 0;
+    const hasV = Object.keys(t.vars).length > 0;
+    const sign = neg ? (i?' − ':'−') : (i?' + ':'');
+    const cs = (abs===1 && hasV) ? '' : String(abs);
+    return sign + cs + mvarsHTML(t.vars);
+  }).join('');
+}
+function resultTermsHTML(terms) {
+  return terms.map((t, i) => {
+    const abs = Math.abs(t.coeff), neg = t.coeff < 0;
+    const hasV = t.varsDisplay !== '';
+    const sign = neg ? (i?' − ':'−') : (i?' + ':'');
+    const cs = (abs===1 && hasV) ? '' : String(abs);
+    return sign + cs + t.varsDisplay;
+  }).join('');
+}
+
+// Generate sum terms for multi-variable problems; returns 0..nTerms items
+function genMultiSumTerms(monoVars, nTerms) {
+  const monoLetters = Object.keys(monoVars);
+  const extras = shuffle([...VARS].filter(v => !monoLetters.includes(v))).slice(0, 3);
+  const pool = [...monoLetters, ...extras];
+  const usedSigs = new Set();
+  const terms = [];
+  let att = 0;
+  while (terms.length < nTerms && att++ < 200) {
+    const r = Math.random();
+    let termVars = {};
+    if (r < 0.25) {
+      // constant
+    } else if (r < 0.80) {
+      const l = pick(pool);
+      const d = rnd(1, 3);
+      termVars = {[l]: d};
+    } else {
+      const [l1, l2] = shuffle([...pool]).slice(0, 2);
+      termVars = {[l1]: 1, [l2]: 1};
+    }
+    const resVars = monoMulVars(monoVars, termVars);
+    const totalDeg = Object.values(resVars).reduce((s,v)=>s+v, 0);
+    if (totalDeg > 5) continue;
+    const sig = mvarsKey(resVars);
+    if (usedSigs.has(sig)) continue;
+    usedSigs.add(sig);
+    terms.push({coeff: rndNZ(-6, 6), vars: termVars});
+  }
+  // sort by result total degree desc
+  terms.sort((a, b) => {
+    const da = Object.values(monoMulVars(monoVars, a.vars)).reduce((s,v)=>s+v, 0);
+    const db = Object.values(monoMulVars(monoVars, b.vars)).reduce((s,v)=>s+v, 0);
+    return db - da;
+  });
+  return terms;
+}
+
+function genM4() {
+  if (L === 1) return genM4Lv1();
+  if (L === 2) return genM4Lv2();
+  if (L === 3) return genM4Lv3();
+  if (L === 4) return genM4Lv4();
+  if (L === 5) return genM4Lv5();
+  if (L === 6) return genM4Lv7();
+  return genM4L7Frac();
+}
+
+function genM4Lv1() {
+  const v = pick(VARS);
+  let k;
+  do { k = rndNZ(-8, 8); } while (k === 1 || (k === -1 && Math.random() < 0.95));
+  const nTerms = rnd(2, 3);
+  const sumPoly = {};
+  for (let d = 0; d < nTerms; d++) sumPoly[d] = rndNZ(-6, 6);
+  const answer = pClean(pScale(sumPoly, k));
+  const kHTML = k < 0 ? `−${Math.abs(k)}` : String(k);
+  const sumDisp = polyHTMLv(sumPoly, v);
+  const qHTML = `<span class="m3-expr-wrap">${kHTML}(${sumDisp})</span>`;
+  const maxDeg = nTerms - 1;
+  const resultTerms = [];
+  for (let d = maxDeg; d >= 0; d--) {
+    const vd = d === 0 ? '' : d === 1 ? v : `${v}<sup>${d}</sup>`;
+    resultTerms.push({coeff: answer[d], vars: {}, varsDisplay: vd});
+  }
+  return {
+    type: 'multimono-sum',
+    qHTML, qLabel: 'Wykonaj mnożenie:',
+    resultTerms, solHTML: resultTermsHTML(resultTerms),
+    key: `m4l1:${k}*(${sumDisp})`
+  };
+}
+
+function genM4Lv2() {
+  let att = 0;
+  while (att++ < 60) {
+    const v = pick(VARS);
+    const nTerms = rnd(2, 3);
+    const divisor = rnd(2, 6);
+    const resPoly = {};
+    for (let d = 0; d < nTerms; d++) resPoly[d] = rndNZ(-4, 4);
+    const sumPoly = pScale(resPoly, divisor);
+    const sumDisp = polyHTMLv(sumPoly, v);
+    const sumBr = `(${sumDisp})`;
+    const useFrac = Math.random() < 0.5;
+    let qHTML;
+    if (useFrac) {
+      qHTML = `<span class="m3-expr-wrap"><span class="m4-frac"><span class="m4-frac-num">${sumBr}</span><span class="m4-frac-bar"></span><span class="m4-frac-den">${divisor}</span></span></span>`;
+    } else {
+      qHTML = `<span class="m3-expr-wrap">${sumBr} ÷ ${divisor}</span>`;
+    }
+    const maxDeg = nTerms - 1;
+    const resultTerms = [];
+    for (let d = maxDeg; d >= 0; d--) {
+      const vd = d === 0 ? '' : d === 1 ? v : `${v}<sup>${d}</sup>`;
+      resultTerms.push({coeff: resPoly[d], vars: {}, varsDisplay: vd});
+    }
+    return {
+      type: 'multimono-sum',
+      qHTML, qLabel: 'Oblicz:',
+      resultTerms, solHTML: resultTermsHTML(resultTerms),
+      key: `m4l2:${sumDisp}/${divisor}`
+    };
+  }
+}
+
+function genM4Lv3() {
+  let att = 0;
+  while (att++ < 80) {
+    const r = Math.random();
+    const nLetters = r < 0.40 ? 1 : r < 0.85 ? 2 : 3;
+    const letters = shuffle([...VARS]).slice(0, nLetters);
+    const monoVars = {};
+    for (const l of letters) monoVars[l] = 1;
+    const monoCoeff = rndNZ(-6, 6);
+    const nTerms = rnd(2, 3);
+    const sumTerms = genMultiSumTerms(monoVars, nTerms);
+    if (sumTerms.length < 2) continue;
+    const resultTerms = sumTerms.map(t => {
+      const c = monoCoeff * t.coeff;
+      const rv = monoMulVars(monoVars, t.vars);
+      return {coeff: c, vars: rv, varsDisplay: mvarsHTML(rv)};
+    });
+    const allLettersLv3 = new Set(resultTerms.flatMap(t => Object.keys(t.vars).filter(l => t.vars[l] > 0)));
+    if (allLettersLv3.size > 3) continue;
+    const monoDisp = monoMultiHTML(monoCoeff, monoVars, false);
+    const sumDisp = multiTermsHTML(sumTerms);
+    const qHTML = `<span class="m3-expr-wrap">${monoDisp}(${sumDisp})</span>`;
+    return {
+      type: 'multimono-sum', multiVarAnswer: true,
+      qHTML, qLabel: 'Wykonaj mnożenie:',
+      resultTerms, solHTML: resultTermsHTML(resultTerms),
+      key: `m4l3:${monoDisp}*(${sumDisp})`
+    };
+  }
+}
+
+// ── shared helpers for Lv4a/4b two-step ──────────────
+function m4CollectResults(blockResultTerms) {
+  const collected = {};
+  for (const bTerms of blockResultTerms) {
+    for (const t of bTerms) {
+      const k = mvarsKey(t.vars) || '_c';
+      if (!collected[k]) collected[k] = { vars: t.vars, coeff: 0 };
+      collected[k].coeff += t.coeff;
+    }
+  }
+  return Object.values(collected)
+    .filter(t => t.coeff !== 0)
+    .sort((a, b) => {
+      const da = Object.values(a.vars).reduce((s,e)=>s+e,0);
+      const db = Object.values(b.vars).reduce((s,e)=>s+e,0);
+      if (db !== da) return db - da;
+      return (mvarsKey(a.vars)||'_c').localeCompare(mvarsKey(b.vars)||'_c');
+    })
+    .map(t => ({ ...t, varsDisplay: mvarsHTML(t.vars) }));
+}
+function m4Phase2QHTML(blockResultTerms) {
+  const all = blockResultTerms.flat();
+  let s = '';
+  all.forEach((t, i) => {
+    const neg = t.coeff < 0;
+    const sign = neg ? (i?' − ':'−') : (i?' + ':'');
+    const abs = Math.abs(t.coeff), hasV = t.varsDisplay !== '';
+    const cs = (abs===1&&hasV)?'':String(abs);
+    s += sign+cs+t.varsDisplay;
+  });
+  return `<span class="m3-expr-wrap">${s}</span>`;
+}
+function m4GenMulBlock(sharedLetters, b, simple=false) {
+  let monoVars = {}, monoCoeff;
+  const mt = Math.random();
+  if (mt < 0.20) {
+    monoVars = {}; monoCoeff = rnd(2,5);
+  } else if (simple || mt < 0.70) {
+    const l = sharedLetters[Math.floor(Math.random()*sharedLetters.length)];
+    monoVars = {[l]:1}; monoCoeff = rnd(1,4);
+  } else {
+    const l = sharedLetters[Math.floor(Math.random()*sharedLetters.length)];
+    monoVars = {[l]:2}; monoCoeff = rnd(1,3);
+  }
+  const blockSign = b===0?1:(Math.random()<0.5?1:-1);
+  const nTerms = rnd(2,3), usedSigs = new Set(), sumTerms = [];
+  let sat=0;
+  while (sumTerms.length<nTerms && sat++<200) {
+    const r=Math.random();
+    let tv={};
+    if (r<0.20) {} else if (r<0.75||sharedLetters.length<2) {
+      const l=sharedLetters[Math.floor(Math.random()*sharedLetters.length)]; tv={[l]:1};
+    } else {
+      const [l1,l2]=shuffle([...sharedLetters]); tv={[l1]:1,[l2]:1};
+    }
+    const rv=monoMulVars(monoVars,tv);
+    if (Object.values(rv).reduce((s,v)=>s+v,0)>4) continue;
+    const sig=mvarsKey(rv)||'_c';
+    if (usedSigs.has(sig)) continue;
+    usedSigs.add(sig);
+    sumTerms.push({coeff:rndNZ(-4,4),vars:tv});
+  }
+  if (sumTerms.length<2) return null;
+  sumTerms.sort((a,bT)=>{
+    const da=Object.values(monoMulVars(monoVars,a.vars)).reduce((s,v)=>s+v,0);
+    const db=Object.values(monoMulVars(monoVars,bT.vars)).reduce((s,v)=>s+v,0);
+    return db-da;
+  });
+  return {kind:'mul', monoVars, monoCoeff, blockSign, sumTerms};
+}
+
+function genM4Lv4() {
+  let att=0;
+  while (att++<120) {
+    const nVars=Math.random()<0.45?1:2;
+    const sharedLetters=shuffle([...VARS]).slice(0,nVars);
+    const nBlocks=2;
+    const blocks=[];
+    for (let b=0;b<nBlocks;b++) {
+      const bl=m4GenMulBlock(sharedLetters,b,true);
+      if (!bl) { blocks.length=0; break; }
+      blocks.push(bl);
+    }
+    if (blocks.length<2) continue;
+
+    const blockResultTerms=blocks.map(bl=>
+      bl.sumTerms.map(st=>{
+        const c=bl.blockSign*bl.monoCoeff*st.coeff;
+        const rv=monoMulVars(bl.monoVars,st.vars);
+        return {coeff:c,vars:rv,varsDisplay:mvarsHTML(rv)};
+      })
+    );
+    const resultTerms=m4CollectResults(blockResultTerms);
+    if (resultTerms.length<2) continue;
+    const allLettersLv4 = new Set(resultTerms.flatMap(t => Object.keys(t.vars).filter(l => t.vars[l] > 0)));
+    if (allLettersLv4.size > 3) continue;
+
+    let qInner='';
+    for (let b=0;b<blocks.length;b++) {
+      const {monoVars,monoCoeff,blockSign,sumTerms}=blocks[b];
+      const monoDisp=monoMultiHTML(monoCoeff,monoVars,false);
+      const sumDisp=multiTermsHTML(sumTerms);
+      if (b===0) { qInner+=monoDisp; }
+      else { qInner+=blockSign>0?' + ':' − '; qInner+=monoDisp; }
+      qInner+=`(${sumDisp})`;
+    }
+    return {
+      type:'multi-block-expand', phase:1, multiVarAnswer:true,
+      qHTML:`<span class="m3-expr-wrap m4-2block-expr">${qInner}</span>`,
+      qLabel:'Wykonaj mnożenie i uprość:',
+      blocks, blockResultTerms, resultTerms,
+      phase2QHTML:m4Phase2QHTML(blockResultTerms),
+      solHTML:resultTermsHTML(resultTerms),
+      key:`m4l4:${qInner}`
+    };
+  }
+}
+
+function genM4Lv5() {
+  let att=0;
+  while (att++<150) {
+    const nVars=Math.random()<0.45?1:2;
+    const sharedLetters=shuffle([...VARS]).slice(0,nVars);
+    const nBlocks=2;
+    // at least 1 'div' block, at most nBlocks
+    const nDiv=rnd(1,nBlocks);
+    const divIdx=new Set(shuffle([...Array(nBlocks).keys()]).slice(0,nDiv));
+
+    const blocks=[];
+    for (let b=0;b<nBlocks;b++) {
+      if (divIdx.has(b)) {
+        // sum ÷ divisor
+        const divisor=rnd(2,5);
+        const blockSign=b===0?1:(Math.random()<0.5?1:-1);
+        const nTerms=rnd(2,3), usedVK=new Set(), sumTerms=[];
+        let sat=0;
+        while (sumTerms.length<nTerms && sat++<200) {
+          const r=Math.random();
+          let tv={};
+          if (r<0.25) {} else if (r<0.75||sharedLetters.length<2) {
+            const l=sharedLetters[Math.floor(Math.random()*sharedLetters.length)]; tv={[l]:1};
+          } else {
+            const [l1,l2]=shuffle([...sharedLetters]); tv={[l1]:1,[l2]:1};
+          }
+          const vk=mvarsKey(tv)||'_c';
+          if (usedVK.has(vk)) continue;
+          const mult=rndNZ(-4,4);
+          usedVK.add(vk);
+          sumTerms.push({coeff:mult*divisor,vars:tv});
+        }
+        if (sumTerms.length<2) { blocks.length=0; break; }
+        sumTerms.sort((a,bT)=>
+          Object.values(bT.vars).reduce((s,v)=>s+v,0)-Object.values(a.vars).reduce((s,v)=>s+v,0)
+        );
+        blocks.push({kind:'div',divisor,blockSign,sumTerms,monoVars:{},monoCoeff:1});
+      } else {
+        const bl=m4GenMulBlock(sharedLetters,b,true);
+        if (!bl) { blocks.length=0; break; }
+        blocks.push(bl);
+      }
+    }
+    if (blocks.length<2) continue;
+
+    const blockResultTerms=blocks.map(bl=>{
+      if (bl.kind==='div') {
+        return bl.sumTerms.map(st=>({
+          coeff:bl.blockSign*st.coeff/bl.divisor,
+          vars:st.vars, varsDisplay:mvarsHTML(st.vars)
+        }));
+      }
+      return bl.sumTerms.map(st=>{
+        const c=bl.blockSign*bl.monoCoeff*st.coeff;
+        const rv=monoMulVars(bl.monoVars,st.vars);
+        return {coeff:c,vars:rv,varsDisplay:mvarsHTML(rv)};
+      });
+    });
+    const resultTerms=m4CollectResults(blockResultTerms);
+    if (resultTerms.length<2) continue;
+    const allLettersLv5 = new Set(resultTerms.flatMap(t => Object.keys(t.vars).filter(l => t.vars[l] > 0)));
+    if (allLettersLv5.size > 3) continue;
+
+    let qInner='';
+    for (let b=0;b<blocks.length;b++) {
+      const bl=blocks[b];
+      const sumDisp=multiTermsHTML(bl.sumTerms);
+      let blockExpr;
+      if (bl.kind==='div') {
+        blockExpr=`<span class="m4-frac"><span class="m4-frac-num">${sumDisp}</span><span class="m4-frac-bar"></span><span class="m4-frac-den">${bl.divisor}</span></span>`;
+      } else {
+        blockExpr=`${monoMultiHTML(bl.monoCoeff,bl.monoVars,false)}(${sumDisp})`;
+      }
+      if (b===0) { if (bl.blockSign<0) qInner+='−'; qInner+=blockExpr; }
+      else { qInner+=bl.blockSign>0?' + ':' − '; qInner+=blockExpr; }
+    }
+    return {
+      type:'multi-block-expand', phase:1, multiVarAnswer:true,
+      qHTML:`<span class="m3-expr-wrap m4-2block-expr">${qInner}</span>`,
+      qLabel:'Wykonaj działania i uprość:',
+      blocks, blockResultTerms, resultTerms,
+      phase2QHTML:m4Phase2QHTML(blockResultTerms),
+      solHTML:resultTermsHTML(resultTerms),
+      key:`m4l5:${qInner}`
+    };
+  }
+}
+
+function genM4Lv7() {
+  let att = 0;
+  while (att++ < 80) {
+    const r = Math.random();
+    const nLetters = r < 0.35 ? 1 : r < 0.85 ? 2 : 3;
+    const letters = shuffle([...VARS]).slice(0, nLetters);
+    const monoVars = {};
+    for (const l of letters) monoVars[l] = 1;
+    const monoCoeff = rndNZ(-6, 6);
+    const nTerms = rnd(2, 3);
+    const sumTerms = genMultiSumTerms(monoVars, nTerms);
+    if (sumTerms.length < 2) continue;
+    const fillTerms = sumTerms.map(t => {
+      const c = monoCoeff * t.coeff;
+      const rv = monoMulVars(monoVars, t.vars);
+      const vars = Object.entries(rv).sort((a,b)=>a[0].localeCompare(b[0])).map(([l,e])=>({l,e}));
+      return {coeff: c, vars};
+    });
+    const allLettersLv7 = new Set(fillTerms.flatMap(t => t.vars.map(v => v.l)));
+    if (allLettersLv7.size > 3) continue;
+    const monoDisp = monoMultiHTML(monoCoeff, monoVars, false);
+    const sumDisp = multiTermsHTML(sumTerms);
+    const qHTML = `<span class="m3-expr-wrap">${monoDisp}(${sumDisp})</span>`;
+    const solHTML = fillTerms.map((t, i) => {
+      const neg = t.coeff < 0, abs = Math.abs(t.coeff);
+      const sign = neg ? (i?' − ':'−') : (i?' + ':'');
+      const hasV = t.vars.length > 0;
+      const cs = (abs===1 && hasV) ? '' : String(abs);
+      const vs = t.vars.map(({l,e})=>e===1?l:`${l}<sup>${e}</sup>`).join('');
+      return sign + cs + vs;
+    }).join('');
+    return {
+      type: 'multimono-fill',
+      qHTML, qLabel: 'Wykonaj mnożenie:',
+      fillTerms, solHTML,
+      key: `m4l5:${monoDisp}*(${sumDisp})`
+    };
+  }
+}
+
+// ── M4 Lv7: ułamek × liczbę (klikanie elementów) ─────
+
+function gcdFunc(a, b) {
+  a = Math.abs(a); b = Math.abs(b);
+  while (b) { const t = b; b = a % b; a = t; }
+  return a || 1;
+}
+
+function genM4L7Frac() {
+  const isHard = m5Mode === 'hard';
+  let att = 0;
+  while (att++ < 120) {
+    const fracTerms = [];
+    const usedLetters = new Set();
+    let genOk = true;
+
+    for (let ti = 0; ti < 2; ti++) {
+      const denom = pick([2, 3, 4, 5, 6, 7]);
+      const outer = rnd(2, isHard ? 9 : 6);
+      const nNum = isHard ? rnd(2, 3) : 2;
+
+      const avail = [...VARS].filter(l => !usedLetters.has(l));
+      if (avail.length < nNum - 1) { genOk = false; break; }
+      const letters = shuffle([...avail]).slice(0, nNum - 1);
+      letters.forEach(l => usedLetters.add(l));
+
+      const numCoeffs = [], numVarSets = [];
+      for (let i = 0; i < nNum - 1; i++) {
+        numCoeffs.push(denom * rndNZ(-4, 4));
+        numVarSets.push({ [letters[i]]: 1 });
+      }
+      numCoeffs.push(denom * rndNZ(-4, 4));
+      numVarSets.push({});
+
+      const sign = ti === 0 ? 1 : (Math.random() < 0.5 ? 1 : -1);
+      const g = gcdFunc(outer, denom);
+      const resultTerms = numCoeffs.map((c, i) => ({
+        coeff: sign * outer * c / denom,
+        vars: numVarSets[i]
+      })).filter(r => r.coeff !== 0);
+
+      if (resultTerms.length === 0) { genOk = false; break; }
+      fracTerms.push({
+        sign, outer, numCoeffs, numVarSets, denom, gcdOD: g, resultTerms,
+        l7phase: 'idle', l7curOuter: outer, l7curDenom: denom, l7interCoeffs: null,
+      });
+    }
+
+    if (!genOk || fracTerms.length < 2) continue;
+
+    const allFlat = fracTerms.flatMap(ft => ft.resultTerms);
+    const finalTerms = m5Reduce(allFlat);
+    if (finalTerms.length === 0) continue;
+    if (finalTerms.some(r => Math.abs(r.coeff) > 100)) continue;
+
+    const needsReduction = finalTerms.length < allFlat.length;
+    const tempTask = { fracTerms, phase: 'tasks', l7sel: null, l7actionTi: null, l7actionType: null };
+    const qHTML = l7QuestionHTML(tempTask);
+    const solHTML = multiTermsHTML(finalTerms);
+
+    return {
+      type: 'm4l7', qLabel: 'Wykonaj mnożenie:',
+      fracTerms, finalTerms, needsReduction, qHTML, solHTML,
+      key: `m4l7:${solHTML}`,
+      phase: 'tasks',
+      l7sel: null, l7actionTi: null, l7actionType: null,
+    };
+  }
+}
+
+function m4l7NumHTML(ft) {
+  return ft.numCoeffs.map((c, i) => {
+    const abs = Math.abs(c), neg = c < 0;
+    const hasV = Object.keys(ft.numVarSets[i]).length > 0;
+    const sign = neg ? (i ? ' − ' : '−') : (i ? ' + ' : '');
+    const cs = (abs === 1 && hasV) ? '' : String(abs);
+    return sign + cs + mvarsHTML(ft.numVarSets[i]);
+  }).join('');
+}
+
+function l7CoeffsHTML(coeffs, varSets) {
+  return coeffs.map((c, i) => {
+    const abs = Math.abs(c), neg = c < 0;
+    const hasV = Object.keys(varSets[i]).length > 0;
+    const sign = neg ? (i ? ' − ' : '−') : (i ? ' + ' : '');
+    const cs = (abs === 1 && hasV) ? '' : String(abs);
+    return sign + cs + mvarsHTML(varSets[i]);
+  }).join('');
+}
+
+function l7SelCls(t, ti, el) {
+  if (t.l7sel && t.l7sel.ti === ti && t.l7sel.el === el) return ' l7-hl';
+  if (t.l7actionTi === ti) {
+    const at = t.l7actionType;
+    if (at === 'mul'  && (el === 'outer' || el === 'numer')) return ' l7-hl';
+    if (at === 'div'  && (el === 'numer' || el === 'denom')) return ' l7-hl';
+    if (at === 'simp' && (el === 'outer' || el === 'denom')) return ' l7-hl';
+  }
+  return '';
+}
+
+function l7TermHTML(t, ft, ti) {
+  const ph = ft.l7phase, cO = ft.l7curOuter, cD = ft.l7curDenom;
+  const sc = el => l7SelCls(t, ti, el);
+  const sgn = ft.sign < 0 ? '−' : '';
+
+  if (ph === 'post-mul') {
+    const nH = `<span class="l7-el l7-numer${sc('numer')}" onclick="l7Click('numer',${ti})">${l7CoeffsHTML(ft.l7interCoeffs, ft.numVarSets)}</span>`;
+    const dH = `<span class="l7-el${sc('denom')}" onclick="l7Click('denom',${ti})">${cD}</span>`;
+    return `<span class="m4-frac">${nH}<span class="m4-frac-bar"></span>${dH}</span>`;
+  }
+  if (ph === 'post-div') {
+    const oH = `<span class="l7-el${sc('outer')}" onclick="l7Click('outer',${ti})">${sgn}${cO}</span>`;
+    const nH = `<span class="l7-el l7-numer${sc('numer')}" onclick="l7Click('numer',${ti})">(${l7CoeffsHTML(ft.l7interCoeffs, ft.numVarSets)})</span>`;
+    return `${oH}&thinsp;&middot;&thinsp;${nH}`;
+  }
+
+  let oH;
+  if (ph === 'simp-active') {
+    oH = `<span class="l7-el l7-cancel-el l7-hl">${sgn}<sup><input class="l7-simp-inp" id="l7si_o_${ti}" type="number" inputmode="numeric" min="1" oninput="updateSubmit()"></sup><span class="l7-struck">${cO}</span></span>`;
+  } else if (ph === 'post-simp') {
+    oH = `<span class="l7-el l7-cancel-el${sc('outer')}" onclick="l7Click('outer',${ti})">${sgn}<sup class="l7-cancel-val">${cO}</sup><span class="l7-struck">${ft.outer}</span></span>`;
+  } else {
+    oH = `<span class="l7-el${sc('outer')}" onclick="l7Click('outer',${ti})">${sgn}${cO}</span>`;
+  }
+
+  const srcCoeffs = ft.l7interCoeffs ?? ft.numCoeffs;
+  const nH = `<span class="l7-el l7-numer${sc('numer')}" onclick="l7Click('numer',${ti})">${l7CoeffsHTML(srcCoeffs, ft.numVarSets)}</span>`;
+
+  let dH = null;
+  if (cD > 1) {
+    if (ph === 'simp-active') {
+      dH = `<span class="l7-el l7-cancel-el l7-hl"><span class="l7-struck">${ft.denom}</span><sub><input class="l7-simp-inp" id="l7si_d_${ti}" type="number" inputmode="numeric" min="1" oninput="updateSubmit()"></sub></span>`;
+    } else if (ph === 'post-simp') {
+      dH = `<span class="l7-el l7-cancel-el${sc('denom')}" onclick="l7Click('denom',${ti})"><span class="l7-struck">${ft.denom}</span><sub class="l7-cancel-val">${cD}</sub></span>`;
+    } else {
+      dH = `<span class="l7-el${sc('denom')}" onclick="l7Click('denom',${ti})">${cD}</span>`;
+    }
+  }
+
+  if (!dH) return `${oH}&thinsp;&middot;&thinsp;(${nH})`;
+  return `${oH}&thinsp;&middot;&thinsp;<span class="m4-frac">${nH}<span class="m4-frac-bar"></span>${dH}</span>`;
+}
+
+function l7QuestionHTML(t) {
+  t = t ?? task;
+  let html = '<span class="m3-expr-wrap">';
+  let hasContent = false;
+  t.fracTerms.forEach((ft, ti) => {
+    if (ft.l7phase === 'expanded') {
+      ft.resultTerms.forEach(rt => {
+        const neg = rt.coeff < 0, abs = Math.abs(rt.coeff);
+        const hasV = Object.keys(rt.vars).length > 0;
+        const prefix = !hasContent ? (neg ? '−' : '') : (neg ? ' − ' : ' + ');
+        const cs = (abs === 1 && hasV) ? '' : String(abs);
+        html += prefix + cs + mvarsHTML(rt.vars);
+        hasContent = true;
+      });
+    } else {
+      const outerVisible = ft.l7phase !== 'post-mul';
+      const prefix = !hasContent ? '' : (ft.sign < 0 && outerVisible ? ' ' : ' + ');
+      html += prefix + l7TermHTML(t, ft, ti);
+      hasContent = true;
+    }
+  });
+  html += '</span>';
+  return html;
+}
+
+function buildM4L7UI() {
+  const area = document.getElementById('answerArea');
+  document.getElementById('m4FillHint').style.display = 'none';
+  const t = task;
+
+  document.getElementById('question').innerHTML = l7QuestionHTML();
+
+  if (t.phase === 'combine') {
+    const allFlat = t.fracTerms.flatMap(ft => ft.resultTerms);
+    m5BuildChipQuestion(allFlat);
+    m4MultiSigns = t.finalTerms.map(() => 1);
+    const lbl = t.needsReduction ? 'Zredukuj wyrazy podobne i wpisz wynik:' : 'Wpisz wynik końcowy:';
+    let html = `<div class="m4-phase-label">${lbl}</div>`;
+    html += '<div class="poly-inputs m3-step2-inputs">';
+    t.finalTerms.forEach((ft2, i) => {
+      if (i > 0) html += '<span class="plus-sep">&thinsp;</span>';
+      const hasV = Object.keys(ft2.vars).length > 0;
+      html += `<div class="coeff-group">
+        <button class="sign-btn" data-m4sign="${i}" type="button" onclick="toggleM4Sign(${i})">+</button>
+        <input class="coeff-input" data-m4idx="${i}" ${hasV ? 'data-hasv="1"' : ''} type="number" inputmode="numeric">
+        ${hasV ? `<span class="coeff-var">${mvarsHTML(ft2.vars)}</span>` : ''}
+      </div>`;
+    });
+    html += '</div>';
+    area.innerHTML = html;
+    area.querySelectorAll('input').forEach(el => el.addEventListener('input', updateSubmit));
+    updateSubmit();
+    area.querySelector('input').focus();
+    return;
+  }
+
+  const at = t.l7actionType;
+
+  if (!at) {
+    area.innerHTML = '<div class="m4-phase-label l7-hint">Kliknij dwa elementy tego samego członu, aby wykonać działanie.</div>';
+    submitBtn.disabled = true;
+    return;
+  }
+
+  if (at === 'simp') {
+    area.innerHTML = '<div class="m4-phase-label l7-hint">Wpisz wyniki skrócenia w kratki w przykładzie powyżej.</div>';
+    updateSubmit();
+    const ti = t.l7actionTi;
+    setTimeout(() => document.getElementById(`l7si_o_${ti}`)?.focus(), 30);
+    return;
+  }
+
+  const ti = t.l7actionTi;
+  const ft = t.fracTerms[ti];
+  const varLabels = ft.numVarSets.map(vs => mvarsHTML(vs));
+
+  const buildTermInputs = () => {
+    m4l7Signs = varLabels.map(() => 1);
+    let h = '<div class="poly-inputs m3-step2-inputs">';
+    varLabels.forEach((lbl, i) => {
+      if (i > 0) h += '<span class="plus-sep">&thinsp;</span>';
+      h += `<div class="coeff-group">
+        <button class="sign-btn" data-l7sign="${i}" type="button" onclick="toggleL7Sign(${i})">+</button>
+        <input class="coeff-input" data-l7inter="${i}" ${lbl ? 'data-hasv="1"' : ''} type="number" inputmode="numeric">
+        ${lbl ? `<span class="coeff-var">${lbl}</span>` : ''}
+      </div>`;
+    });
+    h += '</div>';
+    return h;
+  };
+
+  if (at === 'mul') {
+    const signedO = ft.sign * ft.l7curOuter;
+    const signedOStr = signedO < 0 ? `(−${Math.abs(signedO)})` : String(signedO);
+    let html = `<div class="m4-phase-label">Pomnóż ${signedOStr} przez każdy wyraz licznika:</div>`;
+    html += buildTermInputs();
+    area.innerHTML = html;
+    area.querySelectorAll('input').forEach(el => el.addEventListener('input', updateSubmit));
+    updateSubmit();
+    area.querySelector('input').focus();
+    return;
+  }
+
+  if (at === 'div') {
+    const cD = ft.l7curDenom;
+    const srcCoeffs = ft.l7interCoeffs ?? ft.numCoeffs;
+    const ctxHTML = srcCoeffs.map((c, i) => {
+      const abs = Math.abs(c), neg = c < 0, hasV = varLabels[i] !== '';
+      const sign = neg ? (i ? ' − ' : '−') : (i ? ' + ' : '');
+      const cs = (abs === 1 && hasV) ? '' : String(abs);
+      return sign + cs + varLabels[i];
+    }).join('');
+    let html = `<div class="m4-phase-label">Podziel przez ${cD}: &ensp;<strong>${ctxHTML}</strong></div>`;
+    html += buildTermInputs();
+    area.innerHTML = html;
+    area.querySelectorAll('input').forEach(el => el.addEventListener('input', updateSubmit));
+    updateSubmit();
+    area.querySelector('input').focus();
+    return;
+  }
+}
+
+function toggleL7Sign(i) {
+  m4l7Signs[i] = -m4l7Signs[i];
+  const btn = document.querySelector(`[data-l7sign="${i}"].sign-btn`);
+  if (!btn) return;
+  const neg = m4l7Signs[i] < 0;
+  btn.textContent = neg ? '−' : '+';
+  btn.className = 'sign-btn' + (neg ? ' neg' : '');
+}
+
+function l7Click(el, ti) {
+  const t = task;
+  if (t.l7actionTi !== null) return;
+  const ft = t.fracTerms[ti];
+
+  if (t.l7sel && t.l7sel.ti === ti && t.l7sel.el === el) {
+    t.l7sel = null;
+    buildM4L7UI();
+    return;
+  }
+
+  if (!t.l7sel || t.l7sel.ti !== ti) {
+    t.l7sel = { ti, el };
+    buildM4L7UI();
+    return;
+  }
+
+  const pair = [t.l7sel.el, el].sort().join('+');
+  t.l7sel = null;
+
+  if (pair === 'numer+outer') {
+    if (['idle', 'post-simp', 'post-div'].includes(ft.l7phase)) l7TriggerAction(ti, 'mul');
+    else buildM4L7UI();
+  } else if (pair === 'denom+outer') {
+    const g = gcdFunc(ft.l7curOuter, ft.l7curDenom);
+    if (g > 1 && ['idle', 'post-mul', 'post-div'].includes(ft.l7phase)) l7TriggerAction(ti, 'simp');
+    else buildM4L7UI();
+  } else if (pair === 'denom+numer') {
+    if (['idle', 'post-simp', 'post-mul'].includes(ft.l7phase)) l7TriggerAction(ti, 'div');
+    else buildM4L7UI();
+  } else {
+    buildM4L7UI();
+  }
+}
+
+function l7TriggerAction(ti, action) {
+  const t = task;
+  const ft = t.fracTerms[ti];
+  t.l7actionTi = ti;
+  t.l7actionType = action;
+  ft.l7phase = action + '-active';
+  if (action === 'mul' || action === 'div') {
+    m4l7Signs = ft.numVarSets.map(() => 1);
+  }
+  buildM4L7UI();
+}
+
+function checkM4L7() {
+  const t = task;
+  const okFb = msg => { feedbackEl.className = 'feedback ok'; feedbackEl.innerHTML = '✅ ' + msg; };
+  const badFb = msg => { feedbackEl.className = 'feedback bad'; feedbackEl.innerHTML = '❌ ' + msg; };
+
+  if (t.phase === 'combine') {
+    const allOk = t.finalTerms.every((ft2, i) => {
+      const inp = document.querySelector(`[data-m4idx="${i}"]`);
+      const absVal = inp && inp.value !== '' ? Math.abs(Number(inp.value)) : (inp?.dataset.hasv ? 1 : 0);
+      return m4MultiSigns[i] * absVal === ft2.coeff;
+    });
+    mode = 'next';
+    clearTimeout(autoAdv);
+    stopTimer();
+    tot++;
+    if (allOk) {
+      ok++; playOk();
+      feedbackEl.className = 'feedback good';
+      feedbackEl.innerHTML = `✅ Brawo! Wynik: <strong>${task.solHTML}</strong>`;
+    } else {
+      playBad();
+      feedbackEl.className = 'feedback bad';
+      feedbackEl.innerHTML = `❌ Źle! Poprawna odpowiedź: <strong>${task.solHTML}</strong>`;
+    }
+    scoreEl.textContent = `${ok} / ${tot}`;
+    resetBtn.disabled = false;
+    submitBtn.disabled = true;
+    nextBtn.style.display = '';
+    return;
+  }
+
+  const ti = t.l7actionTi;
+  const ft = t.fracTerms[ti];
+  const at = t.l7actionType;
+
+  const readInps = () => [...document.querySelectorAll('[data-l7inter]')].map((inp, i) => {
+    const abs = inp.value === '' && inp.dataset.hasv ? 1 : Math.abs(parseInt(inp.value || '0', 10));
+    return m4l7Signs[i] * abs;
+  });
+
+  if (at === 'simp') {
+    const sO = parseInt(document.getElementById(`l7si_o_${ti}`)?.value || '', 10);
+    const sD = parseInt(document.getElementById(`l7si_d_${ti}`)?.value || '', 10);
+    const g = gcdFunc(ft.l7curOuter, ft.l7curDenom);
+    if (sO !== ft.l7curOuter / g || sD !== ft.l7curDenom / g) { badFb('Sprawdź skrócenie.'); return; }
+    ft.l7curOuter = sO;
+    ft.l7curDenom = sD;
+    ft.l7phase = 'post-simp';
+    t.l7actionTi = null; t.l7actionType = null;
+    okFb('Dobrze!');
+    l7CheckDone();
+    return;
+  }
+
+  if (at === 'mul') {
+    const signedO = ft.sign * ft.l7curOuter;
+    const srcCoeffs = ft.l7interCoeffs ?? ft.numCoeffs;
+    const expected = srcCoeffs.map(c => signedO * c);
+    const got = readInps();
+    if (!got.every((v, i) => v === expected[i])) { badFb('Sprawdź mnożenie.'); return; }
+    ft.l7interCoeffs = expected;
+    ft.l7curOuter = 1;
+    t.l7actionTi = null; t.l7actionType = null;
+    okFb('Dobrze!');
+    if (ft.l7curDenom === 1) {
+      ft.l7phase = 'expanded';
+    } else {
+      ft.l7phase = 'post-mul';
+    }
+    l7CheckDone();
+    return;
+  }
+
+  if (at === 'div') {
+    const srcCoeffs = ft.l7interCoeffs ?? ft.numCoeffs;
+    const expected = srcCoeffs.map(c => c / ft.l7curDenom);
+    const got = readInps();
+    if (!got.every((v, i) => v === expected[i])) { badFb('Sprawdź dzielenie.'); return; }
+    ft.l7interCoeffs = expected;
+    ft.l7curDenom = 1;
+    t.l7actionTi = null; t.l7actionType = null;
+    okFb('Dobrze!');
+    if (ft.l7curOuter === 1) {
+      ft.l7phase = 'expanded';
+    } else {
+      ft.l7phase = 'post-div';
+    }
+    l7CheckDone();
+    return;
+  }
+}
+
+function l7CheckDone() {
+  const t = task;
+  if (t.fracTerms.every(ft => ft.l7phase === 'expanded')) {
+    t.phase = 'combine';
+    document.getElementById('qLabel').innerHTML = t.needsReduction ? 'Zredukuj wyrazy podobne:' : 'Wpisz wynik:';
+  }
+  buildM4L7UI();
+}
+
+// ── M5: Sumę × sumę ───────────────────────────────────
+
+function m5SumHTML(terms) {
+  return terms.map((t, i) => {
+    const neg = t.coeff < 0, abs = Math.abs(t.coeff);
+    const vd = t.varsDisplay !== undefined ? t.varsDisplay : mvarsHTML(t.vars || {});
+    const hasV = vd !== '';
+    const sign = neg ? (i ? ' − ' : '−') : (i ? ' + ' : '');
+    const cs = (abs === 1 && hasV) ? '' : String(abs);
+    return sign + cs + vd;
+  }).join('');
+}
+
+function m5ProductSums(s1, s2) {
+  const res = [];
+  for (const a of s1) for (const b of s2)
+    res.push({ coeff: a.coeff * b.coeff, vars: monoMulVars(a.vars || {}, b.vars || {}) });
+  return res.filter(t => t.coeff !== 0).map(t => ({ ...t, varsDisplay: mvarsHTML(t.vars) }));
+}
+
+function m5GenBracket(letter) {
+  const a = rndNZ(-5, 5), b = rndNZ(-5, 5);
+  return letter
+    ? [{ coeff: a, vars: { [letter]: 1 } }, { coeff: b, vars: {} }]
+    : [{ coeff: a, vars: {} }, { coeff: b, vars: {} }];
+}
+
+function m5BracketHTML(terms) {
+  return '(' + multiTermsHTML(terms) + ')';
+}
+
+function m5Reduce(terms) {
+  const collected = {};
+  for (const t of terms) {
+    const k = mvarsKey(t.vars) || '_c';
+    if (!collected[k]) collected[k] = { vars: t.vars, coeff: 0 };
+    collected[k].coeff += t.coeff;
+  }
+  return Object.values(collected)
+    .filter(t => t.coeff !== 0)
+    .sort((a, b) => {
+      const da = Object.values(a.vars).reduce((s, e) => s + e, 0);
+      const db = Object.values(b.vars).reduce((s, e) => s + e, 0);
+      if (db !== da) return db - da;
+      return (mvarsKey(a.vars) || '_c').localeCompare(mvarsKey(b.vars) || '_c');
+    })
+    .map(t => ({ ...t, varsDisplay: mvarsHTML(t.vars) }));
+}
+
+function genM5() {
+  if (L === 1) return genM5Lv1();
+  if (L === 2) return genM5Lv2();
+  if (L === 3) return genM5Lv3();
+  if (L === 4) return genM5Lv4();
+  if (L === 5) return genM5Lv5();
+  return genM5Lv6();
+}
+
+function genM5Lv1() {
+  let att = 0;
+  while (att++ < 60) {
+    const [v1, v2] = shuffle([...VARS]).slice(0, 2);
+    const b1 = m5GenBracket(v1), b2 = m5GenBracket(v2);
+    const expandTerms = m5ProductSums(b1, b2);
+    const keys = expandTerms.map(t => mvarsKey(t.vars) || '_c');
+    if (new Set(keys).size < expandTerms.length) continue;
+    if (expandTerms.some(t => t.coeff === 0)) continue;
+    const qHTML = `<span class="m3-expr-wrap">${m5BracketHTML(b1)}${m5BracketHTML(b2)}</span>`;
+    return {
+      type: 'm5', level: 1, step: 1,
+      expandTerms,
+      qHTML, qLabel: 'Wymnóż nawiasy:',
+      solHTML: m5SumHTML(expandTerms), key: `m5l1:${qHTML}`
+    };
+  }
+}
+
+function genM5Lv2() {
+  let att = 0;
+  while (att++ < 60) {
+    const v = pick(VARS);
+    const b1 = m5GenBracket(v), b2 = m5GenBracket(v);
+    if ([...b1, ...b2].some(t => t.coeff === 0)) continue;
+    const expandTerms = m5ProductSums(b1, b2);
+    const keyCounts = {};
+    expandTerms.forEach(t => { const k = mvarsKey(t.vars) || '_c'; keyCounts[k] = (keyCounts[k] || 0) + 1; });
+    if (!Object.values(keyCounts).some(c => c > 1)) continue;
+    const reducedTerms = m5Reduce(expandTerms);
+    if (reducedTerms.length < 2) continue;
+    const expandQHTML = `<span class="m3-expr-wrap">${m5SumHTML(expandTerms)}</span>`;
+    const qHTML = `<span class="m3-expr-wrap">${m5BracketHTML(b1)}${m5BracketHTML(b2)}</span>`;
+    return {
+      type: 'm5', level: 2, step: 1,
+      expandTerms, reducedTerms, expandQHTML,
+      qHTML, qLabel: 'Wymnóż nawiasy, potem uprość:',
+      solHTML: m5SumHTML(reducedTerms), key: `m5l2:${qHTML}`
+    };
+  }
+}
+
+function genM5Lv3() {
+  let att = 0;
+  while (att++ < 80) {
+    const v = pick(VARS);
+    const hasMono = Math.random() < 0.65;
+    const monoCoeff = rndNZ(-5, 5);
+    const monoTerm = { coeff: monoCoeff, vars: hasMono ? { [v]: 1 } : {} };
+    const b1 = m5GenBracket(v), b2 = m5GenBracket(v);
+    if ([...b1, ...b2].some(t => t.coeff === 0)) continue;
+    const f0 = [monoTerm], f1 = b1, f2 = b2;
+    const p01 = m5ProductSums(f0, f1), p02 = m5ProductSums(f0, f2), p12 = m5ProductSums(f1, f2);
+    const r01 = m5Reduce(p01), r02 = m5Reduce(p02), r12 = m5Reduce(p12);
+    const s01 = m5ProductSums(r01, f2), s02 = m5ProductSums(r02, f1), s12 = m5ProductSums(r12, f0);
+    const finalTerms = m5Reduce(s01);
+    if (finalTerms.length < 2) continue;
+    const monoDisp = monoMultiHTML(monoCoeff, monoTerm.vars, false);
+    const fHTMLs = [monoDisp, m5BracketHTML(f1), m5BracketHTML(f2)];
+    const qHTML = `<span class="m3-expr-wrap">${fHTMLs.join('')}</span>`;
+    return {
+      type: 'm5', level: 3, step: 1,
+      factors: [f0, f1, f2], factorHTMLs: fHTMLs,
+      pairProducts: { '0-1': p01, '0-2': p02, '1-2': p12 },
+      pairStep2Products: { '0-1': s01, '0-2': s02, '1-2': s12 },
+      finalTerms, selectedPair: null, step2Terms: null,
+      qHTML, qLabel: 'Wykonaj mnożenie:',
+      solHTML: m5SumHTML(finalTerms), key: `m5l3:${qHTML}`
+    };
+  }
+}
+
+function genM5Lv4() {
+  let att = 0;
+  while (att++ < 80) {
+    const v = pick(VARS);
+    const b1 = m5GenBracket(v), b2 = m5GenBracket(v), b3 = m5GenBracket(v);
+    if ([...b1, ...b2, ...b3].some(t => t.coeff === 0)) continue;
+    const p01 = m5ProductSums(b1, b2), p02 = m5ProductSums(b1, b3), p12 = m5ProductSums(b2, b3);
+    const r01 = m5Reduce(p01), r02 = m5Reduce(p02), r12 = m5Reduce(p12);
+    const s01 = m5ProductSums(r01, b3), s02 = m5ProductSums(r02, b2), s12 = m5ProductSums(r12, b1);
+    const finalTerms = m5Reduce(s01);
+    if (finalTerms.length < 2) continue;
+    const fHTMLs = [m5BracketHTML(b1), m5BracketHTML(b2), m5BracketHTML(b3)];
+    const qHTML = `<span class="m3-expr-wrap">${fHTMLs.join('')}</span>`;
+    return {
+      type: 'm5', level: 4, step: 1,
+      factors: [b1, b2, b3], factorHTMLs: fHTMLs,
+      pairProducts: { '0-1': p01, '0-2': p02, '1-2': p12 },
+      pairStep2Products: { '0-1': s01, '0-2': s02, '1-2': s12 },
+      finalTerms, selectedPair: null, step2Terms: null,
+      qHTML, qLabel: 'Wykonaj mnożenie:',
+      solHTML: m5SumHTML(finalTerms), key: `m5l4:${qHTML}`
+    };
+  }
+}
+
+function genM5Lv5() {
+  let att = 0;
+  while (att++ < 60) {
+    const v = pick(VARS);
+    const a = rndNZ(-5, 5), b = rndNZ(-5, 5);
+    const bracket = [{ coeff: a, vars: { [v]: 1 } }, { coeff: b, vars: {} }];
+    const expandTerms = m5ProductSums(bracket, bracket);
+    const reducedTerms = m5Reduce(expandTerms);
+    if (reducedTerms.length < 2) continue;
+    const bHTML = m5BracketHTML(bracket);
+    const qHTML = `<span class="m3-expr-wrap">${bHTML}<sup>2</sup></span>`;
+    const expandQHTML = `<span class="m3-expr-wrap">${bHTML}${bHTML}</span>`;
+    return {
+      type: 'm5', level: 5, step: 1,
+      bracket, expandTerms, reducedTerms, expandQHTML,
+      qHTML, qLabel: 'Oblicz kwadrat sumy:',
+      solHTML: m5SumHTML(reducedTerms), key: `m5l5:${qHTML}`
+    };
+  }
+}
+
+function genM5Lv6() {
+  const r = Math.random();
+  if (r < 0.333) return genM5Lv6Cube();
+  if (r < 0.667) return genM5Lv6MonoSq();
+  return genM5Lv6SqSum();
+}
+
+function genM5Lv6Cube() {
+  let att = 0;
+  while (att++ < 60) {
+    const v = pick(VARS);
+    const a = rndNZ(-4, 4), b = rndNZ(-4, 4);
+    const bracket = [{ coeff: a, vars: { [v]: 1 } }, { coeff: b, vars: {} }];
+    const bHTML = m5BracketHTML(bracket);
+    const sq = m5ProductSums(bracket, bracket);
+    const sqRed = m5Reduce(sq);
+    const cubeRaw = m5ProductSums(sqRed, bracket);
+    const reducedTerms = m5Reduce(cubeRaw);
+    if (reducedTerms.length < 2) continue;
+    const fHTMLs = [bHTML, bHTML, bHTML];
+    const qHTML = `<span class="m3-expr-wrap">${bHTML}<sup>3</sup></span>`;
+    const pP = { '0-1': sq, '0-2': sq, '1-2': sq };
+    const pS = { '0-1': cubeRaw, '0-2': cubeRaw, '1-2': cubeRaw };
+    return {
+      type: 'm5', level: 6, step: 1, method: null, subtype: 'cube',
+      bracket, bHTML, factorHTMLs: fHTMLs,
+      pairProducts: pP, pairStep2Products: pS,
+      expandedSqTerms: sqRed, reducedTerms,
+      finalTerms: reducedTerms, selectedPair: null, step2Terms: null,
+      qHTML, qLabel: 'Oblicz sześcian sumy:',
+      solHTML: m5SumHTML(reducedTerms), key: `m5l6c:${qHTML}`
+    };
+  }
+}
+
+function genM5Lv6MonoSq() {
+  let att = 0;
+  while (att++ < 80) {
+    const v = pick(VARS);
+    const monoDeg = rnd(1, 3);
+    const monoVars = { [v]: monoDeg };
+    const hasCoeff = Math.random() < 0.55;
+    const monoCoeff = hasCoeff ? rndNZ(-5, 5) : 1;
+    const monoTerm = { coeff: monoCoeff, vars: monoVars };
+    const bracket = m5GenBracket(v);
+    if (bracket.some(t => t.coeff === 0)) continue;
+    const sq = m5ProductSums(bracket, bracket);
+    const sqRed = m5Reduce(sq);
+    if (sqRed.length < 2) continue;
+    const monoArr = [monoTerm];
+    const step3Terms = m5ProductSums(monoArr, sqRed);
+    const reducedFinalTerms = m5Reduce(step3Terms);
+    if (reducedFinalTerms.length < 1) continue;
+    const monoHTML = monoMultiHTML(monoCoeff, monoVars, false);
+    const bHTML = m5BracketHTML(bracket);
+    const fHTMLs = [monoHTML, bHTML, bHTML];
+    const p01 = m5ProductSums(monoArr, bracket);
+    const p12 = sq;
+    const r01 = m5Reduce(p01), r12 = sqRed;
+    const s01 = m5ProductSums(r01, bracket);
+    const s12 = m5ProductSums(r12, monoArr);
+    const finalTerms = m5Reduce(s01);
+    if (finalTerms.length < 1) continue;
+    const qHTML = `<span class="m3-expr-wrap">${monoHTML}${bHTML}<sup>2</sup></span>`;
+    return {
+      type: 'm5', level: 6, step: 1, method: null, subtype: 'mono_sq',
+      monoTerm, monoArr, monoHTML, bracket, bHTML,
+      expandedSqTerms: sqRed, step3Terms, finalTerms,
+      factorHTMLs: fHTMLs,
+      pairProducts: { '0-1': p01, '0-2': p01, '1-2': p12 },
+      pairStep2Products: { '0-1': s01, '0-2': s01, '1-2': s12 },
+      selectedPair: null, step2Terms: null,
+      qHTML, qLabel: 'Wykonaj mnożenie:',
+      solHTML: m5SumHTML(finalTerms), key: `m5l6m:${qHTML}`
+    };
+  }
+}
+
+function genM5Lv6SqSum() {
+  let att = 0;
+  while (att++ < 80) {
+    const v = pick(VARS);
+    const sq = m5GenBracket(v), sum = m5GenBracket(v);
+    if ([...sq, ...sum].some(t => t.coeff === 0)) continue;
+    const sqSq = m5ProductSums(sq, sq);
+    const sqRed = m5Reduce(sqSq);
+    if (sqRed.length < 2) continue;
+    const step3Terms = m5ProductSums(sum, sqRed);
+    const reducedFinalTerms = m5Reduce(step3Terms);
+    if (reducedFinalTerms.length < 2) continue;
+    const sqHTML = m5BracketHTML(sq), sumHTML = m5BracketHTML(sum);
+    const sqPos = Math.random() < 0.5 ? 'left' : 'right';
+    const fHTMLs = [sqHTML, sqHTML, sumHTML];
+    const sqSumP = m5ProductSums(sq, sum);
+    const rSqSq = sqRed, rSqSum = m5Reduce(sqSumP);
+    const s01 = m5ProductSums(rSqSq, sum);
+    const s02 = m5ProductSums(rSqSum, sq);
+    const finalTerms = m5Reduce(s01);
+    if (finalTerms.length < 2) continue;
+    const qHTMLInner = sqPos === 'left'
+      ? `${sqHTML}<sup>2</sup>${sumHTML}`
+      : `${sumHTML}${sqHTML}<sup>2</sup>`;
+    const qHTML = `<span class="m3-expr-wrap">${qHTMLInner}</span>`;
+    return {
+      type: 'm5', level: 6, step: 1, method: null, subtype: 'sq_sum',
+      sq, sum, sqHTML, sumHTML, sqPos,
+      expandedSqTerms: sqRed, step3Terms, finalTerms,
+      factorHTMLs: fHTMLs,
+      pairProducts: { '0-1': sqSq, '0-2': sqSumP, '1-2': sqSumP },
+      pairStep2Products: { '0-1': s01, '0-2': s02, '1-2': s02 },
+      selectedPair: null, step2Terms: null,
+      qHTML, qLabel: 'Wykonaj mnożenie:',
+      solHTML: m5SumHTML(finalTerms), key: `m5l6s:${qHTML}`
+    };
+  }
+}
+
+// ── M5 mode helpers ───────────────────────────────────
+
+function m5SetMode(mode) {
+  m5Mode = mode;
+  document.getElementById('m5BtnNormal').classList.toggle('active', mode === 'normal');
+  document.getElementById('m5BtnHard').classList.toggle('active', mode === 'hard');
+  applyModTheme(5, L);
+  fullReset();
+}
+
+function hardSortKey(t) {
+  const vars = t.vars || {};
+  const letters = Object.keys(vars).sort();
+  if (letters.length === 0) return 'zzz';
+  const totalDeg = Object.values(vars).reduce((s, e) => s + e, 0);
+  // primary: first letter alphabetically; secondary: higher degree first; tertiary: full var key
+  return letters[0] + String(99 - totalDeg).padStart(2, '0') + letters.join('');
+}
+
+function hardSortTerms(terms) {
+  return [...terms].sort((a, b) => hardSortKey(a).localeCompare(hardSortKey(b)));
+}
+
+function parseVarInput(s) {
+  s = (s || '').trim().toLowerCase();
+  if (!s) return {};
+  const vars = {};
+  const re = /([a-z])(\d*)/g;
+  let m;
+  while ((m = re.exec(s)) !== null) {
+    if (m[1]) vars[m[1]] = m[2] ? parseInt(m[2]) : 1;
+  }
+  return vars;
+}
+
+function varsEqual(a, b) {
+  a = a || {}; b = b || {};
+  const ka = Object.keys(a), kb = Object.keys(b);
+  if (ka.length !== kb.length) return false;
+  return ka.every(k => a[k] === b[k]);
+}
+
+function m5CheckAny(terms) {
+  return m5Mode === 'hard' ? m5CheckTermsHard(terms) : m5CheckTerms(terms);
+}
+
+function m5CheckTermsHard(expected) {
+  const sorted = hardSortTerms(expected);
+
+  // Group consecutive terms that share the same hardSortKey
+  const groups = [];
+  let i = 0;
+  while (i < sorted.length) {
+    const key = hardSortKey(sorted[i]);
+    let j = i;
+    while (j < sorted.length && hardSortKey(sorted[j]) === key) j++;
+    groups.push({ terms: sorted.slice(i, j), start: i });
+    i = j;
+  }
+
+  return groups.every(({ terms, start }) => {
+    const varEntries = Object.entries(terms[0].vars || {}).sort().filter(([, e]) => e > 0);
+
+    // All inputs in this group must have the correct letters/exponents
+    const lettersOk = terms.every((_, offset) => {
+      const idx = start + offset;
+      return varEntries.every(([letter, exp], j) => {
+        const lInp = document.querySelector(`[data-m5letter="${idx}-${j}"]`);
+        if (!lInp || lInp.value.trim().toLowerCase() !== letter) return false;
+        if (exp > 1) {
+          const eInp = document.querySelector(`[data-m5exp="${idx}-${j}"]`);
+          if (!eInp || parseInt(eInp.value) !== exp) return false;
+        }
+        return true;
+      });
+    });
+    if (!lettersOk) return false;
+
+    // Coefficients may be entered in any order within the same-key group
+    const expCoeffs = terms.map(t => t.coeff).slice().sort((a, b) => a - b);
+    const actCoeffs = terms.map((_, offset) => {
+      const idx = start + offset;
+      const inp = document.querySelector(`[data-m4idx="${idx}"]`);
+      if (!inp || inp.value === '') return NaN;
+      return m4MultiSigns[idx] * Math.abs(Number(inp.value));
+    }).sort((a, b) => a - b);
+
+    return actCoeffs.every((v, k) => !isNaN(v) && v === expCoeffs[k]);
+  });
+}
+
+// ── M5 UI ─────────────────────────────────────────────
+
+function m5BuildUI() {
+  const { level, step } = task;
+  document.getElementById('submitBtn').style.display = '';
+  if (level === 1) { m5BuildExpandUI(task.expandTerms); return; }
+  if (level === 2) {
+    if (step === 1) { m5BuildExpandUI(task.expandTerms); return; }
+    m5BuildExpandUI(task.reducedTerms); return;
+  }
+  if (level === 3 || level === 4) {
+    if (step === 1) { m5BuildSelectUI(); return; }
+    if (step === 2) { m5BuildExpandUI(task.step2Terms); return; }
+    m5BuildExpandUI(task.finalTerms); return;
+  }
+  if (level === 5) {
+    if (step === 1) { m5BuildMethodChoiceUI(); return; }
+    if (step === 2) { m5BuildExpandUI(task.expandTerms); return; }
+    m5BuildExpandUI(task.reducedTerms); return;
+  }
+  if (level === 6) {
+    if (step === 1) { m5BuildMethodChoiceUI(); return; }
+    const { subtype, method } = task;
+    if (subtype === 'cube' && method === 'wzory') { m5BuildExpandUI(task.reducedTerms); return; }
+    if (method === 'wzory') {
+      if (step === 2) { m5Lv6BuildSqFillUI(); return; }
+      if (step === 3) { m5BuildExpandUI(task.step3Terms); return; }
+      m5BuildExpandUI(task.finalTerms); return;
+    }
+    if (step === 2) { m5BuildSelectUI(); return; }
+    if (step === 3) { m5BuildExpandUI(task.step2Terms); return; }
+    m5BuildExpandUI(task.finalTerms); return;
+  }
+}
+
+function m5BuildExpandUI(terms) {
+  if (m5Mode === 'hard') { m5BuildExpandUIHard(terms); return; }
+  const area = document.getElementById('answerArea');
+  m4MultiSigns = terms.map(() => 1);
+  let html = '<div class="poly-inputs m3-step2-inputs">';
+  terms.forEach((t, i) => {
+    if (i > 0) html += '<span class="plus-sep">&thinsp;</span>';
+    const vd = t.varsDisplay !== undefined ? t.varsDisplay : mvarsHTML(t.vars || {});
+    html += `<div class="coeff-group">
+      <button class="sign-btn" data-m4sign="${i}" type="button" onclick="toggleM4Sign(${i})">+</button>
+      <input class="coeff-input" data-m4idx="${i}" type="number" inputmode="numeric">`;
+    if (vd) html += `<span class="coeff-var">${vd}</span>`;
+    html += `</div>`;
+  });
+  html += '</div>';
+  area.innerHTML = html;
+  area.querySelectorAll('input').forEach(inp => inp.addEventListener('input', updateSubmit));
+  updateSubmit();
+  const first = area.querySelector('input');
+  if (first) setTimeout(() => first.focus(), 50);
+}
+
+function m5BuildExpandUIHard(terms) {
+  const sorted = hardSortTerms(terms);
+  const area = document.getElementById('answerArea');
+  m4MultiSigns = sorted.map(() => 1);
+  let html = '<div class="poly-inputs m3-step2-inputs">';
+  sorted.forEach((t, i) => {
+    if (i > 0) html += '<span class="plus-sep">&thinsp;</span>';
+    html += `<div class="coeff-group">
+      <button class="sign-btn" data-m4sign="${i}" type="button" onclick="toggleM4Sign(${i})">+</button>
+      <input class="coeff-input" data-m4idx="${i}" type="number" inputmode="numeric">`;
+    Object.entries(t.vars || {}).sort().filter(([,e]) => e > 0).forEach(([,exp], j) => {
+      html += `<input class="m4-letter-inp" data-m5letter="${i}-${j}" type="text" maxlength="1" autocomplete="off" spellcheck="false">`;
+      if (exp > 1) html += `<input class="m4-exp-inp" data-m5exp="${i}-${j}" type="number" inputmode="numeric">`;
+    });
+    html += `</div>`;
+  });
+  html += '</div>';
+  area.innerHTML = html;
+  area.querySelectorAll('input').forEach(inp => inp.addEventListener('input', updateSubmit));
+  updateSubmit();
+  const first = area.querySelector('input');
+  if (first) setTimeout(() => first.focus(), 50);
+}
+
+function m5BuildChipQuestion(terms) {
+  m5ChipAssign = terms.map(() => -1);
+  const q = document.getElementById('question');
+  let html = '<div class="m3-chip-row">';
+  terms.forEach((t, i) => {
+    const abs = Math.abs(t.coeff);
+    const vd = t.varsDisplay !== undefined ? t.varsDisplay : mvarsHTML(t.vars || {});
+    const hasV = vd !== '';
+    const cs = (abs === 1 && hasV) ? '' : String(abs);
+    if (i > 0) html += `<span class="m3-chip-sep">${t.coeff >= 0 ? '+' : '−'}</span>`;
+    else if (t.coeff < 0) html += '<span class="m3-chip-sep">−</span>';
+    html += `<span class="m3-chip" data-m5cidx="${i}" onclick="cycleM5Chip(${i})">${cs}${vd}</span>`;
+  });
+  html += '</div><p class="m3-chip-hint">Kliknij kilka razy, aby zmienić kolor wyrazu</p>';
+  q.innerHTML = html;
+}
+
+function cycleM5Chip(i) {
+  m5ChipAssign[i] = (m5ChipAssign[i] + 2) % 5 - 1;
+  const chip = document.querySelector(`.m3-chip[data-m5cidx="${i}"]`);
+  if (chip) chip.className = 'm3-chip' + (m5ChipAssign[i] >= 0 ? ' gc' + m5ChipAssign[i] : '');
+}
+
+function m5BuildSelectUI() {
+  const q = document.getElementById('question');
+  let qHTML = '<div class="m5-factors">';
+  task.factorHTMLs.forEach((fHTML, i) => {
+    const isSel = task.selectedPair && task.selectedPair.includes(i);
+    qHTML += `<span class="m5-factor-tile${isSel ? ' sel' : ''}" onclick="m5ToggleFactor(${i})">${fHTML}</span>`;
+  });
+  qHTML += '</div>';
+  q.innerHTML = qHTML;
+  m5UpdateSelectAnswer();
+}
+
+function m5ToggleFactor(i) {
+  if (mode !== 'ask') return;
+  const prev = task.selectedPair || [];
+  if (prev.includes(i)) {
+    task.selectedPair = prev.filter(x => x !== i);
+  } else if (prev.length < 2) {
+    task.selectedPair = [...prev, i].sort((a, b) => a - b);
+  } else {
+    task.selectedPair = [i];
+  }
+  document.querySelectorAll('.m5-factor-tile').forEach((el, idx) => {
+    el.className = 'm5-factor-tile' + (task.selectedPair.includes(idx) ? ' sel' : '');
+  });
+  m5UpdateSelectAnswer();
+}
+
+function m5UpdateSelectAnswer() {
+  const area = document.getElementById('answerArea');
+  if (!task.selectedPair || task.selectedPair.length < 2) {
+    area.innerHTML = '<div class="m5-select-hint">Zaznacz dwa wyrażenia do przemnożenia</div>';
+    document.getElementById('submitBtn').disabled = true;
+    return;
+  }
+  const key = task.selectedPair.join('-');
+  const productTerms = task.pairProducts[key];
+  const remainIdx = [0, 1, 2].find(i => !task.selectedPair.includes(i));
+  const remainHTML = task.factorHTMLs[remainIdx];
+  const displayTerms = m5Mode === 'hard' ? hardSortTerms(productTerms) : productTerms;
+  m4MultiSigns = displayTerms.map(() => 1);
+  let html = '<div class="poly-inputs m3-step2-inputs">';
+  html += '<span class="m6-sq-ctx">(</span>';
+  displayTerms.forEach((t, i) => {
+    if (i > 0) html += '<span class="plus-sep">&thinsp;</span>';
+    html += `<div class="coeff-group">
+      <button class="sign-btn" data-m4sign="${i}" type="button" onclick="toggleM4Sign(${i})">+</button>
+      <input class="coeff-input" data-m4idx="${i}" type="number" inputmode="numeric">`;
+    if (m5Mode === 'hard') {
+      Object.entries(t.vars || {}).sort().filter(([,e]) => e > 0).forEach(([,exp], j) => {
+        html += `<input class="m4-letter-inp" data-m5letter="${i}-${j}" type="text" maxlength="1" autocomplete="off" spellcheck="false">`;
+        if (exp > 1) html += `<input class="m4-exp-inp" data-m5exp="${i}-${j}" type="number" inputmode="numeric">`;
+      });
+    } else {
+      const vd = t.varsDisplay !== undefined ? t.varsDisplay : mvarsHTML(t.vars || {});
+      if (vd) html += `<span class="coeff-var">${vd}</span>`;
+    }
+    html += `</div>`;
+  });
+  html += `<span class="m6-sq-ctx">)${remainHTML}</span>`;
+  html += '</div>';
+  area.innerHTML = html;
+  area.querySelectorAll('input').forEach(inp => inp.addEventListener('input', updateSubmit));
+  updateSubmit();
+  const first = area.querySelector('input');
+  if (first) setTimeout(() => first.focus(), 50);
+}
+
+function m5BuildMethodChoiceUI() {
+  document.getElementById('submitBtn').style.display = 'none';
+  document.getElementById('answerArea').innerHTML = `<div class="m5-method-btns">
+    <button class="m5-method-btn" onclick="m5ChooseMethod('wzory')">Wzory skróconego mnożenia</button>
+    <button class="m5-method-btn" onclick="m5ChooseMethod('normal')">Ręcznie</button>
+  </div>`;
+}
+
+function m5Lv6BuildSqFillUI() {
+  const area = document.getElementById('answerArea');
+  const { subtype, monoHTML, sumHTML, sqPos, expandedSqTerms } = task;
+  let prefix, suffix;
+  if (subtype === 'mono_sq') {
+    prefix = `<span class="m6-sq-ctx">${monoHTML} &sdot; (</span>`;
+    suffix = `<span class="m6-sq-ctx">)</span>`;
+  } else {
+    if (sqPos === 'left') {
+      prefix = `<span class="m6-sq-ctx">(</span>`;
+      suffix = `<span class="m6-sq-ctx">) &sdot; ${sumHTML}</span>`;
+    } else {
+      prefix = `<span class="m6-sq-ctx">${sumHTML} &sdot; (</span>`;
+      suffix = `<span class="m6-sq-ctx">)</span>`;
+    }
+  }
+  const sqDisplayTerms = m5Mode === 'hard' ? hardSortTerms(expandedSqTerms) : expandedSqTerms;
+  m4MultiSigns = sqDisplayTerms.map(() => 1);
+  let html = `<div class="m6-sq-fill">${prefix}`;
+  sqDisplayTerms.forEach((t, i) => {
+    if (i > 0) html += '<span class="plus-sep">&thinsp;</span>';
+    html += `<div class="coeff-group">
+      <button class="sign-btn" data-m4sign="${i}" type="button" onclick="toggleM4Sign(${i})">+</button>
+      <input class="coeff-input" data-m4idx="${i}" type="number" inputmode="numeric">`;
+    if (m5Mode === 'hard') {
+      Object.entries(t.vars || {}).sort().filter(([,e]) => e > 0).forEach(([,exp], j) => {
+        html += `<input class="m4-letter-inp" data-m5letter="${i}-${j}" type="text" maxlength="1" autocomplete="off" spellcheck="false">`;
+        if (exp > 1) html += `<input class="m4-exp-inp" data-m5exp="${i}-${j}" type="number" inputmode="numeric">`;
+      });
+    } else {
+      const vd = t.varsDisplay !== undefined ? t.varsDisplay : mvarsHTML(t.vars || {});
+      if (vd) html += `<span class="coeff-var">${vd}</span>`;
+    }
+    html += `</div>`;
+  });
+  html += `${suffix}</div>`;
+  area.innerHTML = html;
+  area.querySelectorAll('input').forEach(inp => inp.addEventListener('input', updateSubmit));
+  updateSubmit();
+  const first = area.querySelector('input');
+  if (first) setTimeout(() => first.focus(), 50);
+}
+
+function m5ChooseMethod(method) {
+  task.method = method;
+  document.getElementById('submitBtn').style.display = '';
+  if (task.level === 6) {
+    task.step = 2;
+    const lbl = document.getElementById('qLabel');
+    if (method === 'wzory') {
+      lbl.innerHTML = task.subtype === 'cube' ? 'Wpisz wynik:' : 'Wpisz wynik wzoru skróconego mnożenia:';
+    } else {
+      lbl.innerHTML = 'Zaznacz dwa wyrażenia do przemnożenia:';
+    }
+    m5BuildUI();
+    return;
+  }
+  if (method === 'wzory') {
+    task.step = 3;
+    document.getElementById('qLabel').innerHTML = 'Wpisz wynik:';
+  } else {
+    task.step = 2;
+    document.getElementById('qLabel').innerHTML = 'Wymnóż nawiasy:';
+    document.getElementById('question').innerHTML = task.expandQHTML;
+  }
+  m5BuildUI();
+}
+
+// ── M5 check ──────────────────────────────────────────
+
+function m5CheckTerms(expected) {
+  return expected.every((t, i) => {
+    const inp = document.querySelector(`[data-m4idx="${i}"]`);
+    const absVal = inp && inp.value !== '' ? Math.abs(Number(inp.value)) : 1;
+    return m4MultiSigns[i] * absVal === t.coeff;
+  });
+}
+
+function m5HasLikeTerms(terms) {
+  return m5Reduce(terms).length < terms.length;
+}
+
+function m5NextStep() {
+  const { level, step } = task;
+  if (level === 1) return null;
+  if (level === 2) return step === 1 ? (m5HasLikeTerms(task.expandTerms) ? 2 : null) : null;
+  if (level === 3 || level === 4) {
+    if (step === 1) {
+      const key = task.selectedPair.join('-');
+      task.step2Terms = task.pairStep2Products[key];
+      return 2;
+    }
+    if (step === 2) return m5HasLikeTerms(task.step2Terms) ? 3 : null;
+    return null;
+  }
+  if (level === 5) {
+    if (task.method === 'wzory') return null;
+    if (step === 2) return m5HasLikeTerms(task.expandTerms) ? 3 : null;
+    return null;
+  }
+  if (level === 6) {
+    const { subtype, method } = task;
+    if (subtype === 'cube' && method === 'wzory') return null;
+    if (method === 'wzory') {
+      if (step === 2) return 3;
+      if (step === 3) return m5HasLikeTerms(task.step3Terms) ? 4 : null;
+      return null;
+    }
+    if (step === 2) {
+      const key = task.selectedPair.join('-');
+      task.step2Terms = task.pairStep2Products[key];
+      return 3;
+    }
+    if (step === 3) return m5HasLikeTerms(task.step2Terms) ? 4 : null;
+    return null;
+  }
+  return null;
+}
+
+function m5UpdateQuestionForStep() {
+  const { level, step } = task;
+  const q = document.getElementById('question');
+  const lbl = document.getElementById('qLabel');
+  if (level === 2 && step === 2) {
+    m5BuildChipQuestion(task.expandTerms);
+    lbl.innerHTML = 'Zaznacz wyrazy podobne, potem wpisz wynik:';
+  }
+  if ((level === 3 || level === 4) && step === 2) {
+    const key = task.selectedPair.join('-');
+    const remainIdx = [0, 1, 2].find(i => !task.selectedPair.includes(i));
+    const r1 = m5Reduce(task.pairProducts[key]);
+    q.innerHTML = `<span class="m3-expr-wrap">(${m5SumHTML(r1)})${task.factorHTMLs[remainIdx]}</span>`;
+    lbl.innerHTML = 'Wykonaj mnożenie:';
+  }
+  if ((level === 3 || level === 4) && step === 3) {
+    m5BuildChipQuestion(task.step2Terms);
+    lbl.innerHTML = 'Zaznacz wyrazy podobne, potem wpisz wynik:';
+  }
+  if (level === 5 && step === 3) {
+    m5BuildChipQuestion(task.expandTerms);
+    lbl.innerHTML = 'Zaznacz wyrazy podobne, potem wpisz wynik:';
+  }
+  if (level === 6) {
+    const { subtype, method } = task;
+    if (method === 'wzory' && step === 3) {
+      if (subtype === 'mono_sq') {
+        q.innerHTML = `<span class="m3-expr-wrap">${task.monoHTML}${m5BracketHTML(task.expandedSqTerms)}</span>`;
+      } else {
+        const sqExp = m5BracketHTML(task.expandedSqTerms);
+        q.innerHTML = task.sqPos === 'left'
+          ? `<span class="m3-expr-wrap">${sqExp}${task.sumHTML}</span>`
+          : `<span class="m3-expr-wrap">${task.sumHTML}${sqExp}</span>`;
+      }
+      lbl.innerHTML = 'Wymnóż czynniki:';
+    }
+    if (method === 'normal' && step === 3) {
+      const key = task.selectedPair.join('-');
+      const remainIdx = [0, 1, 2].find(i => !task.selectedPair.includes(i));
+      const r1 = m5Reduce(task.pairProducts[key]);
+      q.innerHTML = `<span class="m3-expr-wrap">(${m5SumHTML(r1)})${task.factorHTMLs[remainIdx]}</span>`;
+      lbl.innerHTML = 'Wykonaj mnożenie:';
+    }
+    if (step === 4) {
+      m5BuildChipQuestion(method === 'wzory' ? task.step3Terms : task.step2Terms);
+      lbl.innerHTML = 'Zaznacz wyrazy podobne, potem wpisz wynik:';
+    }
+  }
+}
+
+function m5HandleCheckAnswer() {
+  const { level, step } = task;
+  let correct;
+  if (level === 1) {
+    correct = m5CheckAny(task.expandTerms);
+  } else if (level === 2) {
+    correct = step === 1 ? m5CheckAny(task.expandTerms) : m5CheckAny(task.reducedTerms);
+  } else if (level === 3 || level === 4) {
+    if (step === 1) {
+      correct = task.selectedPair && task.selectedPair.length === 2
+        ? m5CheckAny(task.pairProducts[task.selectedPair.join('-')])
+        : false;
+    } else if (step === 2) {
+      correct = m5CheckAny(task.step2Terms);
+    } else {
+      correct = m5CheckAny(task.finalTerms);
+    }
+  } else if (level === 5) {
+    correct = step === 2 ? m5CheckAny(task.expandTerms) : m5CheckAny(task.reducedTerms);
+  } else if (level === 6) {
+    const { subtype, method } = task;
+    if (subtype === 'cube' && method === 'wzory') {
+      correct = m5CheckAny(task.reducedTerms);
+    } else if (method === 'wzory') {
+      if (step === 2) correct = m5CheckAny(task.expandedSqTerms);
+      else if (step === 3) correct = m5CheckAny(task.step3Terms);
+      else correct = m5CheckAny(task.finalTerms);
+    } else {
+      if (step === 2) {
+        correct = task.selectedPair && task.selectedPair.length === 2
+          ? m5CheckAny(task.pairProducts[task.selectedPair.join('-')])
+          : false;
+      } else if (step === 3) {
+        correct = m5CheckAny(task.step2Terms);
+      } else {
+        correct = m5CheckAny(task.finalTerms);
+      }
+    }
+  }
+
+  if (!correct) {
+    feedbackEl.className = 'feedback bad';
+    feedbackEl.innerHTML = '❌ Sprawdź obliczenia — niedobrze.';
+    return;
+  }
+
+  const nextStep = m5NextStep();
+  if (nextStep !== null) {
+    task.step = nextStep;
+    feedbackEl.className = 'feedback ok';
+    const isReduceNext = nextStep === 4 || (nextStep === 3 && task.level < 6) || (nextStep === 2 && task.level === 2);
+    feedbackEl.innerHTML = isReduceNext ? '✅ Dobrze! Teraz zredukuj wyrazy podobne.' : '✅ Dobrze! Kontynuuj.';
+    m5UpdateQuestionForStep();
+    m5BuildUI();
+    return;
+  }
+
+  mode = 'next';
+  clearTimeout(autoAdv);
+  stopTimer();
+  ok++; tot++;
+  playOk();
+  feedbackEl.className = 'feedback good';
+  feedbackEl.innerHTML = `✅ Brawo! Wynik: <strong>${task.solHTML}</strong>`;
+  scoreEl.textContent = `${ok} / ${tot}`;
+  resetBtn.disabled = false;
+  submitBtn.disabled = true;
+  nextBtn.style.display = '';
+}
+
+// ── Master generator ──────────────────────────────────
+function generate() {
+  let t, key, tries = 0;
+  do {
+    switch (M) {
+      case 1: t = genM1(); break;
+      case 2: t = genM2(); break;
+      case 3: t = genM3(); break;
+      case 4: t = genM4(); break;
+      case 5: t = genM5(); break;
+    }
+    key = t.key || t.qHTML;
+    tries++;
+  } while (recentKeys.includes(key) && tries < 40);
+  recentKeys.push(key);
+  if (recentKeys.length > 14) recentKeys.shift();
+  return t;
+}
+
+// ── Chip interaction (M2 Lv2/3) ──────────────────────
+function chipClick(i) {
+  if (mode !== 'ask') return;
+  const s = chipState[i];
+  if (typeof s === 'number') return; // locked group, ignore
+  chipState[i] = s === 'sel' ? null : 'sel';
+  rebuildChips();
+  checkAutoLock();
+  updateSubmit();
+}
+
+function checkAutoLock() {
+  const selIds = chipState.map((s, i) => s === 'sel' ? i : -1).filter(i => i >= 0);
+  if (selIds.length === 0) return;
+  const types = selIds.map(i => task.terms[i].var + ':' + task.terms[i].deg);
+  if (new Set(types).size !== 1) return;
+  const varKey = types[0];
+  const allOfType = task.terms.filter(t => t.var + ':' + t.deg === varKey);
+  const allCovered = allOfType.every(t => chipState[t.id] === 'sel' || typeof chipState[t.id] === 'number');
+  if (!allCovered) return;
+  selIds.forEach(id => { chipState[id] = chipGroupIdx; });
+  chipGroupIdx++;
+  rebuildChips();
+  updateSubmit();
+}
+
+function rebuildChips() {
+  const qDiv = document.getElementById('question');
+  const frozen = task.phase === 2 || mode !== 'ask';
+  let html = '<div class="term-chips-area">';
+  task.terms.forEach((t, i) => {
+    const s = chipState[i];
+    let cls = 'term-chip';
+    if (typeof s === 'number') cls += ' g' + s + (frozen ? ' done' : '');
+    else if (s === 'sel') cls += ' sel';
+    const abs = Math.abs(t.coeff), cs = abs === 1 ? '' : String(abs);
+    const vp = t.deg === 1 ? t.var : `${t.var}<sup>${t.deg}</sup>`;
+    const neg = t.coeff < 0;
+    const sign = i === 0 ? (neg ? '−' : '') : (neg ? ' − ' : ' + ');
+    const click = frozen ? '' : ` onclick="chipClick(${i})"`;
+    html += `<span class="${cls}"${click}>${sign}${cs}${vp}</span>`;
+  });
+  html += '</div>';
+  qDiv.innerHTML = html;
+  requestAnimationFrame(fitChipsToLine);
+}
+
+function fitChipsToLine() {
+  const qDiv = document.getElementById('question');
+  if (!qDiv) return;
+  const area = qDiv.querySelector('.term-chips-area');
+  if (!area) return;
+  area.style.fontSize = '';
+  const maxW = qDiv.offsetWidth;
+  if (area.scrollWidth <= maxW) return;
+  let fs = 1.35;
+  while (area.scrollWidth > maxW && fs > 0.6) {
+    fs = Math.round((fs - 0.04) * 100) / 100;
+    area.style.fontSize = fs + 'rem';
+  }
+}
+
+function toggleSign(i) {
+  if (mode !== 'ask') return;
+  signState[i] = -signState[i];
+  const btn = document.querySelector(`[data-gidx="${i}"].sign-btn`);
+  if (btn) {
+    btn.textContent = signState[i] > 0 ? '+' : '−';
+    btn.className = 'sign-btn' + (signState[i] < 0 ? ' neg' : '');
+  }
+}
+
+// ── Answer UI ─────────────────────────────────────────
+function buildAnswerUI() {
+  const area = document.getElementById('answerArea');
+  document.getElementById('m4FillHint').style.display = 'none';
+
+  if (task.type === 'multivar-mono') {
+    let html = '<div class="multivars-answer">';
+    html += `<div class="ans-coeff-grp">
+      <div class="ans-label">współczynnik</div>
+      <input class="ans-coeff-inp" id="ai_mcoeff" type="number" inputmode="numeric">
+    </div>`;
+    for (let i = 0; i < task.targetVars.length; i++) {
+      const v = task.targetVars[i];
+      html += `<div class="ans-var-block">`;
+      if (task.blindVars) {
+        html += `<input class="ans-letter-inp" id="ai_letter_${i}" type="text" maxlength="1" autocomplete="off" spellcheck="false">`;
+      } else {
+        html += `<span class="ans-var-letter">${v}</span>`;
+      }
+      html += `<input class="ans-exp-inp" id="ai_exp_${i}" type="number" inputmode="numeric">
+      </div>`;
+    }
+    html += '</div>';
+    area.innerHTML = html;
+  } else if (task.type === 'multimono-fill') {
+    buildM4FillUI();
+    return;
+  } else if (task.type === 'm4l7') {
+    buildM4L7UI();
+    return;
+  } else if (task.type === 'multi-block-expand') {
+    buildM4MultiBlockPhase1UI();
+    return;
+  } else if (task.type === 'multimono-sum') {
+    buildM4MultiUI();
+    return;
+  } else if (task.type === 'remove-brackets') {
+    if (task.phase === 1) buildM3Step1UI();
+    else buildM3Step2AnswerUI();
+    return;
+  } else if (task.type === 'remove-brackets-nested') {
+    m3bracketActive = null;
+    m3bracketDone = { r: false, sq: false, cu: false };
+    const qEl = document.getElementById('question');
+    qEl.style.fontSize = '';
+    qEl.style.whiteSpace = '';
+    showM3BracketWaitUI();
+    return;
+  } else if (task.type === 'm5') {
+    m5BuildUI();
+    return;
+  } else if (task.type === 'group-poly') {
+    chipState = task.terms.map(() => null);
+    chipGroupIdx = 0;
+    rebuildChips(); // chips → question div
+    buildGroupPolyPhase2UI(); // inputy od razu widoczne
+    return;
+  } else if (task.textInput) {
+    area.innerHTML = `<div class="poly-inputs"><input class="text-mono-inp" id="ai_text" type="text" autocomplete="off" spellcheck="false" inputmode="text"></div>`;
+  } else {
+    // Polynomial inputs (M2–M5)
+    const varName = task.var || 'x';
+    const minDeg = task.minDeg ?? 0;
+    let html = '<div class="poly-inputs">';
+    for (let d = task.maxDeg; d >= minDeg; d--) {
+      if (d < task.maxDeg) html += '<span class="plus-sep">+</span>';
+      const varLabel = d === 0 ? '' : (d === 1 ? varName : `${varName}<sup>${d}</sup>`);
+      html += `<div class="coeff-group">
+        <input class="coeff-input" data-deg="${d}" type="number" inputmode="numeric">
+        ${varLabel ? `<span class="coeff-var">${varLabel}</span>` : ''}
+      </div>`;
+    }
+    html += '</div>';
+    area.innerHTML = html;
+  }
+
+  area.querySelectorAll('input').forEach(inp => inp.addEventListener('input', updateSubmit));
+  updateSubmit();
+  const first = area.querySelector('input');
+  if (first) setTimeout(() => first.focus(), 50);
+}
+
+function buildGroupPolyPhase2UI() {
+  const area = document.getElementById('answerArea');
+  signState = task.groups.map(() => 1);
+  let html = '<div class="phase2-label">Wpisz wynik redukcji:</div><div class="group-poly-answer">';
+  task.groups.forEach((g, i) => {
+    if (i > 0) html += '<span class="plus-sep">&thinsp;</span>';
+    const varLabel = g.deg === 1 ? g.var : `${g.var}<sup>${g.deg}</sup>`;
+    html += `<div class="coeff-group">
+      <button class="sign-btn" data-gidx="${i}" type="button" onclick="toggleSign(${i})">+</button>
+      <input class="coeff-input" data-gidx="${i}" type="number" inputmode="numeric">
+      <span class="coeff-var">${varLabel}</span>
+    </div>`;
+  });
+  html += '</div>';
+  area.innerHTML = html;
+  area.querySelectorAll('input').forEach(inp => inp.addEventListener('input', updateSubmit));
+  updateSubmit();
+  const first = area.querySelector('input');
+  if (first) setTimeout(() => first.focus(), 50);
+}
+
+function updateSubmit() {
+  let dis;
+  if (task && task.type === 'multivar-mono') {
+    const cInp = document.getElementById('ai_mcoeff');
+    const coeffOk = cInp && cInp.value !== '';
+    const lettersOk = !task.blindVars || task.targetVars.every((v, i) => {
+      const inp = document.getElementById('ai_letter_' + i);
+      return inp && inp.value.trim() !== '';
+    });
+    dis = !(coeffOk && lettersOk);
+  } else if (task && task.type === 'multimono-fill') {
+    const inputs = document.querySelectorAll('#answerArea [data-m4idx], #answerArea .m4-letter-inp');
+    dis = [...inputs].every(i => i.value === '');
+  } else if (task && task.type === 'm4l7') {
+    if (task.phase === 'combine') {
+      const inps = [...document.querySelectorAll('[data-m4idx]')];
+      dis = inps.length === 0 || inps.some(i => !i.dataset.hasv && i.value === '');
+    } else if (task.l7actionType === 'simp') {
+      const ti = task.l7actionTi;
+      dis = !(document.getElementById(`l7si_o_${ti}`)?.value && document.getElementById(`l7si_d_${ti}`)?.value);
+    } else if (task.l7actionType === 'mul' || task.l7actionType === 'div') {
+      const inps = [...document.querySelectorAll('[data-l7inter]')];
+      dis = inps.length === 0 || inps.some(i => !i.dataset.hasv && i.value === '');
+    } else {
+      dis = true;
+    }
+  } else if (task && (task.type === 'multimono-sum' || task.type === 'multi-block-expand')) {
+    const sel = task.multiVarAnswer
+      ? '#answerArea [data-m4idx], #answerArea .m4-letter-inp'
+      : '#answerArea [data-m4idx]';
+    const inputs = document.querySelectorAll(sel);
+    dis = [...inputs].every(i => i.value === '');
+  } else if (task && task.type === 'remove-brackets') {
+    dis = false;
+  } else if (task && task.type === 'remove-brackets-nested') {
+    if (m3bracketActive !== null) {
+      dis = false;
+    } else if (document.querySelectorAll('#answerArea input').length) {
+      dis = false;
+    } else {
+      dis = true;
+    }
+  } else if (task && task.type === 'm5') {
+    if ((task.level === 5 || task.level === 6) && task.step === 1) {
+      dis = true;
+    } else if (task.level === 6 && task.step === 2 && task.method === 'normal') {
+      const hasSelection = task.selectedPair && task.selectedPair.length === 2;
+      const inputs = document.querySelectorAll('#answerArea [data-m4idx]');
+      dis = !hasSelection || (inputs.length > 0 && [...inputs].every(i => i.value === ''));
+    } else if ((task.level === 3 || task.level === 4) && task.step === 1) {
+      const hasSelection = task.selectedPair && task.selectedPair.length === 2;
+      const inputs = document.querySelectorAll('#answerArea [data-m4idx]');
+      dis = !hasSelection || (inputs.length > 0 && [...inputs].every(i => i.value === ''));
+    } else {
+      const inputs = document.querySelectorAll('#answerArea [data-m4idx]');
+      dis = inputs.length > 0 && [...inputs].every(i => i.value === '');
+    }
+  } else if (task && task.type === 'group-poly') {
+    dis = false;
+  } else if (task && task.textInput) {
+    const inp = document.getElementById('ai_text');
+    dis = !inp || inp.value.trim() === '';
+  } else {
+    const inputs = document.querySelectorAll('#answerArea input');
+    dis = [...inputs].every(i => i.value === '');
+  }
+  document.getElementById('submitBtn').disabled = dis;
+}
+
+function parseMonoTerm(str) {
+  const s = str.trim().replace(/\s+/g, '').toLowerCase();
+  if (!s) return null;
+  const m = s.match(/^(-?)(\d*)([a-z])$/);
+  if (!m) return null;
+  const abs = m[2] === '' ? 1 : parseInt(m[2], 10);
+  if (isNaN(abs) || abs === 0) return null;
+  return { coeff: m[1] === '-' ? -abs : abs, var: m[3] };
+}
+
+// ── Check answer ──────────────────────────────────────
+function checkAnswer() {
+  if (mode !== 'ask') return;
+
+  // M3 step 1: validate signs — does NOT finalize the task
+  if (task && task.type === 'remove-brackets' && task.phase === 1) {
+    const allOk = task.flatTerms.every((t, i) => termSignState[i] === t.effectiveSign);
+    if (allOk) {
+      transitionM3ToPhase2();
+    } else {
+      feedbackEl.className = 'feedback bad';
+      feedbackEl.innerHTML = '❌ Sprawdź zaznaczenia — niektóre znaki są błędne.';
+    }
+    return;
+  }
+
+  // M3 Lv3: bracket selection mode
+  if (task && task.type === 'remove-brackets-nested' && m3bracketActive !== null) {
+    const flatTerms = getM3StepFlatTerms(m3bracketActive);
+    const allOk = flatTerms.every((t, i) => m3nestedTermSigns[i] === t.effectiveSign);
+    if (allOk) {
+      m3bracketDone[m3bracketActive] = true;
+      m3bracketActive = null;
+      document.getElementById('question').innerHTML = task.stateHTMLs[m3StateKey()];
+      updateM3BracketVisuals();
+      requestAnimationFrame(fitM3Question);
+      const needCu = task.depth === 3;
+      const allDone = m3bracketDone.r && m3bracketDone.sq && (!needCu || m3bracketDone.cu);
+      if (allDone) {
+        document.getElementById('qLabel').innerHTML = task.finalLabel;
+        buildM3ChipQuestion(task.finalFlatTerms);
+        buildM3Step2AnswerUI();
+      } else {
+        document.getElementById('qLabel').innerHTML = 'Usuń nawiasy:';
+        feedbackEl.className = 'feedback ok';
+        feedbackEl.innerHTML = '✅ Dobrze! Kliknij kolejne nawiasy.';
+        showM3BracketWaitUI();
+      }
+    } else {
+      feedbackEl.className = 'feedback bad';
+      feedbackEl.innerHTML = '❌ Sprawdź zaznaczenia — niektóre znaki są błędne.';
+    }
+    return;
+  }
+
+  // M4 Lv4a/4b phase 1
+  if (task && task.type === 'multi-block-expand' && task.phase === 1) {
+    let fi = 0;
+    const allOk = task.blockResultTerms.every(bTerms =>
+      bTerms.every(t => {
+        const inp = document.querySelector(`[data-m4idx="${fi}"]`);
+        const absVal = inp && inp.value !== '' ? Math.abs(Number(inp.value)) : 1;
+        const coeffOk = m4MultiSigns[fi] * absVal === t.coeff;
+        let varsOk = true;
+        if (task.multiVarAnswer) {
+          varsOk = Object.entries(t.vars).sort().filter(([,e])=>e>0).every(([letter, exp], j) => {
+            const lInp = document.querySelector(`[data-m4letter="${fi}-${j}"]`);
+            if (!lInp || lInp.value.trim().toLowerCase() !== letter) return false;
+            if (exp > 1) {
+              const eInp = document.querySelector(`[data-m4exp="${fi}-${j}"]`);
+              if (!eInp || Number(eInp.value) !== exp) return false;
+            }
+            return true;
+          });
+        }
+        fi++;
+        return coeffOk && varsOk;
+      })
+    );
+    if (allOk) {
+      transitionM4ToPhase2();
+    } else {
+      document.getElementById('feedback').className = 'feedback bad';
+      document.getElementById('feedback').innerHTML = '❌ Sprawdź obliczenia — niektóre wyrazy są błędne.';
+    }
+    return;
+  }
+
+  // M4 Lv7 — fully self-contained handler
+  if (task && task.type === 'm4l7') {
+    checkM4L7();
+    return;
+  }
+
+  // M5 multi-step — fully self-contained handler
+  if (task && task.type === 'm5') {
+    m5HandleCheckAnswer();
+    return;
+  }
+
+  mode = 'next';
+  clearTimeout(autoAdv);
+  stopTimer();
+
+  let correct = false;
+
+  if (task.type === 'multivar-mono') {
+    const cInp = document.getElementById('ai_mcoeff');
+    const uc = cInp ? Number(cInp.value) : NaN;
+    if (!isNaN(uc) && uc === task.target.coeff) {
+      correct = task.targetVars.every((v, i) => {
+        const eInp = document.getElementById('ai_exp_' + i);
+        const ue = eInp && eInp.value !== '' ? Number(eInp.value) : 1;
+        if (ue !== (task.target.vars[v] || 0)) return false;
+        if (task.blindVars) {
+          const lInp = document.getElementById('ai_letter_' + i);
+          return lInp && lInp.value.trim().toLowerCase() === v;
+        }
+        return true;
+      });
+    }
+  } else if (task.type === 'group-poly') {
+    correct = task.groups.every((g, i) => {
+      const c = document.querySelector(`[data-gidx="${i}"].coeff-input`);
+      const uc = signState[i] * (c && c.value !== '' ? Number(c.value) : 1);
+      return uc === g.sum;
+    });
+    rebuildChips(); // freeze chips with .done
+  } else if (task.textInput) {
+    const inp = document.getElementById('ai_text');
+    const parsed = parseMonoTerm(inp ? inp.value : '');
+    correct = parsed !== null && parsed.coeff === task.answer[1] && parsed.var === task.var;
+  } else if (task.type === 'multimono-fill') {
+    correct = task.fillTerms.every((t, ti) => {
+      const coeffInp = document.querySelector(`[data-m4idx="${ti}"]`);
+      const absVal = coeffInp && coeffInp.value !== '' ? Math.abs(Number(coeffInp.value)) : 0;
+      if (m4MultiSigns[ti] * absVal !== t.coeff) return false;
+      return t.vars.every((v, vi) => {
+        const lInp = document.querySelector(`[data-fti="${ti}"][data-fvi="${vi}"].m4-letter-inp`);
+        if (!lInp || lInp.value.trim().toLowerCase() !== v.l) return false;
+        if (v.e > 1) {
+          const eInp = document.querySelector(`[data-fti="${ti}"][data-fvi="${vi}"][data-fexp]`);
+          if (!eInp || Number(eInp.value) !== v.e) return false;
+        }
+        return true;
+      });
+    });
+  } else if (task.type === 'multimono-sum' || task.type === 'multi-block-expand') {
+    correct = task.resultTerms.every((t, i) => {
+      const inp = document.querySelector(`[data-m4idx="${i}"]`);
+      const emptyDefault = (task.type === 'multi-block-expand' && task.multiVarAnswer) ? 1 : 0;
+      const absVal = inp && inp.value !== '' ? Math.abs(Number(inp.value)) : emptyDefault;
+      if (m4MultiSigns[i] * absVal !== t.coeff) return false;
+      if (!task.multiVarAnswer) return true;
+      return Object.entries(t.vars).sort().filter(([,e])=>e>0).every(([letter, exp], j) => {
+        const lInp = document.querySelector(`[data-m4letter="${i}-${j}"]`);
+        if (!lInp || lInp.value.trim().toLowerCase() !== letter) return false;
+        if (exp > 1) {
+          const eInp = document.querySelector(`[data-m4exp="${i}-${j}"]`);
+          if (!eInp || Number(eInp.value) !== exp) return false;
+        }
+        return true;
+      });
+    });
+  } else if (task.type === 'remove-brackets' || task.type === 'remove-brackets-nested') {
+    correct = true;
+    for (let d = 0; d <= task.maxDeg; d++) {
+      const idx = task.maxDeg - d;
+      const inp = document.querySelector(`#answerArea [data-deg="${d}"]`);
+      const expected = task.answer[d] || 0;
+      const absVal = (inp && inp.value !== '') ? Math.abs(Number(inp.value)) : (d > 0 && Math.abs(expected) === 1 ? 1 : 0);
+      const uc = m3step2Signs[idx] * absVal;
+      if (uc !== (task.answer[d] || 0)) { correct = false; break; }
+    }
+  } else {
+    correct = true;
+    for (let d = 0; d <= task.maxDeg; d++) {
+      const inp = document.querySelector(`#answerArea [data-deg="${d}"]`);
+      const uc = (inp && inp.value !== '') ? Number(inp.value) : 0;
+      if (uc !== (task.answer[d] || 0)) { correct = false; break; }
+    }
+  }
+
+  tot++;
+  if (correct) {
+    ok++;
+    playOk();
+    feedbackEl.className = 'feedback good';
+    feedbackEl.innerHTML = `✅ Brawo! Wynik: <strong>${task.solHTML}</strong>`;
+  } else {
+    playBad();
+    feedbackEl.className = 'feedback bad';
+    feedbackEl.innerHTML = `❌ Źle! Poprawna odpowiedź: <strong>${task.solHTML}</strong>`;
+  }
+
+  scoreEl.textContent = `${ok} / ${tot}`;
+  resetBtn.disabled = false;
+  submitBtn.disabled = true;
+  nextBtn.style.display = '';
+}
+
+// ── New question ──────────────────────────────────────
+function newQuestion() {
+  clearTimeout(autoAdv);
+  mode = 'ask';
+  task = generate();
+  document.getElementById('qLabel').innerHTML = task.qLabel;
+  document.getElementById('question').innerHTML = task.qHTML;
+  feedbackEl.className = 'feedback empty';
+  feedbackEl.textContent = '–';
+  nextBtn.style.display = 'none';
+  buildAnswerUI();
+  requestAnimationFrame(fitM3Question);
+  requestAnimationFrame(fitM4BlockQuestion);
+  startTimer();
+}
+
+// ── Module / Level switching ──────────────────────────
+const modIds  = ['m1Btn','m2Btn','m3Btn','m4Btn','m5Btn'];
+const modCls  = ['active-m1','active-m2','active-m3','active-m4','active-m5'];
+
+const MOD_LEVEL_SHADES = [
+  null,
+  // M1: Porządkowanie (cyjan) — L1..L4
+  [ null,
+    { dark:'#0097a7', mid:'#26c6da', light:'#b2ebf2', bg:'#e0f7fa', shadow:'rgba(0,151,167,.2)' },
+    { dark:'#006064', mid:'#00bcd4', light:'#80deea', bg:'#e0f7fa', shadow:'rgba(0,96,100,.3)'  },
+    { dark:'#004d52', mid:'#0097a7', light:'#4dd0e1', bg:'#e0f7fa', shadow:'rgba(0,77,82,.4)'   },
+    { dark:'#00363a', mid:'#00838f', light:'#26c6da', bg:'#b2ebf2', shadow:'rgba(0,54,58,.5)'   },
+  ],
+  // M2: Redukcja (indygo) — L1..L3
+  [ null,
+    { dark:'#3949ab', mid:'#5c6bc0', light:'#c5cae9', bg:'#e8eaf6', shadow:'rgba(57,73,171,.2)'  },
+    { dark:'#283593', mid:'#3949ab', light:'#9fa8da', bg:'#e8eaf6', shadow:'rgba(40,53,147,.35)' },
+    { dark:'#1a237e', mid:'#303f9f', light:'#7986cb', bg:'#e8eaf6', shadow:'rgba(26,35,126,.5)'  },
+    { dark:'#1a237e', mid:'#303f9f', light:'#7986cb', bg:'#e8eaf6', shadow:'rgba(26,35,126,.5)'  },
+  ],
+  // M3: Usuwanie nawiasów (fiolet) — L1..L3
+  [ null,
+    { dark:'#8e24aa', mid:'#ab47bc', light:'#e1bee7', bg:'#f3e5f5', shadow:'rgba(142,36,170,.2)'  },
+    { dark:'#7b1fa2', mid:'#8e24aa', light:'#ce93d8', bg:'#f3e5f5', shadow:'rgba(106,27,154,.35)' },
+    { dark:'#4a148c', mid:'#7b1fa2', light:'#ba68c8', bg:'#f3e5f5', shadow:'rgba(74,20,140,.5)'   },
+    { dark:'#4a148c', mid:'#7b1fa2', light:'#ba68c8', bg:'#f3e5f5', shadow:'rgba(74,20,140,.5)'   },
+  ],
+  // M4: Mnożenie przez jednom (róż) — L1..L5
+  [ null,
+    { dark:'#c2185b', mid:'#e91e63', light:'#f8bbd0', bg:'#fce4ec', shadow:'rgba(194,24,91,.2)'  },
+    { dark:'#ad1457', mid:'#d81b60', light:'#f48fb1', bg:'#fce4ec', shadow:'rgba(173,20,87,.3)'  },
+    { dark:'#880e4f', mid:'#c2185b', light:'#f06292', bg:'#fce4ec', shadow:'rgba(136,14,79,.4)'  },
+    { dark:'#6d0e3e', mid:'#ad1457', light:'#ec407a', bg:'#fce4ec', shadow:'rgba(109,14,62,.5)'  },
+    { dark:'#560a31', mid:'#880e4f', light:'#e91e63', bg:'#fce4ec', shadow:'rgba(86,10,49,.6)'   },
+    { dark:'#560a31', mid:'#880e4f', light:'#e91e63', bg:'#fce4ec', shadow:'rgba(86,10,49,.6)'   },
+    { dark:'#3e0622', mid:'#560a31', light:'#880e4f', bg:'#fce4ec', shadow:'rgba(62,6,34,.7)', label:'#fce4ec' },
+  ],
+  // M5: Mnożenie sum (zieleń) — L1..L6
+  [ null,
+    { dark:'#388e3c', mid:'#66bb6a', light:'#c8e6c9', bg:'#f1f8f1', shadow:'rgba(56,142,60,.2)'  },
+    { dark:'#2e7d32', mid:'#4caf50', light:'#a5d6a7', bg:'#f1f8f1', shadow:'rgba(46,125,50,.3)'  },
+    { dark:'#1a5c34', mid:'#43a047', light:'#81c784', bg:'#f1f8f1', shadow:'rgba(26,92,52,.4)'   },
+    { dark:'#1b5e20', mid:'#388e3c', light:'#66bb6a', bg:'#f1f8f1', shadow:'rgba(27,94,32,.5)'   },
+    { dark:'#155724', mid:'#2e7d32', light:'#4caf50', bg:'#e8f5e9', shadow:'rgba(21,87,36,.55)'  },
+    { dark:'#0d3d18', mid:'#1b5e20', light:'#388e3c', bg:'#e8f5e9', shadow:'rgba(13,61,24,.6)'   },
+  ],
+];
+const HARD_THEME = { dark:'#7f0000', mid:'#c62828', light:'#ef9a9a', bg:'#ffebee', shadow:'rgba(198,40,40,.3)' };
+function applyModTheme(n, l) {
+  let t;
+  if (n === 5 && m5Mode === 'hard') {
+    t = HARD_THEME;
+  } else {
+    const shades = MOD_LEVEL_SHADES[n];
+    const idx = Math.min(l || 1, shades.length - 1);
+    t = shades[idx];
+  }
+  if (!t) return;
+  const r = document.documentElement.style;
+  r.setProperty('--mod-dark',        t.dark);
+  r.setProperty('--mod-mid',         t.mid);
+  r.setProperty('--mod-light',       t.light);
+  r.setProperty('--mod-bg',          t.bg);
+  r.setProperty('--mod-shadow',      t.shadow);
+  r.setProperty('--mod-label-color', t.label || t.dark);
+}
+
+function switchModule(n) {
+  if (M === n) return;
+  M = n;
+  const modSel = document.getElementById('modSelect'); if (modSel) modSel.value = n;
+  const lv3Btn   = document.getElementById('lv3Btn');
+  const lv4Btn   = document.getElementById('lv4Btn');
+  const lv4aBtn  = document.getElementById('lv4aBtn');
+  const lv4bBtn  = document.getElementById('lv4bBtn');
+  const lv6Btn   = document.getElementById('lv6Btn');
+  const m5lv3Btn = document.getElementById('m5lv3Btn');
+  const m5lv4Btn = document.getElementById('m5lv4Btn');
+  const m5lv5Btn = document.getElementById('m5lv5Btn');
+  const m5lv6Btn = document.getElementById('m5lv6Btn');
+  const showLv3    = n !== 5;
+  const showLv4    = n === 1;
+  const showM4extra = n === 4;
+  const showM5extra = n === 5;
+  lv3Btn.style.display   = showLv3     ? '' : 'none';
+  lv4Btn.style.display   = showLv4     ? '' : 'none';
+  lv4aBtn.style.display  = showM4extra ? '' : 'none';
+  lv4bBtn.style.display  = showM4extra ? '' : 'none';
+  lv6Btn.style.display   = showM4extra ? '' : 'none';
+  document.getElementById('lv7Btn').style.display = showM4extra ? '' : 'none';
+  m5lv3Btn.style.display = showM5extra ? '' : 'none';
+  m5lv4Btn.style.display = showM5extra ? '' : 'none';
+  m5lv5Btn.style.display = showM5extra ? '' : 'none';
+  m5lv6Btn.style.display = showM5extra ? '' : 'none';
+  document.getElementById('m5ModeRow').style.display = showM5extra ? 'flex' : 'none';
+  // downgrade L when levels not available in target module
+  const maxL = n === 4 ? 7 : n === 5 ? 6 : n === 1 ? 4 : 3;
+  if (L > maxL) L = maxL;
+  if (L === 3 && !showLv3 && !showM5extra) L = 2;
+  applyModTheme(n, L);
+  // set active classes
+  m4SetLevelClasses();
+  fullReset();
+}
+
+function m4SetLevelClasses() {
+  const a = ' active-lv';
+  document.getElementById('lv1Btn').className  = 'tab' + (L===1?a:'');
+  document.getElementById('lv2Btn').className  = 'tab' + (L===2?a:'');
+  document.getElementById('lv3Btn').className  = 'tab' + (L===3?a:'');
+  document.getElementById('lv4Btn').className  = 'tab' + (L===4?a:'');
+  document.getElementById('lv4aBtn').className = 'tab' + (L===4?a:'');
+  document.getElementById('lv4bBtn').className = 'tab' + (L===5?a:'');
+  document.getElementById('lv6Btn').className  = 'tab' + (L===6?a:'');
+  document.getElementById('lv7Btn').className  = 'tab' + (L===7?a:'');
+  document.getElementById('m5lv3Btn').className = 'tab' + (L===3?a:'');
+  document.getElementById('m5lv4Btn').className = 'tab' + (L===4?a:'');
+  document.getElementById('m5lv5Btn').className = 'tab' + (L===5?a:'');
+  document.getElementById('m5lv6Btn').className = 'tab' + (L===6?a:'');
+}
+
+function switchLevel(n) {
+  if (L === n) return;
+  L = n;
+  applyModTheme(M, L);
+  m4SetLevelClasses();
+  fullReset();
+}
+
+// ── Reset ─────────────────────────────────────────────
+function fullReset() {
+  clearTimeout(autoAdv);
+  stopTimer();
+  ok = 0; tot = 0; recentKeys = [];
+  scoreEl.textContent = '0 / 0';
+  timerEl.textContent = '0 s';
+  resetBtn.disabled = true;
+  newQuestion();
+}
+
+// ── Timer ─────────────────────────────────────────────
 function startTimer() {
-  timeLeft = 60;
-  document.getElementById('timer').textContent = 60;
-  document.getElementById('timerBox').classList.remove('urgent');
-  if (timerInterval) clearInterval(timerInterval);
-  timerInterval = setInterval(() => {
-    timeLeft--;
-    document.getElementById('timer').textContent = timeLeft;
-    if (timeLeft <= 10) document.getElementById('timerBox').classList.add('urgent');
-    if (timeLeft <= 0) { clearInterval(timerInterval); showResult(); }
+  stopTimer();
+  t0 = Date.now();
+  timerEl.textContent = '0 s';
+  timerID = setInterval(() => {
+    timerEl.textContent = Math.floor((Date.now()-t0)/1000) + ' s';
   }, 1000);
 }
+function stopTimer() { clearInterval(timerID); timerID = null; }
 
-/* ── question generators ─────────────────── */
+// ── Animations ────────────────────────────────────────
+const animLayer = document.getElementById('animLayer');
 
-function genOblicz() {
-  const v = rp(VARS);
-  const t = ri(0, 4);
-  let expr, sub, correct;
-
-  if (t === 0) {          // ax + b
-    const a = ri(2,8), b = ri(1,12), n = ri(2,8);
-    expr = `${a}${v} + ${b}`;  sub = `dla ${v} = ${n}`;  correct = a*n + b;
-  } else if (t === 1) {   // ax − b
-    const a = ri(2,8), b = ri(1,8), n = ri(2,8);
-    expr = `${a}${v} − ${b}`;  sub = `dla ${v} = ${n}`;  correct = a*n - b;
-  } else if (t === 2) {   // ax + bx
-    const a = ri(2,6), b = ri(2,6), n = ri(2,8);
-    expr = `${a}${v} + ${b}${v}`;  sub = `dla ${v} = ${n}`;  correct = (a+b)*n;
-  } else if (t === 3) {   // v² + b
-    const n = ri(2,7), b = ri(1,10);
-    expr = `${v}² + ${b}`;  sub = `dla ${v} = ${n}`;  correct = n*n + b;
-  } else {                // a(v + b)
-    const a = ri(2,6), b = ri(1,8), n = ri(2,6);
-    expr = `${a}(${v} + ${b})`;  sub = `dla ${v} = ${n}`;  correct = a*(n+b);
-  }
-
-  const set = new Set([correct]);
-  const deltas = [-3,-2,-1,1,2,3,5,-5,10,-10];
-  while (set.size < 4) set.add(correct + rp(deltas));
-  return { label: 'Oblicz wartość wyrażenia:', expr, sub, correct, opts: shuf([...set]) };
+function playOk() {
+  animLayer.innerHTML = '';
+  const el = document.createElement('div');
+  el.className = 'anim-ok'; el.textContent = '✓';
+  animLayer.appendChild(el);
+  const fl = document.createElement('div'); fl.className = 'flash-ok';
+  animLayer.appendChild(fl);
+  ['★','♦','●','✶'].forEach((sym, si) => {
+    for (let i = 0; i < 2; i++) {
+      const p = document.createElement('span'); p.className = 'particle';
+      p.textContent = sym;
+      const ang = (si*2+i) * Math.PI/4 + Math.random()*.4;
+      const dist = 70 + Math.random()*60;
+      p.style.setProperty('--tx', `translate(${Math.cos(ang)*dist}px,${Math.sin(ang)*dist}px)`);
+      p.style.animationDelay = (Math.random()*0.12)+'s';
+      animLayer.appendChild(p);
+    }
+  });
 }
 
-function genUpros() {
-  const v1 = rp(['x','a','n']), v2 = rp(['y','b','m']);
-  const t = ri(0, 4);
-  let expr, correct, wrongs;
-
-  if (t === 0) {           // av + bv → (a+b)v
-    const a = ri(2,7), b = ri(2,7);
-    expr = `${a}${v1} + ${b}${v1}`;
-    correct = `${a+b}${v1}`;
-    wrongs  = [`${a}${v1}`, `${a*b}${v1}`, `${a+b}${v1}²`];
-  } else if (t === 1) {    // av − bv + c → (a-b)v + c
-    const a = ri(4,9), b = ri(1,a-1), c = ri(1,9);
-    expr = `${a}${v1} − ${b}${v1} + ${c}`;
-    correct = `${a-b}${v1} + ${c}`;
-    wrongs  = [`${a+b}${v1} + ${c}`, `${a-b}${v1} − ${c}`, `${a-b+c}${v1}`];
-  } else if (t === 2) {    // av + bv2 + cv → (a+c)v + bv2
-    const a = ri(2,5), c = ri(1,4), b = ri(2,6);
-    expr = `${a}${v1} + ${b}${v2} + ${c}${v1}`;
-    correct = `${a+c}${v1} + ${b}${v2}`;
-    wrongs  = [`${a}${v1} + ${b+c}${v2}`, `${a+b+c}${v1}`, `${a+c}${v1} − ${b}${v2}`];
-  } else if (t === 3) {    // av + bv2 − cv → (a-c)v + bv2
-    const a = ri(4,8), c = ri(1,a-1), b = ri(2,6);
-    expr = `${a}${v1} + ${b}${v2} − ${c}${v1}`;
-    correct = `${a-c}${v1} + ${b}${v2}`;
-    wrongs  = [`${a+c}${v1} + ${b}${v2}`, `${a-c}${v1} − ${b}${v2}`, `${a}${v1} + ${b-c > 0 ? b-c : b+c}${v2}`];
-  } else {                 // av1 + bv2 + cv1 + dv2 → (a+c)v1 + (b+d)v2
-    const a = ri(2,5), c = ri(1,4), b = ri(2,5), d = ri(1,4);
-    expr = `${a}${v1} + ${b}${v2} + ${c}${v1} + ${d}${v2}`;
-    correct = `${a+c}${v1} + ${b+d}${v2}`;
-    wrongs  = [`${a+b+c+d}${v1}`, `${a+c}${v1} − ${b+d}${v2}`, `${a}${v1} + ${b+d}${v2}`];
-  }
-
-  return { label: 'Uprość wyrażenie:', expr, sub: '', correct, opts: shuf([correct, ...wrongs]) };
+function playBad() {
+  animLayer.innerHTML = '';
+  const x = document.createElement('div'); x.className = 'anim-x'; x.textContent = '✕';
+  animLayer.appendChild(x);
+  const fl = document.createElement('div'); fl.className = 'flash-bad';
+  animLayer.appendChild(fl);
 }
 
-function genRozwin() {
-  const v = rp(VARS);
-  const t = ri(0, 3);
-  let expr, correct, wrongs;
+// ── DOM refs ──────────────────────────────────────────
+const scoreEl   = document.getElementById('score');
+const timerEl   = document.getElementById('timer');
+const feedbackEl = document.getElementById('feedback');
+const submitBtn  = document.getElementById('submitBtn');
+const resetBtn   = document.getElementById('resetBtn');
+const nextBtn    = document.getElementById('nextBtn');
 
-  if (t === 0) {          // a(v + b) → av + ab
-    const a = ri(2,8), b = ri(2,9);
-    expr = `${a}(${v} + ${b})`;
-    correct = `${a}${v} + ${a*b}`;
-    wrongs  = [`${a}${v} + ${b}`, `${a+b}${v}`, `${a}${v} − ${a*b}`];
-  } else if (t === 1) {   // a(v − b) → av − ab
-    const a = ri(2,8), b = ri(2,9);
-    expr = `${a}(${v} − ${b})`;
-    correct = `${a}${v} − ${a*b}`;
-    wrongs  = [`${a}${v} − ${b}`, `${a}${v} + ${a*b}`, `${(a-b) > 0 ? a-b : a+b}${v}`];
-  } else if (t === 2) {   // a(bv + c) → abv + ac
-    const a = ri(2,5), b = ri(2,5), c = ri(2,8);
-    expr = `${a}(${b}${v} + ${c})`;
-    correct = `${a*b}${v} + ${a*c}`;
-    wrongs  = [`${a}${v} + ${a*c}`, `${a*b}${v} + ${c}`, `${a+b}${v} + ${a*c}`];
-  } else {                // a(bv − c) → abv − ac
-    const a = ri(2,5), b = ri(2,5), c = ri(2,8);
-    expr = `${a}(${b}${v} − ${c})`;
-    correct = `${a*b}${v} − ${a*c}`;
-    wrongs  = [`${a}${v} − ${a*c}`, `${a*b}${v} − ${c}`, `${a*b}${v} + ${a*c}`];
-  }
+document.getElementById('mainForm').addEventListener('submit', e => { e.preventDefault(); checkAnswer(); });
 
-  return { label: 'Rozwiń nawias:', expr, sub: '', correct, opts: shuf([correct, ...wrongs]) };
-}
-
-/* ── next question ───────────────────────── */
-function nextQ() {
-  answered = false;
-  document.getElementById('feedback').textContent = '';
-  document.getElementById('feedback').className = 'feedback';
-  document.getElementById('nextBtn').disabled = true;
-  document.querySelectorAll('.ans-btn').forEach(b => { b.className = 'ans-btn'; b.disabled = false; });
-
-  const q = mode === 'oblicz' ? genOblicz()
-          : mode === 'uprość' ? genUpros()
-          : genRozwin();
-
-  document.getElementById('qLabel').textContent = q.label;
-  document.getElementById('qExpr').textContent  = q.expr;
-  document.getElementById('qSub').textContent   = q.sub;
-  q.opts.forEach((opt, i) => { document.getElementById('a' + i).textContent = opt; });
-
-  correctIdx = q.opts.indexOf(q.correct);
-}
-
-/* ── select answer ───────────────────────── */
-function selectAnswer(idx) {
-  if (answered) return;
-  answered = true;
-  document.querySelectorAll('.ans-btn').forEach(b => b.disabled = true);
-
-  if (idx === correctIdx) {
-    document.getElementById('a' + idx).classList.add('correct');
-    score++;
-    document.getElementById('score').textContent = score;
-    document.getElementById('feedback').textContent = '✓ Dobrze!';
-    document.getElementById('feedback').className = 'feedback ok';
-  } else {
-    document.getElementById('a' + idx).classList.add('wrong');
-    document.getElementById('a' + correctIdx).classList.add('correct');
-    document.getElementById('feedback').textContent = '✗ Błąd!';
-    document.getElementById('feedback').className = 'feedback err';
-  }
-
-  document.getElementById('nextBtn').disabled = false;
-}
-
-/* ── result ──────────────────────────────── */
-function showResult() {
-  document.getElementById('gameArea').style.display = 'none';
-  document.getElementById('resultScreen').style.display = '';
-
-  const emojis = ['💪', '👍', '🌟', '🏆'];
-  const labels = ['Ćwicz dalej, dasz radę!', 'Niezły wynik!', 'Świetnie!', 'Mistrz algebry!'];
-  const tier = score < 5 ? 0 : score < 10 ? 1 : score < 16 ? 2 : 3;
-
-  document.getElementById('resultEmoji').textContent = emojis[tier];
-  document.getElementById('resultScore').textContent = score + ' pkt';
-  document.getElementById('resultLabel').textContent = labels[tier];
-}
-
-function restart() { setMode(mode); }
-
-/* ── init ────────────────────────────────── */
-setMode('oblicz');
+// ── Init ──────────────────────────────────────────────
+applyModTheme(M, L);
+newQuestion();
 </script>
 </body>
 </html>
