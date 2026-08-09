@@ -4,29 +4,62 @@
       <stop offset="0%" stop-color="#004d40"/>
       <stop offset="100%" stop-color="#00bcd4"/>
     </linearGradient>
+    <!-- yellow arrowhead (2x group) -->
+    <marker id="ay" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#FFE055"/>
+    </marker>
+    <!-- mint arrowhead (3 group) -->
+    <marker id="am" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7EFFD4"/>
+    </marker>
   </defs>
+
   <rect width="397" height="280" fill="url(#bg)"/>
 
   <!-- faint watermark -->
-  <text x="205" y="205" font-size="220" fill="rgba(255,255,255,0.055)"
+  <text x="205" y="200" font-size="220" fill="rgba(255,255,255,0.05)"
         text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-weight="bold">x</text>
 
   <!-- label -->
-  <text x="198" y="23" font-family="'Courier New',monospace" font-size="12"
+  <text x="198" y="21" font-family="'Courier New',monospace" font-size="12"
         fill="rgba(255,255,255,0.55)" text-anchor="middle" font-style="italic">wyrażenia algebraiczne</text>
 
-  <!-- top: like terms in two colours + underline -->
-  <text x="198" y="95" font-family="Georgia,'Times New Roman',serif"
-        font-size="29" text-anchor="middle" font-weight="bold" font-style="italic">
-    <tspan fill="#FFE055" text-decoration="underline">3x</tspan><tspan fill="white"> + </tspan><tspan fill="#7EFFD4" text-decoration="underline">5</tspan><tspan fill="white"> + </tspan><tspan fill="#FFE055" text-decoration="underline">4x</tspan><tspan fill="white"> &#x2212; </tspan><tspan fill="#7EFFD4" text-decoration="underline">8</tspan><tspan fill="white"> = ?</tspan>
+  <!-- ── TOP EXPRESSION: absolute x so underlines can be precisely placed ── -->
+  <text y="73" font-family="Georgia,'Times New Roman',serif"
+        font-size="28" font-weight="bold" font-style="italic">
+    <tspan x="55"  fill="#FFE055">3x</tspan><tspan fill="white"> + </tspan><tspan fill="#7EFFD4">5</tspan><tspan fill="white"> + </tspan><tspan fill="#FFE055">4x</tspan><tspan fill="white"> &#x2212; </tspan><tspan fill="#7EFFD4">8</tspan><tspan fill="white"> = ?</tspan>
   </text>
 
+  <!-- underlines 14px below baseline (y=73+14=87) -->
+  <line x1="53"  y1="87" x2="97"  y2="87" stroke="#FFE055" stroke-width="4" stroke-linecap="round"/>
+  <line x1="131" y1="87" x2="150" y2="87" stroke="#7EFFD4" stroke-width="4" stroke-linecap="round"/>
+  <line x1="184" y1="87" x2="228" y2="87" stroke="#FFE055" stroke-width="4" stroke-linecap="round"/>
+  <line x1="261" y1="87" x2="281" y2="87" stroke="#7EFFD4" stroke-width="4" stroke-linecap="round"/>
+
   <!-- divider -->
-  <line x1="28" y1="140" x2="369" y2="140"
+  <line x1="28" y1="113" x2="369" y2="113"
         stroke="rgba(255,255,255,0.28)" stroke-width="1.5" stroke-dasharray="8,4"/>
 
-  <!-- bottom: one-line expansion -->
-  <text x="198" y="207" font-family="'Courier New',monospace"
-        font-size="17" fill="white" text-anchor="middle" font-weight="bold"
-        >(2x&#x2212;3)(3a+4) = 6ax+8x&#x2212;9a&#x2212;12</text>
+  <!-- ── TOP FOIL ARROWS (yellow, from 2x) ── -->
+  <!-- 2x → 3a : inner arc -->
+  <path d="M 148,203 Q 183,172 219,203"
+        fill="none" stroke="#FFE055" stroke-width="2" marker-end="url(#ay)"/>
+  <!-- 2x → 4 : outer arc (higher) -->
+  <path d="M 148,203 Q 201,152 255,203"
+        fill="none" stroke="#FFE055" stroke-width="2" marker-end="url(#ay)"/>
+
+  <!-- ── FOIL EXPRESSION: Georgia bold italic, centred ── -->
+  <text x="198" y="210" font-family="Georgia,'Times New Roman',serif"
+        font-size="22" font-weight="bold" font-style="italic"
+        fill="white" text-anchor="middle">(2x&#x2212;3)(3a+4)</text>
+
+  <!-- ── BOTTOM FOIL ARROWS (mint, from ‑3) ── -->
+  <!-- 3 → 3a : inner arc -->
+  <path d="M 182,217 Q 201,240 219,217"
+        fill="none" stroke="#7EFFD4" stroke-width="2" marker-end="url(#am)"/>
+  <!-- 3 → 4 : outer arc (deeper) -->
+  <path d="M 182,217 Q 219,258 255,217"
+        fill="none" stroke="#7EFFD4" stroke-width="2" marker-end="url(#am)"/>
 </svg>
