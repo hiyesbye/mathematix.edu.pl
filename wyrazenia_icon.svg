@@ -22,13 +22,13 @@
   <text x="198" y="21" font-family="'Courier New',monospace" font-size="12"
         fill="rgba(255,255,255,0.55)" text-anchor="middle" font-style="italic">wyrażenia algebraiczne</text>
 
-  <!-- TOP EXPRESSION (absolute x start so underlines align) -->
+  <!-- TOP EXPRESSION -->
   <text y="73" font-family="Georgia,'Times New Roman',serif"
         font-size="28" font-weight="bold" font-style="italic">
     <tspan x="55" fill="#FFE055">3x</tspan><tspan fill="white"> + </tspan><tspan fill="#7EFFD4">5</tspan><tspan fill="white"> + </tspan><tspan fill="#FFE055">4x</tspan><tspan fill="white"> &#x2212; </tspan><tspan fill="#7EFFD4">8</tspan><tspan fill="white"> = ?</tspan>
   </text>
 
-  <!-- UNDERLINES – positions from getBBox(): 3x(54,35) 5(122,18) 4x(173,36) 8(242,19) -->
+  <!-- UNDERLINES – positions from getBBox() -->
   <line x1="52"  y1="87" x2="91"  y2="87" stroke="#FFE055" stroke-width="4" stroke-linecap="round"/>
   <line x1="120" y1="87" x2="142" y2="87" stroke="#7EFFD4" stroke-width="4" stroke-linecap="round"/>
   <line x1="171" y1="87" x2="211" y2="87" stroke="#FFE055" stroke-width="4" stroke-linecap="round"/>
@@ -37,25 +37,21 @@
   <line x1="28" y1="113" x2="369" y2="113"
         stroke="rgba(255,255,255,0.28)" stroke-width="1.5" stroke-dasharray="8,4"/>
 
-  <!-- TOP FOIL ARROWS (yellow, from 2x) -->
-  <path d="M 148,183 Q 183,153 219,183"
+  <!-- TOP FOIL ARROWS – x positions from getBBox(): 2x=68, 3neg=96, 3a=127, 4=156 -->
+  <path id="arr1" d="M 68,194 Q 97,168 127,194"
         fill="none" stroke="#FFE055" stroke-width="2" marker-end="url(#ay)"/>
-  <path d="M 148,183 Q 201,138 255,183"
+  <path id="arr2" d="M 68,194 Q 112,152 156,194"
         fill="none" stroke="#FFE055" stroke-width="2" marker-end="url(#ay)"/>
 
-  <!-- FOIL EXPRESSION (moved up to y=188) -->
-  <text x="198" y="188" font-family="Georgia,'Times New Roman',serif"
-        font-size="22" font-weight="bold" font-style="italic"
-        fill="white" text-anchor="middle">(2x&#x2212;3)(3a+4)</text>
+  <!-- COMBINED FOIL LINE: (2x−3)(3a+4) = 6ax + 8x − 9a − 12 -->
+  <text id="foil" x="198" y="200" font-family="Georgia,'Times New Roman',serif"
+        font-size="17" font-weight="bold" font-style="italic"
+        fill="white" text-anchor="middle"
+        >(2x&#x2212;3)(3a+4) = 6ax + 8x &#x2212; 9a &#x2212; 12</text>
 
-  <!-- BOTTOM FOIL ARROWS (mint, from ‑3) -->
-  <path d="M 182,196 Q 201,216 219,196"
+  <!-- BOTTOM FOIL ARROWS -->
+  <path id="arr3" d="M 96,208 Q 111,224 127,208"
         fill="none" stroke="#7EFFD4" stroke-width="2" marker-end="url(#am)"/>
-  <path d="M 182,196 Q 219,228 255,196"
+  <path id="arr4" d="M 96,208 Q 126,235 156,208"
         fill="none" stroke="#7EFFD4" stroke-width="2" marker-end="url(#am)"/>
-
-  <!-- RESULT -->
-  <text x="198" y="257" font-family="Georgia,'Times New Roman',serif"
-        font-size="14" font-weight="bold" font-style="italic"
-        fill="rgba(255,255,255,0.88)" text-anchor="middle">= 6ax + 8x &#x2212; 9a &#x2212; 12</text>
 </svg>
