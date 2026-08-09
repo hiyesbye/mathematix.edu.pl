@@ -7,25 +7,26 @@
   </defs>
   <rect width="397" height="280" fill="url(#bg)"/>
 
-  <!-- watermark -->
-  <text x="210" y="210" font-size="230" fill="rgba(255,255,255,0.06)"
+  <!-- faint watermark -->
+  <text x="205" y="205" font-size="220" fill="rgba(255,255,255,0.055)"
         text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-weight="bold">x</text>
 
+  <!-- label -->
+  <text x="198" y="23" font-family="'Courier New',monospace" font-size="12"
+        fill="rgba(255,255,255,0.55)" text-anchor="middle" font-style="italic">wyrażenia algebraiczne</text>
+
+  <!-- top: like terms in two colours + underline -->
+  <text x="198" y="95" font-family="Georgia,'Times New Roman',serif"
+        font-size="29" text-anchor="middle" font-weight="bold" font-style="italic">
+    <tspan fill="#FFE055" text-decoration="underline">3x</tspan><tspan fill="white"> + </tspan><tspan fill="#7EFFD4" text-decoration="underline">5</tspan><tspan fill="white"> + </tspan><tspan fill="#FFE055" text-decoration="underline">4x</tspan><tspan fill="white"> &#x2212; </tspan><tspan fill="#7EFFD4" text-decoration="underline">8</tspan><tspan fill="white"> = ?</tspan>
+  </text>
+
   <!-- divider -->
-  <line x1="30" y1="142" x2="367" y2="142"
+  <line x1="28" y1="140" x2="369" y2="140"
         stroke="rgba(255,255,255,0.28)" stroke-width="1.5" stroke-dasharray="8,4"/>
 
-  <!-- subtitle label -->
-  <text x="198" y="24" font-family="'Courier New',monospace" font-size="13"
-        fill="rgba(255,255,255,0.58)" text-anchor="middle" font-style="italic">wyrażenia algebraiczne</text>
-
-  <!-- top: oblicz -->
-  <text x="198" y="97" font-family="Georgia,'Times New Roman',serif"
-        font-size="44" fill="white" text-anchor="middle" font-weight="bold" font-style="italic">3x + 5 = ?</text>
-
-  <!-- bottom: rozwiń -->
-  <text x="198" y="185" font-family="Georgia,'Times New Roman',serif"
-        font-size="32" fill="white" text-anchor="middle" font-weight="bold" font-style="italic">2(a &#x2212; 3)</text>
-  <text x="198" y="238" font-family="Georgia,'Times New Roman',serif"
-        font-size="28" fill="rgba(255,255,255,0.82)" text-anchor="middle" font-weight="bold" font-style="italic">= 2a &#x2212; 6</text>
+  <!-- bottom: one-line expansion -->
+  <text x="198" y="207" font-family="'Courier New',monospace"
+        font-size="17" fill="white" text-anchor="middle" font-weight="bold"
+        >(2x&#x2212;3)(3a+4) = 6ax+8x&#x2212;9a&#x2212;12</text>
 </svg>
