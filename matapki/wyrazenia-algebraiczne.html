@@ -1571,6 +1571,21 @@ function fitM4BlockQuestion() {
   const ratio = wrap.clientWidth / wrap.scrollWidth;
   wrap.style.fontSize = Math.max(fs0 * 0.45, fs0 * ratio).toFixed(1) + 'px';
 }
+function fitL7Question() {
+  if (!task || task.type !== 'm4l7') return;
+  const wrap = document.querySelector('#question .m3-expr-wrap');
+  if (!wrap) return;
+  const q = document.getElementById('question');
+  const avail = q.offsetWidth - 16;
+  if (!avail) return;
+  wrap.style.fontSize = '';
+  const fs0 = parseFloat(getComputedStyle(q).fontSize);
+  const nat = wrap.scrollWidth;
+  if (nat <= 0) return;
+  const ratio = avail / nat;
+  const targetPx = Math.min(fs0 * 1.8, Math.max(fs0 * 0.45, fs0 * ratio));
+  wrap.style.fontSize = targetPx.toFixed(1) + 'px';
+}
 
 // ── M4: Jednomian × sumę ──────────────────────────────
 
@@ -2008,28 +2023,23 @@ function gcdFunc(a, b) {
 function genM4L7Frac() {
   const isHard = m5Mode === 'hard';
   let att = 0;
-  while (att++ < 120) {
+  while (att++ < 200) {
+    // Shared variable structure: both numerators use the same letters (creates like terms)
+    const nNum = rnd(2, 3);
+    const varCount = nNum - 1;
+    const sharedLetters = shuffle([...VARS]).slice(0, varCount);
+    // sharedVarSets: varCount variable slots + 1 constant slot
+    const sharedVarSets = [...sharedLetters.map(l => ({ [l]: 1 })), {}];
+    const maxMul = nNum >= 3 ? 3 : 4; // smaller range for 3-term to keep expression compact
+
     const fracTerms = [];
-    const usedLetters = new Set();
     let genOk = true;
 
     for (let ti = 0; ti < 2; ti++) {
       const denom = pick([2, 3, 4, 5, 6, 7]);
-      const outer = rnd(2, isHard ? 9 : 6);
-      const nNum = isHard ? rnd(2, 3) : 2;
-
-      const avail = [...VARS].filter(l => !usedLetters.has(l));
-      if (avail.length < nNum - 1) { genOk = false; break; }
-      const letters = shuffle([...avail]).slice(0, nNum - 1);
-      letters.forEach(l => usedLetters.add(l));
-
-      const numCoeffs = [], numVarSets = [];
-      for (let i = 0; i < nNum - 1; i++) {
-        numCoeffs.push(denom * rndNZ(-4, 4));
-        numVarSets.push({ [letters[i]]: 1 });
-      }
-      numCoeffs.push(denom * rndNZ(-4, 4));
-      numVarSets.push({});
+      const outer = rnd(2, isHard ? 7 : 5);
+      const numVarSets = sharedVarSets.map(vs => ({ ...vs }));
+      const numCoeffs = numVarSets.map(() => denom * rndNZ(-maxMul, maxMul));
 
       const sign = ti === 0 ? 1 : (Math.random() < 0.5 ? 1 : -1);
       const g = gcdFunc(outer, denom);
@@ -2050,7 +2060,7 @@ function genM4L7Frac() {
     const allFlat = fracTerms.flatMap(ft => ft.resultTerms);
     const finalTerms = m5Reduce(allFlat);
     if (finalTerms.length === 0) continue;
-    if (finalTerms.some(r => Math.abs(r.coeff) > 100)) continue;
+    if (finalTerms.some(r => Math.abs(r.coeff) > 80)) continue;
 
     const needsReduction = finalTerms.length < allFlat.length;
     const tempTask = { fracTerms, phase: 'tasks', l7sel: null, l7actionTi: null, l7actionType: null };
@@ -2143,7 +2153,7 @@ function l7TermHTML(t, ft, ti) {
 
 function l7QuestionHTML(t) {
   t = t ?? task;
-  let html = '<span class="m3-expr-wrap">';
+  let html = '<span class="m3-expr-wrap" style="white-space:nowrap">';
   let hasContent = false;
   t.fracTerms.forEach((ft, ti) => {
     if (ft.l7phase === 'expanded') {
@@ -2172,6 +2182,7 @@ function buildM4L7UI() {
   const t = task;
 
   document.getElementById('question').innerHTML = l7QuestionHTML();
+  requestAnimationFrame(fitL7Question);
 
   if (t.phase === 'combine') {
     const allFlat = t.fracTerms.flatMap(ft => ft.resultTerms);
@@ -3700,6 +3711,7 @@ function newQuestion() {
   buildAnswerUI();
   requestAnimationFrame(fitM3Question);
   requestAnimationFrame(fitM4BlockQuestion);
+  requestAnimationFrame(fitL7Question);
   startTimer();
 }
 
