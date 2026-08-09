@@ -4,12 +4,10 @@
       <stop offset="0%" stop-color="#004d40"/>
       <stop offset="100%" stop-color="#00bcd4"/>
     </linearGradient>
-    <!-- yellow arrowhead (2x group) -->
     <marker id="ay" viewBox="0 0 10 10" refX="9" refY="5"
             markerWidth="5" markerHeight="5" orient="auto">
       <path d="M0,0 L10,5 L0,10 z" fill="#FFE055"/>
     </marker>
-    <!-- mint arrowhead (3 group) -->
     <marker id="am" viewBox="0 0 10 10" refX="9" refY="5"
             markerWidth="5" markerHeight="5" orient="auto">
       <path d="M0,0 L10,5 L0,10 z" fill="#7EFFD4"/>
@@ -18,48 +16,46 @@
 
   <rect width="397" height="280" fill="url(#bg)"/>
 
-  <!-- faint watermark -->
   <text x="205" y="200" font-size="220" fill="rgba(255,255,255,0.05)"
         text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-weight="bold">x</text>
 
-  <!-- label -->
   <text x="198" y="21" font-family="'Courier New',monospace" font-size="12"
         fill="rgba(255,255,255,0.55)" text-anchor="middle" font-style="italic">wyrażenia algebraiczne</text>
 
-  <!-- ── TOP EXPRESSION: absolute x so underlines can be precisely placed ── -->
+  <!-- TOP EXPRESSION (absolute x start so underlines align) -->
   <text y="73" font-family="Georgia,'Times New Roman',serif"
         font-size="28" font-weight="bold" font-style="italic">
-    <tspan x="55"  fill="#FFE055">3x</tspan><tspan fill="white"> + </tspan><tspan fill="#7EFFD4">5</tspan><tspan fill="white"> + </tspan><tspan fill="#FFE055">4x</tspan><tspan fill="white"> &#x2212; </tspan><tspan fill="#7EFFD4">8</tspan><tspan fill="white"> = ?</tspan>
+    <tspan x="55" fill="#FFE055">3x</tspan><tspan fill="white"> + </tspan><tspan fill="#7EFFD4">5</tspan><tspan fill="white"> + </tspan><tspan fill="#FFE055">4x</tspan><tspan fill="white"> &#x2212; </tspan><tspan fill="#7EFFD4">8</tspan><tspan fill="white"> = ?</tspan>
   </text>
 
-  <!-- underlines 14px below baseline (y=73+14=87) -->
-  <line x1="53"  y1="87" x2="97"  y2="87" stroke="#FFE055" stroke-width="4" stroke-linecap="round"/>
-  <line x1="131" y1="87" x2="150" y2="87" stroke="#7EFFD4" stroke-width="4" stroke-linecap="round"/>
-  <line x1="184" y1="87" x2="228" y2="87" stroke="#FFE055" stroke-width="4" stroke-linecap="round"/>
-  <line x1="261" y1="87" x2="281" y2="87" stroke="#7EFFD4" stroke-width="4" stroke-linecap="round"/>
+  <!-- UNDERLINES – positions from getBBox(): 3x(54,35) 5(122,18) 4x(173,36) 8(242,19) -->
+  <line x1="52"  y1="87" x2="91"  y2="87" stroke="#FFE055" stroke-width="4" stroke-linecap="round"/>
+  <line x1="120" y1="87" x2="142" y2="87" stroke="#7EFFD4" stroke-width="4" stroke-linecap="round"/>
+  <line x1="171" y1="87" x2="211" y2="87" stroke="#FFE055" stroke-width="4" stroke-linecap="round"/>
+  <line x1="240" y1="87" x2="263" y2="87" stroke="#7EFFD4" stroke-width="4" stroke-linecap="round"/>
 
-  <!-- divider -->
   <line x1="28" y1="113" x2="369" y2="113"
         stroke="rgba(255,255,255,0.28)" stroke-width="1.5" stroke-dasharray="8,4"/>
 
-  <!-- ── TOP FOIL ARROWS (yellow, from 2x) ── -->
-  <!-- 2x → 3a : inner arc -->
-  <path d="M 148,203 Q 183,172 219,203"
+  <!-- TOP FOIL ARROWS (yellow, from 2x) -->
+  <path d="M 148,183 Q 183,153 219,183"
         fill="none" stroke="#FFE055" stroke-width="2" marker-end="url(#ay)"/>
-  <!-- 2x → 4 : outer arc (higher) -->
-  <path d="M 148,203 Q 201,152 255,203"
+  <path d="M 148,183 Q 201,138 255,183"
         fill="none" stroke="#FFE055" stroke-width="2" marker-end="url(#ay)"/>
 
-  <!-- ── FOIL EXPRESSION: Georgia bold italic, centred ── -->
-  <text x="198" y="210" font-family="Georgia,'Times New Roman',serif"
+  <!-- FOIL EXPRESSION (moved up to y=188) -->
+  <text x="198" y="188" font-family="Georgia,'Times New Roman',serif"
         font-size="22" font-weight="bold" font-style="italic"
         fill="white" text-anchor="middle">(2x&#x2212;3)(3a+4)</text>
 
-  <!-- ── BOTTOM FOIL ARROWS (mint, from ‑3) ── -->
-  <!-- 3 → 3a : inner arc -->
-  <path d="M 182,217 Q 201,240 219,217"
+  <!-- BOTTOM FOIL ARROWS (mint, from ‑3) -->
+  <path d="M 182,196 Q 201,216 219,196"
         fill="none" stroke="#7EFFD4" stroke-width="2" marker-end="url(#am)"/>
-  <!-- 3 → 4 : outer arc (deeper) -->
-  <path d="M 182,217 Q 219,258 255,217"
+  <path d="M 182,196 Q 219,228 255,196"
         fill="none" stroke="#7EFFD4" stroke-width="2" marker-end="url(#am)"/>
+
+  <!-- RESULT -->
+  <text x="198" y="257" font-family="Georgia,'Times New Roman',serif"
+        font-size="14" font-weight="bold" font-style="italic"
+        fill="rgba(255,255,255,0.88)" text-anchor="middle">= 6ax + 8x &#x2212; 9a &#x2212; 12</text>
 </svg>
