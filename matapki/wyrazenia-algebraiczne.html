@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔣</text></svg>">
+<title>Wyrażenia algebraiczne</title>
+<style>
+  :root {
+    --bg:       #e0f5f1;
+    --card:     #ffffff;
+    --primary:  #00897b;
+    --good:     #1e9e5a;
+    --bad:      #d64040;
+    --text:     #1a2e2b;
+    --score-bg:  #d6f5e6; --score-text: #1a7a44; --score-bdr: #a8e8c8;
+    --timer-bg:  #fff4d6; --timer-text: #b86b00; --timer-bdr: #ffd98a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg);
+    font-family: "Segoe UI", Verdana, Arial, sans-serif; color: var(--text); }
+  body { display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; padding: 16px; }
+
+  .card {
+    background: var(--card); width: 100%; max-width: 460px;
+    border-radius: 24px; box-shadow: 0 12px 36px rgba(0,80,64,.15);
+    padding: 28px 24px 28px; text-align: center;
+  }
+  h1 {
+    font-size: 1.4rem; font-weight: 900; margin: 0 0 16px;
+    padding: 13px 20px;
+    background: linear-gradient(135deg, #004d40, #00bcd4);
+    border: 2px solid #00695c; border-radius: 16px; color: #fff;
+  }
+
+  /* ── mode tabs ─────────────────────────── */
+  .mode-row {
+    display: flex; align-items: center; gap: 4px;
+    background: #d0efeb; border-radius: 14px;
+    padding: 4px; margin-bottom: 18px;
+  }
+  .tab {
+    flex: 1; border: none; background: transparent; border-radius: 11px;
+    padding: 10px 4px; font-size: .85rem; font-weight: 700; color: #3a706a;
+    cursor: pointer; transition: background .18s, color .18s, box-shadow .18s;
+  }
+  .tab:not([class*="active"]):hover { background: #a7d9d3; color: var(--text); }
+  .tab.active-obl { background: linear-gradient(135deg,#00897b,#26c6da); color:#fff; box-shadow:0 3px 10px rgba(0,137,123,.35); }
+  .tab.active-upr { background: linear-gradient(135deg,#5e35b1,#9c6ef0); color:#fff; box-shadow:0 3px 10px rgba(94,53,177,.35); }
+  .tab.active-roz { background: linear-gradient(135deg,#d84315,#ff8f00); color:#fff; box-shadow:0 3px 10px rgba(216,67,21,.35); }
+  button:disabled { opacity: .42; cursor: not-allowed; }
+
+  /* ── stats ─────────────────────────────── */
+  .stats { display: flex; gap: 10px; margin-bottom: 18px; }
+  .stat-box { flex: 1; border-radius: 14px; padding: 10px 6px; font-weight: 700; }
+  .stat-label { font-size: .68rem; text-transform: uppercase; letter-spacing: .8px; opacity: .7; margin-bottom: 2px; }
+  .stat-value { font-size: 1.35rem; }
+  .score-box { background: var(--score-bg); color: var(--score-text); border: 2px solid var(--score-bdr); }
+  .timer-box { background: var(--timer-bg); color: var(--timer-text); border: 2px solid var(--timer-bdr); }
+  .timer-box.urgent { background: #ffe5e5; color: var(--bad); border-color: #f5a0a0; }
+
+  /* ── question ───────────────────────────── */
+  .question-box {
+    background: linear-gradient(145deg, #004d40, #00796b);
+    color: #fff; border-radius: 18px;
+    padding: 22px 16px; margin-bottom: 18px;
+    box-shadow: 0 6px 22px rgba(0,77,64,.35);
+    min-height: 96px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+  }
+  .q-label { font-size: .8rem; opacity: .78; margin-bottom: 8px; }
+  .q-expr  { font-family: Georgia,'Times New Roman',serif; font-size: 1.7rem;
+              font-weight: bold; font-style: italic; line-height: 1.2; }
+  .q-sub   { font-size: .95rem; margin-top: 8px; opacity: .88; }
+
+  /* ── answers ────────────────────────────── */
+  .answers { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .ans-btn {
+    border: 2px solid #b2dfdb; background: #f1faf9; color: var(--text);
+    border-radius: 14px; padding: 14px 8px;
+    font-size: 1.1rem; font-weight: 700;
+    font-family: Georgia,'Times New Roman',serif; font-style: italic;
+    cursor: pointer; transition: background .15s, border-color .15s, transform .1s;
+    line-height: 1.2;
+  }
+  .ans-btn:hover:not(:disabled) { background: #b2dfdb; border-color: var(--primary); transform: translateY(-1px); }
+  .ans-btn.correct { background: #c8f5d8; border-color: var(--good); color: var(--good); }
+  .ans-btn.wrong   { background: #ffe0e0; border-color: var(--bad);  color: var(--bad); }
+
+  /* ── feedback + next ────────────────────── */
+  .feedback { font-size: 1rem; font-weight: 700; min-height: 24px; margin-bottom: 10px; }
+  .feedback.ok  { color: var(--good); }
+  .feedback.err { color: var(--bad); }
+  .next-btn {
+    width: 100%; border: none;
+    background: linear-gradient(135deg, #00695c, #00bcd4);
+    color: #fff; border-radius: 14px;
+    padding: 13px; font-size: 1rem; font-weight: 800;
+    cursor: pointer; transition: opacity .15s, transform .15s;
+    margin-bottom: 16px;
+  }
+  .next-btn:hover:not(:disabled) { opacity: .9; transform: translateY(-1px); }
+
+  /* ── result screen ──────────────────────── */
+  .result-screen { display: none; text-align: center; padding: 12px 0; }
+  .result-emoji  { font-size: 3rem; margin-bottom: 8px; }
+  .result-score  {
+    font-size: 3rem; font-weight: 900; margin: 8px 0 4px;
+    background: linear-gradient(135deg,#004d40,#00bcd4);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .result-label  { font-size: .95rem; color: #555; margin-bottom: 20px; }
+  .restart-btn {
+    border: none; background: linear-gradient(135deg,#004d40,#26c6da);
+    color: #fff; border-radius: 14px; padding: 13px 32px;
+    font-size: 1rem; font-weight: 800; cursor: pointer;
+  }
+
+  /* ── back link ──────────────────────────── */
+  .back-link {
+    display: block; margin-top: 6px;
+    font-size: .8rem; color: #888; text-decoration: none;
+    font-style: italic;
+  }
+  .back-link:hover { color: var(--primary); }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Wyrażenia algebraiczne</h1>
+
+  <!-- mode tabs -->
+  <div class="mode-row" id="modeRow">
+    <button class="tab active-obl" onclick="setMode('oblicz')">Oblicz</button>
+    <button class="tab"            onclick="setMode('uprość')">Uprość</button>
+    <button class="tab"            onclick="setMode('rozwiń')">Rozwiń</button>
+  </div>
+
+  <!-- stats -->
+  <div class="stats">
+    <div class="stat-box score-box">
+      <div class="stat-label">Wynik</div>
+      <div class="stat-value" id="score">0</div>
+    </div>
+    <div class="stat-box timer-box" id="timerBox">
+      <div class="stat-label">Czas</div>
+      <div class="stat-value" id="timer">60</div>
+    </div>
+  </div>
+
+  <!-- game -->
+  <div id="gameArea">
+    <div class="question-box">
+      <div class="q-label" id="qLabel"></div>
+      <div class="q-expr"  id="qExpr"></div>
+      <div class="q-sub"   id="qSub"></div>
+    </div>
+
+    <div class="answers">
+      <button class="ans-btn" id="a0" onclick="selectAnswer(0)"></button>
+      <button class="ans-btn" id="a1" onclick="selectAnswer(1)"></button>
+      <button class="ans-btn" id="a2" onclick="selectAnswer(2)"></button>
+      <button class="ans-btn" id="a3" onclick="selectAnswer(3)"></button>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+    <button class="next-btn" id="nextBtn" onclick="nextQ()" disabled>Następne →</button>
+  </div>
+
+  <!-- result -->
+  <div class="result-screen" id="resultScreen">
+    <div class="result-emoji" id="resultEmoji">🎉</div>
+    <div class="result-score" id="resultScore"></div>
+    <div class="result-label" id="resultLabel"></div>
+    <button class="restart-btn" onclick="restart()">Zagraj jeszcze raz</button>
+  </div>
+
+  <a class="back-link" href="../matapki.html">← Powrót do MatApek</a>
+</div>
+
+<script>
+/* ── helpers ─────────────────────────────── */
+const ri  = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
+const rp  = (arr) => arr[Math.floor(Math.random() * arr.length)];
+const shuf = arr => {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+};
+const VARS = ['x', 'a', 'n', 'm'];
+
+/* ── state ───────────────────────────────── */
+let mode = 'oblicz', score = 0, timeLeft = 60;
+let timerInterval = null, answered = false, correctIdx = -1;
+
+/* ── mode switching ──────────────────────── */
+function setMode(m) {
+  if (timerInterval) clearInterval(timerInterval);
+  mode = m; score = 0;
+  document.getElementById('score').textContent = '0';
+  document.getElementById('gameArea').style.display = '';
+  document.getElementById('resultScreen').style.display = 'none';
+
+  const modeNames = ['oblicz', 'uprość', 'rozwiń'];
+  const activeClasses = ['active-obl', 'active-upr', 'active-roz'];
+  document.querySelectorAll('#modeRow .tab').forEach((t, i) => {
+    t.className = 'tab' + (modeNames[i] === m ? ' ' + activeClasses[i] : '');
+  });
+
+  startTimer();
+  nextQ();
+}
+
+/* ── timer ───────────────────────────────── */
+function startTimer() {
+  timeLeft = 60;
+  document.getElementById('timer').textContent = 60;
+  document.getElementById('timerBox').classList.remove('urgent');
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    document.getElementById('timer').textContent = timeLeft;
+    if (timeLeft <= 10) document.getElementById('timerBox').classList.add('urgent');
+    if (timeLeft <= 0) { clearInterval(timerInterval); showResult(); }
+  }, 1000);
+}
+
+/* ── question generators ─────────────────── */
+
+function genOblicz() {
+  const v = rp(VARS);
+  const t = ri(0, 4);
+  let expr, sub, correct;
+
+  if (t === 0) {          // ax + b
+    const a = ri(2,8), b = ri(1,12), n = ri(2,8);
+    expr = `${a}${v} + ${b}`;  sub = `dla ${v} = ${n}`;  correct = a*n + b;
+  } else if (t === 1) {   // ax − b
+    const a = ri(2,8), b = ri(1,8), n = ri(2,8);
+    expr = `${a}${v} − ${b}`;  sub = `dla ${v} = ${n}`;  correct = a*n - b;
+  } else if (t === 2) {   // ax + bx
+    const a = ri(2,6), b = ri(2,6), n = ri(2,8);
+    expr = `${a}${v} + ${b}${v}`;  sub = `dla ${v} = ${n}`;  correct = (a+b)*n;
+  } else if (t === 3) {   // v² + b
+    const n = ri(2,7), b = ri(1,10);
+    expr = `${v}² + ${b}`;  sub = `dla ${v} = ${n}`;  correct = n*n + b;
+  } else {                // a(v + b)
+    const a = ri(2,6), b = ri(1,8), n = ri(2,6);
+    expr = `${a}(${v} + ${b})`;  sub = `dla ${v} = ${n}`;  correct = a*(n+b);
+  }
+
+  const set = new Set([correct]);
+  const deltas = [-3,-2,-1,1,2,3,5,-5,10,-10];
+  while (set.size < 4) set.add(correct + rp(deltas));
+  return { label: 'Oblicz wartość wyrażenia:', expr, sub, correct, opts: shuf([...set]) };
+}
+
+function genUpros() {
+  const v1 = rp(['x','a','n']), v2 = rp(['y','b','m']);
+  const t = ri(0, 4);
+  let expr, correct, wrongs;
+
+  if (t === 0) {           // av + bv → (a+b)v
+    const a = ri(2,7), b = ri(2,7);
+    expr = `${a}${v1} + ${b}${v1}`;
+    correct = `${a+b}${v1}`;
+    wrongs  = [`${a}${v1}`, `${a*b}${v1}`, `${a+b}${v1}²`];
+  } else if (t === 1) {    // av − bv + c → (a-b)v + c
+    const a = ri(4,9), b = ri(1,a-1), c = ri(1,9);
+    expr = `${a}${v1} − ${b}${v1} + ${c}`;
+    correct = `${a-b}${v1} + ${c}`;
+    wrongs  = [`${a+b}${v1} + ${c}`, `${a-b}${v1} − ${c}`, `${a-b+c}${v1}`];
+  } else if (t === 2) {    // av + bv2 + cv → (a+c)v + bv2
+    const a = ri(2,5), c = ri(1,4), b = ri(2,6);
+    expr = `${a}${v1} + ${b}${v2} + ${c}${v1}`;
+    correct = `${a+c}${v1} + ${b}${v2}`;
+    wrongs  = [`${a}${v1} + ${b+c}${v2}`, `${a+b+c}${v1}`, `${a+c}${v1} − ${b}${v2}`];
+  } else if (t === 3) {    // av + bv2 − cv → (a-c)v + bv2
+    const a = ri(4,8), c = ri(1,a-1), b = ri(2,6);
+    expr = `${a}${v1} + ${b}${v2} − ${c}${v1}`;
+    correct = `${a-c}${v1} + ${b}${v2}`;
+    wrongs  = [`${a+c}${v1} + ${b}${v2}`, `${a-c}${v1} − ${b}${v2}`, `${a}${v1} + ${b-c > 0 ? b-c : b+c}${v2}`];
+  } else {                 // av1 + bv2 + cv1 + dv2 → (a+c)v1 + (b+d)v2
+    const a = ri(2,5), c = ri(1,4), b = ri(2,5), d = ri(1,4);
+    expr = `${a}${v1} + ${b}${v2} + ${c}${v1} + ${d}${v2}`;
+    correct = `${a+c}${v1} + ${b+d}${v2}`;
+    wrongs  = [`${a+b+c+d}${v1}`, `${a+c}${v1} − ${b+d}${v2}`, `${a}${v1} + ${b+d}${v2}`];
+  }
+
+  return { label: 'Uprość wyrażenie:', expr, sub: '', correct, opts: shuf([correct, ...wrongs]) };
+}
+
+function genRozwin() {
+  const v = rp(VARS);
+  const t = ri(0, 3);
+  let expr, correct, wrongs;
+
+  if (t === 0) {          // a(v + b) → av + ab
+    const a = ri(2,8), b = ri(2,9);
+    expr = `${a}(${v} + ${b})`;
+    correct = `${a}${v} + ${a*b}`;
+    wrongs  = [`${a}${v} + ${b}`, `${a+b}${v}`, `${a}${v} − ${a*b}`];
+  } else if (t === 1) {   // a(v − b) → av − ab
+    const a = ri(2,8), b = ri(2,9);
+    expr = `${a}(${v} − ${b})`;
+    correct = `${a}${v} − ${a*b}`;
+    wrongs  = [`${a}${v} − ${b}`, `${a}${v} + ${a*b}`, `${(a-b) > 0 ? a-b : a+b}${v}`];
+  } else if (t === 2) {   // a(bv + c) → abv + ac
+    const a = ri(2,5), b = ri(2,5), c = ri(2,8);
+    expr = `${a}(${b}${v} + ${c})`;
+    correct = `${a*b}${v} + ${a*c}`;
+    wrongs  = [`${a}${v} + ${a*c}`, `${a*b}${v} + ${c}`, `${a+b}${v} + ${a*c}`];
+  } else {                // a(bv − c) → abv − ac
+    const a = ri(2,5), b = ri(2,5), c = ri(2,8);
+    expr = `${a}(${b}${v} − ${c})`;
+    correct = `${a*b}${v} − ${a*c}`;
+    wrongs  = [`${a}${v} − ${a*c}`, `${a*b}${v} − ${c}`, `${a*b}${v} + ${a*c}`];
+  }
+
+  return { label: 'Rozwiń nawias:', expr, sub: '', correct, opts: shuf([correct, ...wrongs]) };
+}
+
+/* ── next question ───────────────────────── */
+function nextQ() {
+  answered = false;
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('nextBtn').disabled = true;
+  document.querySelectorAll('.ans-btn').forEach(b => { b.className = 'ans-btn'; b.disabled = false; });
+
+  const q = mode === 'oblicz' ? genOblicz()
+          : mode === 'uprość' ? genUpros()
+          : genRozwin();
+
+  document.getElementById('qLabel').textContent = q.label;
+  document.getElementById('qExpr').textContent  = q.expr;
+  document.getElementById('qSub').textContent   = q.sub;
+  q.opts.forEach((opt, i) => { document.getElementById('a' + i).textContent = opt; });
+
+  correctIdx = q.opts.indexOf(q.correct);
+}
+
+/* ── select answer ───────────────────────── */
+function selectAnswer(idx) {
+  if (answered) return;
+  answered = true;
+  document.querySelectorAll('.ans-btn').forEach(b => b.disabled = true);
+
+  if (idx === correctIdx) {
+    document.getElementById('a' + idx).classList.add('correct');
+    score++;
+    document.getElementById('score').textContent = score;
+    document.getElementById('feedback').textContent = '✓ Dobrze!';
+    document.getElementById('feedback').className = 'feedback ok';
+  } else {
+    document.getElementById('a' + idx).classList.add('wrong');
+    document.getElementById('a' + correctIdx).classList.add('correct');
+    document.getElementById('feedback').textContent = '✗ Błąd!';
+    document.getElementById('feedback').className = 'feedback err';
+  }
+
+  document.getElementById('nextBtn').disabled = false;
+}
+
+/* ── result ──────────────────────────────── */
+function showResult() {
+  document.getElementById('gameArea').style.display = 'none';
+  document.getElementById('resultScreen').style.display = '';
+
+  const emojis = ['💪', '👍', '🌟', '🏆'];
+  const labels = ['Ćwicz dalej, dasz radę!', 'Niezły wynik!', 'Świetnie!', 'Mistrz algebry!'];
+  const tier = score < 5 ? 0 : score < 10 ? 1 : score < 16 ? 2 : 3;
+
+  document.getElementById('resultEmoji').textContent = emojis[tier];
+  document.getElementById('resultScore').textContent = score + ' pkt';
+  document.getElementById('resultLabel').textContent = labels[tier];
+}
+
+function restart() { setMode(mode); }
+
+/* ── init ────────────────────────────────── */
+setMode('oblicz');
+</script>
+</body>
+</html>

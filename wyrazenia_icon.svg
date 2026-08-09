@@ -1,0 +1,31 @@
+<svg viewBox="0 0 397 280" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#004d40"/>
+      <stop offset="100%" stop-color="#00bcd4"/>
+    </linearGradient>
+  </defs>
+  <rect width="397" height="280" fill="url(#bg)"/>
+
+  <!-- watermark -->
+  <text x="210" y="210" font-size="230" fill="rgba(255,255,255,0.06)"
+        text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-weight="bold">x</text>
+
+  <!-- divider -->
+  <line x1="30" y1="142" x2="367" y2="142"
+        stroke="rgba(255,255,255,0.28)" stroke-width="1.5" stroke-dasharray="8,4"/>
+
+  <!-- subtitle label -->
+  <text x="198" y="24" font-family="'Courier New',monospace" font-size="13"
+        fill="rgba(255,255,255,0.58)" text-anchor="middle" font-style="italic">wyrażenia algebraiczne</text>
+
+  <!-- top: oblicz -->
+  <text x="198" y="97" font-family="Georgia,'Times New Roman',serif"
+        font-size="44" fill="white" text-anchor="middle" font-weight="bold" font-style="italic">3x + 5 = ?</text>
+
+  <!-- bottom: rozwiń -->
+  <text x="198" y="185" font-family="Georgia,'Times New Roman',serif"
+        font-size="32" fill="white" text-anchor="middle" font-weight="bold" font-style="italic">2(a &#x2212; 3)</text>
+  <text x="198" y="238" font-family="Georgia,'Times New Roman',serif"
+        font-size="28" fill="rgba(255,255,255,0.82)" text-anchor="middle" font-weight="bold" font-style="italic">= 2a &#x2212; 6</text>
+</svg>
