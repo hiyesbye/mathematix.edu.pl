@@ -17,64 +17,56 @@
   <rect width="397" height="280" fill="url(#bg)"/>
 
   <!-- Watermark -->
-  <text x="200" y="195" font-size="210" fill="rgba(255,255,255,0.05)"
+  <text x="200" y="175" font-size="210" fill="rgba(255,255,255,0.05)"
         text-anchor="middle" font-family="Georgia,serif" font-weight="bold">=</text>
 
-  <!-- Label -->
-  <text x="198" y="21" font-family="'Courier New',monospace" font-size="12"
-        fill="rgba(255,255,255,0.55)" text-anchor="middle" font-style="italic">równania</text>
-
-  <!-- TOP EQUATION: 3x + 2 = 11 -->
-  <text y="73" font-family="Georgia,'Times New Roman',serif"
+  <!-- TOP EQUATION: 3x + 2 = 11 (no label, no divider) -->
+  <text y="50" font-family="Georgia,'Times New Roman',serif"
         font-size="28" font-weight="bold" font-style="italic">
     <tspan x="116" fill="#FFE055">3x</tspan><tspan fill="white"> + 2 = 11</tspan>
   </text>
-  <!-- Underline under 3x (getBBox: x=115, w=35) -->
-  <line x1="113" y1="87" x2="152" y2="87" stroke="#FFE055" stroke-width="4" stroke-linecap="round"/>
-
-  <!-- Divider -->
-  <line x1="28" y1="113" x2="369" y2="113"
-        stroke="rgba(255,255,255,0.28)" stroke-width="1.5" stroke-dasharray="8,4"/>
+  <!-- Underline under +2 (estimate: x≈157–203, y=64) -->
+  <line x1="157" y1="64" x2="205" y2="64" stroke="#FFE055" stroke-width="4" stroke-linecap="round"/>
 
   <!-- Upper arrows: −2 applied to both sides -->
-  <path d="M 162,120 Q 162,132 177,145"
+  <path d="M 162,75 Q 162,92 177,110"
         fill="none" stroke="#FFE055" stroke-width="2" marker-end="url(#ay)"/>
-  <path d="M 234,120 Q 234,132 221,145"
+  <path d="M 234,75 Q 234,92 221,110"
         fill="none" stroke="#FFE055" stroke-width="2" marker-end="url(#ay)"/>
 
-  <!-- −2 labels -->
-  <text x="136" y="134" font-family="Georgia,'Times New Roman',serif"
-        font-size="13" font-weight="bold" font-style="italic"
-        fill="rgba(255,218,80,0.88)" text-anchor="middle">&#x2212;2</text>
-  <text x="260" y="134" font-family="Georgia,'Times New Roman',serif"
-        font-size="13" font-weight="bold" font-style="italic"
-        fill="rgba(255,218,80,0.88)" text-anchor="middle">&#x2212;2</text>
+  <!-- −2 labels: white, larger -->
+  <text x="128" y="96" font-family="Georgia,'Times New Roman',serif"
+        font-size="16" font-weight="bold" font-style="italic"
+        fill="white" text-anchor="middle">&#x2212;2</text>
+  <text x="268" y="96" font-family="Georgia,'Times New Roman',serif"
+        font-size="16" font-weight="bold" font-style="italic"
+        fill="white" text-anchor="middle">&#x2212;2</text>
 
-  <!-- Intermediate equation: 3x = 9 -->
-  <text x="198" y="167" font-family="Georgia,'Times New Roman',serif"
+  <!-- Intermediate equation: 3x = 9 (coefficient 3 in mint, x in yellow) -->
+  <text x="198" y="133" font-family="Georgia,'Times New Roman',serif"
         font-size="22" font-weight="bold" font-style="italic"
         fill="white" text-anchor="middle">
-    <tspan fill="#FFE055">3x</tspan><tspan> = 9</tspan>
+    <tspan fill="#7EFFD4">3</tspan><tspan fill="#FFE055">x</tspan><tspan fill="white"> = 9</tspan>
   </text>
-  <!-- Underline under 3x (getBBox: x=163, w=29) -->
-  <line x1="161" y1="179" x2="194" y2="179" stroke="#FFE055" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Underline under 3x in mint (getBBox: x=163, w=29) -->
+  <line x1="161" y1="145" x2="194" y2="145" stroke="#7EFFD4" stroke-width="3.5" stroke-linecap="round"/>
 
   <!-- Lower arrows: ÷3 applied to both sides -->
-  <path d="M 162,181 Q 172,196 182,210"
+  <path d="M 162,147 Q 172,162 182,178"
         fill="none" stroke="#7EFFD4" stroke-width="2" marker-end="url(#am)"/>
-  <path d="M 234,181 Q 224,196 214,210"
+  <path d="M 234,147 Q 224,162 214,178"
         fill="none" stroke="#7EFFD4" stroke-width="2" marker-end="url(#am)"/>
 
   <!-- ÷3 labels -->
-  <text x="137" y="199" font-family="Georgia,'Times New Roman',serif"
-        font-size="13" font-weight="bold" font-style="italic"
-        fill="rgba(126,255,212,0.88)" text-anchor="middle">&#xF7;3</text>
-  <text x="259" y="199" font-family="Georgia,'Times New Roman',serif"
-        font-size="13" font-weight="bold" font-style="italic"
-        fill="rgba(126,255,212,0.88)" text-anchor="middle">&#xF7;3</text>
+  <text x="128" y="164" font-family="Georgia,'Times New Roman',serif"
+        font-size="14" font-weight="bold" font-style="italic"
+        fill="rgba(126,255,212,0.95)" text-anchor="middle">&#xF7;3</text>
+  <text x="268" y="164" font-family="Georgia,'Times New Roman',serif"
+        font-size="14" font-weight="bold" font-style="italic"
+        fill="rgba(126,255,212,0.95)" text-anchor="middle">&#xF7;3</text>
 
   <!-- Final answer: x = 3 -->
-  <text x="198" y="230" font-family="Georgia,'Times New Roman',serif"
+  <text x="198" y="207" font-family="Georgia,'Times New Roman',serif"
         font-size="28" font-weight="bold" font-style="italic"
         fill="white" text-anchor="middle">
     <tspan fill="#FFE055">x</tspan><tspan> = 3</tspan>
