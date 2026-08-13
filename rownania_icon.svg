@@ -1,0 +1,82 @@
+<svg viewBox="0 0 397 280" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5c0000"/>
+      <stop offset="100%" stop-color="#c62828"/>
+    </linearGradient>
+    <marker id="ay" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#FFE055"/>
+    </marker>
+    <marker id="am" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7EFFD4"/>
+    </marker>
+  </defs>
+
+  <rect width="397" height="280" fill="url(#bg)"/>
+
+  <!-- Watermark -->
+  <text x="200" y="195" font-size="210" fill="rgba(255,255,255,0.05)"
+        text-anchor="middle" font-family="Georgia,serif" font-weight="bold">=</text>
+
+  <!-- Label -->
+  <text x="198" y="21" font-family="'Courier New',monospace" font-size="12"
+        fill="rgba(255,255,255,0.55)" text-anchor="middle" font-style="italic">równania</text>
+
+  <!-- TOP EQUATION: 3x + 2 = 11 -->
+  <text y="73" font-family="Georgia,'Times New Roman',serif"
+        font-size="28" font-weight="bold" font-style="italic">
+    <tspan x="116" fill="#FFE055">3x</tspan><tspan fill="white"> + 2 = 11</tspan>
+  </text>
+  <!-- Underline under 3x (getBBox: x=115, w=35) -->
+  <line x1="113" y1="87" x2="152" y2="87" stroke="#FFE055" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- Divider -->
+  <line x1="28" y1="113" x2="369" y2="113"
+        stroke="rgba(255,255,255,0.28)" stroke-width="1.5" stroke-dasharray="8,4"/>
+
+  <!-- Upper arrows: −2 applied to both sides -->
+  <path d="M 162,120 Q 162,132 177,145"
+        fill="none" stroke="#FFE055" stroke-width="2" marker-end="url(#ay)"/>
+  <path d="M 234,120 Q 234,132 221,145"
+        fill="none" stroke="#FFE055" stroke-width="2" marker-end="url(#ay)"/>
+
+  <!-- −2 labels -->
+  <text x="136" y="134" font-family="Georgia,'Times New Roman',serif"
+        font-size="13" font-weight="bold" font-style="italic"
+        fill="rgba(255,218,80,0.88)" text-anchor="middle">&#x2212;2</text>
+  <text x="260" y="134" font-family="Georgia,'Times New Roman',serif"
+        font-size="13" font-weight="bold" font-style="italic"
+        fill="rgba(255,218,80,0.88)" text-anchor="middle">&#x2212;2</text>
+
+  <!-- Intermediate equation: 3x = 9 -->
+  <text x="198" y="167" font-family="Georgia,'Times New Roman',serif"
+        font-size="22" font-weight="bold" font-style="italic"
+        fill="white" text-anchor="middle">
+    <tspan fill="#FFE055">3x</tspan><tspan> = 9</tspan>
+  </text>
+  <!-- Underline under 3x (getBBox: x=163, w=29) -->
+  <line x1="161" y1="179" x2="194" y2="179" stroke="#FFE055" stroke-width="3.5" stroke-linecap="round"/>
+
+  <!-- Lower arrows: ÷3 applied to both sides -->
+  <path d="M 162,181 Q 172,196 182,210"
+        fill="none" stroke="#7EFFD4" stroke-width="2" marker-end="url(#am)"/>
+  <path d="M 234,181 Q 224,196 214,210"
+        fill="none" stroke="#7EFFD4" stroke-width="2" marker-end="url(#am)"/>
+
+  <!-- ÷3 labels -->
+  <text x="137" y="199" font-family="Georgia,'Times New Roman',serif"
+        font-size="13" font-weight="bold" font-style="italic"
+        fill="rgba(126,255,212,0.88)" text-anchor="middle">&#xF7;3</text>
+  <text x="259" y="199" font-family="Georgia,'Times New Roman',serif"
+        font-size="13" font-weight="bold" font-style="italic"
+        fill="rgba(126,255,212,0.88)" text-anchor="middle">&#xF7;3</text>
+
+  <!-- Final answer: x = 3 -->
+  <text x="198" y="230" font-family="Georgia,'Times New Roman',serif"
+        font-size="28" font-weight="bold" font-style="italic"
+        fill="white" text-anchor="middle">
+    <tspan fill="#FFE055">x</tspan><tspan> = 3</tspan>
+  </text>
+</svg>

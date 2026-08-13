@@ -1,0 +1,3158 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#f3e5f5">
+<title>Równania</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f3e5f5; --card: #fff; --text: #1a0030;
+  --score-bg: #e8f5e9; --score-text: #1b5e20; --score-bdr: #a5d6a7;
+  --timer-bg: #f0e8ff; --timer-text: #4527a0; --timer-bdr: #c8aaf5;
+  --mod-dark: #4527a0; --mod-mid: #7c4dff; --mod-light: #ede7f6;
+  --mod-bg: #ede7f6; --mod-shadow: rgba(69,39,160,.2);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: var(--bg);
+  font-family: "Segoe UI", Verdana, Arial, sans-serif; color: var(--text); }
+body { display: flex; align-items: center; justify-content: center;
+  min-height: 100vh; padding: 12px; }
+.card {
+  background: var(--card); width: 100%; max-width: 480px;
+  border-radius: 24px; padding: 22px 20px 26px;
+  box-shadow: 0 8px 36px rgba(69,39,160,.14), 0 2px 8px rgba(69,39,160,.08);
+}
+.app-title {
+  font-family: 'Nunito', "Segoe UI", sans-serif;
+  font-size: 1.55rem; font-weight: 900; letter-spacing: 3px;
+  text-align: center; margin: 0 0 14px; padding: 13px 20px;
+  background: linear-gradient(135deg, #5c0000 0%, #b71c1c 55%, #ef5350 100%);
+  border-radius: 16px; color: #fff;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.45), 0 0 28px rgba(255,120,120,0.28);
+  box-shadow: 0 4px 22px rgba(183,28,28,0.45), 0 1px 4px rgba(0,0,0,0.2);
+}
+.tabs {
+  display: flex; gap: 4px; background: var(--mod-bg);
+  border-radius: 15px; padding: 5px 6px; margin-bottom: 14px;
+}
+/* ── Section-box (label + row of buttons) ── */
+.section-box {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 5px;
+  background: var(--mod-bg); border-radius: 14px; padding: 5px 6px; margin-bottom: 12px;
+}
+.section-label {
+  flex: 0 0 auto;
+  background: linear-gradient(135deg, var(--mod-dark), var(--mod-mid));
+  color: #fff; font-size: .72rem; font-weight: 700; padding: 5px 10px; border-radius: 8px;
+  white-space: nowrap; cursor: default; user-select: none;
+  box-shadow: 0 2px 6px var(--mod-shadow);
+}
+/* ── Diff screen (Challenge) ── */
+.diff-screen { padding: 2px 0 6px; }
+.diff-heading { font-size: 1rem; font-weight: 700; margin-bottom: 12px; opacity: .85; text-align: center; }
+.diff-buttons { display: flex; flex-direction: column; gap: 10px; }
+.diff-btn {
+  display: flex; align-items: center; gap: 14px; width: 100%;
+  border: none; border-radius: 14px; padding: 13px 16px; cursor: pointer;
+  font-family: inherit; color: #fff; font-weight: 700; transition: filter .15s, transform .06s;
+}
+.diff-btn:hover { filter: brightness(1.08); }
+.diff-btn:active { transform: scale(.97); }
+.diff-icon { font-size: 1.8rem; line-height: 1; }
+.diff-info { display: flex; flex-direction: column; gap: 2px; }
+.diff-name { font-size: 1rem; }
+.diff-desc { font-size: .76rem; opacity: .88; font-weight: 600; }
+.diff-easy   { background: linear-gradient(135deg,#1e9e5a,#38d68a); box-shadow: 0 4px 14px rgba(30,158,90,.3); }
+.diff-medium { background: linear-gradient(135deg,#c07800,#f5c030); box-shadow: 0 4px 14px rgba(192,120,0,.3); }
+.diff-hard   { background: linear-gradient(135deg,#d64040,#f07070); box-shadow: 0 4px 14px rgba(214,64,64,.3); }
+/* ── Timer countdown states ── */
+.timer-box.warn   { background: #ffe0cc !important; color: #c04000 !important; border-color: #ffb480 !important; }
+.timer-box.danger { background: #ffd6d6 !important; color: #c00000 !important; border-color: #ff9090 !important;
+  animation: timerPulse .5s ease-in-out infinite alternate; }
+@keyframes timerPulse { from { transform:scale(1); } to { transform:scale(1.05); } }
+.tab {
+  flex: 1; border: none; background: transparent; border-radius: 11px;
+  padding: 8px 4px; font-size: .68rem; font-weight: 700; color: var(--mod-mid);
+  cursor: pointer; transition: background .18s, color .18s;
+  line-height: 1.25; text-align: center; font-family: inherit;
+}
+.tab:hover { background: var(--mod-light); }
+.tab.active {
+  background: linear-gradient(135deg, var(--mod-dark), var(--mod-mid));
+  color: #fff; box-shadow: 0 3px 10px var(--mod-shadow);
+}
+.stats { display: flex; gap: 10px; margin-bottom: 14px; }
+.stat-box {
+  flex: 1; border-radius: 14px; padding: 10px 6px;
+  font-weight: 700; text-align: center;
+  background: var(--score-bg); color: var(--score-text); border: 2px solid var(--score-bdr);
+}
+.timer-box { background: var(--timer-bg); color: var(--timer-text); border: 2px solid var(--timer-bdr); transition: background .3s, color .3s; }
+.stat-label { font-size: .7rem; text-transform: uppercase; letter-spacing: .8px; opacity: .7; margin-bottom: 2px; }
+.stat-value { font-size: 1.35rem; }
+.question-box {
+  background: linear-gradient(145deg, var(--mod-dark), var(--mod-mid)); color: #fff;
+  border-radius: 18px; padding: 18px 14px 16px; text-align: center; margin-bottom: 14px;
+  position: relative; overflow: hidden; transition: background .3s;
+}
+#m6-fill-area {
+  background: linear-gradient(145deg, var(--mod-dark), var(--mod-mid)); color: #fff;
+  border-radius: 0 0 18px 18px; padding: 10px 14px 14px; text-align: center;
+  margin-top: -20px; position: relative;
+}
+.question-box.step2 {
+  background: linear-gradient(145deg, #0d47a1, #1976d2);
+}
+.q-label { font-size: .76rem; font-weight: 600; opacity: .8; margin-bottom: 8px; position: relative; z-index: 1; }
+.question {
+  font-family: "Bahnschrift","DIN Alternate","Trebuchet MS",sans-serif;
+  font-size: clamp(1rem, 4.5vw, 1.6rem); font-weight: 700; line-height: 1.5;
+  position: relative; z-index: 1;
+}
+
+/* ── Kratki (moduł 1) ── */
+.eq-input-row {
+  display: flex; align-items: center; justify-content: center;
+  gap: 6px; flex-wrap: wrap; margin-bottom: 12px; min-height: 56px;
+}
+.kratka {
+  width: 56px; height: 50px;
+  border: 2.5px solid var(--mod-light); border-radius: 10px;
+  font-size: 1.15rem; font-weight: 700; text-align: center;
+  font-family: "Bahnschrift","DIN Alternate","Trebuchet MS",sans-serif;
+  color: var(--text); background: #fafafa; outline: none;
+  transition: border-color .2s, box-shadow .2s;
+  -moz-appearance: textfield;
+}
+.kratka::-webkit-outer-spin-button,
+.kratka::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.kratka:focus { border-color: var(--mod-mid); box-shadow: 0 0 0 3px rgba(124,77,255,.15); }
+.kratka:disabled { opacity: .55; }
+.kratka.narrow { width: 44px; height: 44px; font-size: 1rem; }
+.eq-letter {
+  font-size: 1.6rem; font-weight: 700; line-height: 1;
+  font-family: "Bahnschrift","DIN Alternate","Trebuchet MS",sans-serif;
+  color: var(--text);
+}
+.eq-fixed { font-size: 1.1rem; font-weight: 700; color: #555; white-space: nowrap; }
+.frac-input { display: flex; flex-direction: column; align-items: center; }
+.frac-bar { width: 44px; height: 2.5px; background: var(--text); margin: 2px 0; }
+.sign-btn {
+  min-width: 38px; height: 50px; padding: 0 8px;
+  font-size: 1.3rem; font-weight: 900; line-height: 1;
+  border: 2.5px solid #a5d6a7; border-radius: 10px;
+  background: #f1f8f1; color: #1b5e20;
+  cursor: pointer; transition: all .15s; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.sign-btn:hover { background: #c8e6c9; }
+.sign-btn.neg { background: #ffe8e8; border-color: #e57373; color: #c62828; }
+.sign-btn:disabled { opacity: .5; cursor: default; }
+
+/* ── Moduł 2 ── */
+.ans-row { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
+.ans-inp {
+  flex: 1; padding: 12px 14px; font-size: 1.1rem; font-weight: 700;
+  border: 2.5px solid var(--mod-light); border-radius: 14px; outline: none;
+  font-family: "Bahnschrift","DIN Alternate","Trebuchet MS",sans-serif;
+  color: var(--text); background: #fafafa; transition: border-color .2s;
+}
+.ans-inp:focus { border-color: var(--mod-mid); }
+.btn {
+  border: none; border-radius: 14px; padding: 12px 22px;
+  font-size: .95rem; font-weight: 700; cursor: pointer;
+  font-family: inherit; transition: opacity .18s, transform .1s;
+}
+.btn:active { transform: scale(.97); }
+.btn-primary { background: linear-gradient(135deg, var(--mod-dark), var(--mod-mid)); color: #fff; }
+.btn-primary:hover { opacity: .88; }
+.btn-next { background: var(--mod-light); color: var(--mod-dark); }
+.btn-next:hover { background: #d1c4e9; }
+.btn-row { display: flex; gap: 8px; }
+.m1-hint { font-size: .78rem; color: #888; text-align: center; margin-bottom: 10px; }
+.lv-row { display: flex; gap: 6px; margin-bottom: 12px; }
+.lv-btn {
+  flex: 1; border: 2px solid var(--mod-light); border-radius: 10px;
+  padding: 7px 4px; font-size: .78rem; font-weight: 700;
+  background: transparent; color: var(--mod-mid);
+  cursor: pointer; font-family: inherit; transition: all .15s;
+}
+.lv-btn:hover { background: var(--mod-light); }
+.lv-btn.active { background: var(--mod-mid); color: #fff; border-color: var(--mod-dark); }
+.eq-sup { font-size: 0.72rem; vertical-align: super; font-weight: 700; line-height: 0; }
+.eq-frac { display: inline-flex; flex-direction: column; align-items: center; margin: 0 4px; flex-shrink: 0; vertical-align: middle; }
+.eq-frac-num { border-bottom: 2.5px solid var(--mod-mid); padding: 2px 6px 5px; display: flex; align-items: center; gap: 4px; justify-content: center; min-width: 30px; }
+.eq-frac-den { padding: 5px 6px 2px; display: flex; align-items: center; gap: 4px; justify-content: center; }
+.kratka-pow {
+  width: 22px; height: 22px;
+  font-size: 0.68rem; font-weight: 700; text-align: center;
+  border: 2px solid #9575cd; border-radius: 6px;
+  background: #f3f0ff; color: #4527a0;
+  padding: 0; margin-left: 2px;
+  position: relative; bottom: 14px;
+  flex-shrink: 0;
+}
+.kratka-pow:focus { outline: none; border-color: var(--mod-mid); background: #ede7f6; }
+.kratka-dec {
+  width: 58px; height: 38px;
+  font-size: 1.05rem; font-weight: 700; text-align: center;
+  border: 2px solid var(--mod-mid); border-radius: 8px;
+  background: #f3f0ff; color: #4527a0;
+  padding: 0; margin: 0 3px;
+  flex-shrink: 0;
+}
+.kratka-dec:focus { outline: none; border-color: var(--mod-dark); background: #ede7f6; }
+.kratka-eq {
+  width: 100%; max-width: 320px; height: 42px;
+  font-size: 1.08rem; font-weight: 700; text-align: center;
+  border: 2px solid var(--mod-mid); border-radius: 8px;
+  background: #f3f0ff; color: #4527a0;
+  padding: 0 10px; box-sizing: border-box; flex-shrink: 0;
+}
+.kratka-eq:focus { outline: none; border-color: var(--mod-dark); background: #ede7f6; }
+.step-row {
+  width: 100%; display: flex; align-items: center; justify-content: center;
+  gap: 6px; flex-wrap: wrap; padding: 2px 0;
+}
+.step-label {
+  font-size: 0.75rem; color: #888; font-style: italic;
+  width: 100%; text-align: center; margin-bottom: 1px;
+}
+.feedback.step { display: block; background: #fff8e1; color: #e65100; border: 2px solid #ffb300; }
+.feedback {
+  border-radius: 14px; padding: 11px 14px; font-weight: 700;
+  text-align: center; margin-bottom: 12px; font-size: .93rem; display: none;
+}
+.feedback.good { display: block; background: #e8f5e9; color: #1b5e20; border: 2px solid #a5d6a7; }
+.feedback.bad  { display: block; background: #ffebee; color: #b71c1c; border: 2px solid #ef9a9a; }
+.feedback.bad .fb-hint { display: block; margin-top: 5px; font-size: 1.08rem; font-weight: 900; color: #c62828; letter-spacing: .02em; }
+.choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.choice-btn {
+  padding: 14px 8px; border-radius: 14px; border: 2.5px solid var(--mod-light);
+  background: #fafafa; font-size: 1.15rem; font-weight: 700; cursor: pointer;
+  font-family: "Bahnschrift","DIN Alternate","Trebuchet MS",sans-serif;
+  color: var(--text); transition: all .18s; text-align: center;
+}
+.choice-btn:hover:not(:disabled) { border-color: var(--mod-mid); background: var(--mod-bg); }
+.choice-btn.correct { background: #e8f5e9; border-color: #4caf50; color: #1b5e20; }
+.choice-btn.wrong   { background: #ffebee; border-color: #e53935; color: #b71c1c; }
+.choice-btn:disabled { cursor: default; }
+.module { display: none; }
+.module.active { display: block; }
+
+/* ── Animacje ── */
+.anim-layer {
+  position: absolute; inset: 0; z-index: 10;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none;
+}
+.correct-flash {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at center, rgba(40,220,100,.45) 0%, rgba(40,220,100,0) 70%);
+  animation: flashFade 1.3s ease-out forwards;
+}
+.wrong-flash {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at center, rgba(220,0,0,.4) 0%, rgba(220,0,0,0) 70%);
+  animation: flashFade 1.2s ease-out forwards;
+}
+@keyframes flashFade { 0%{opacity:0;} 15%{opacity:1;} 100%{opacity:0;} }
+.anim-correct-num {
+  font-size: 6rem; font-weight: 900; color: #fff; line-height: 1;
+  text-shadow: 0 0 10px #7fffb0, 0 0 25px #50ff80, 0 0 55px #20e860;
+  animation: correctPop 1.3s cubic-bezier(.22,1,.36,1) forwards;
+  position: relative; z-index: 2;
+}
+@keyframes correctPop {
+  0%   { opacity:0; transform:scale(.2) rotate(-8deg); }
+  28%  { opacity:1; transform:scale(1.18) rotate(2deg); }
+  60%  { transform:scale(.95) rotate(0); }
+  100% { opacity:0; transform:scale(1.1); }
+}
+.anim-big-x {
+  font-size: 6rem; font-weight: 900; color: #ff1a1a; line-height: 1;
+  position: absolute; z-index: 3;
+  animation: wrongGlow 1.2s ease-out forwards;
+}
+@keyframes wrongGlow {
+  0%   { opacity:0; transform:scale(.4); text-shadow:0 0 8px #f00,0 0 16px #f00; }
+  18%  { opacity:1; transform:scale(1.12); text-shadow:0 0 8px #f00,0 0 20px #f00,0 0 40px #f22,0 0 80px #f44; }
+  60%  { transform:scale(1.05); }
+  100% { opacity:0; transform:scale(1.2); }
+}
+.particle {
+  position: absolute; z-index: 3; font-size: 1.8rem; font-weight: 900; color: #fff;
+  pointer-events: none; animation: particleFly 1s ease-out forwards;
+  text-shadow: 0 0 8px rgba(80,255,140,.9), 0 0 18px rgba(80,255,140,.5);
+}
+@keyframes particleFly {
+  0%   { opacity:1; transform:translate(0,0) scale(1.1); }
+  100% { opacity:0; transform:var(--tx) scale(.2); }
+}
+
+/* ── Moduł 3 ── */
+.m3-step { font-size:.72rem; font-weight:700; text-align:center; color:rgba(255,255,255,.75); margin-bottom:10px; letter-spacing:.5px; position:relative; z-index:1; }
+.m3-eq-row {
+  display:flex; align-items:center; justify-content:center; gap:6px; flex-wrap:wrap;
+  font-family:"Bahnschrift","DIN Alternate","Trebuchet MS",sans-serif;
+  font-size:clamp(1.3rem,5.5vw,2rem); font-weight:700; color:#fff; min-height:2.6rem;
+  position:relative; z-index:1;
+}
+.m3-term-btn {
+  background:rgba(255,255,255,.12); border:2.5px solid rgba(255,255,255,.38);
+  border-radius:10px; padding:3px 10px; color:#fff; cursor:pointer;
+  font-family:inherit; font-size:inherit; font-weight:inherit;
+  transition:background .15s, border-color .15s, transform .12s;
+}
+.m3-term-btn:hover { background:rgba(255,255,255,.28); border-color:rgba(255,255,255,.85); transform:scale(1.07); }
+.m3-term-sel { background:rgba(255,213,0,.22); border:2.5px solid rgba(255,213,0,.78); border-radius:10px; padding:3px 10px; color:#fff; }
+.m3-term-static { color:#fff; }
+.m3-sep { color:rgba(255,255,255,.65); padding:0 3px; }
+.m3-sign-sep { color:rgba(255,255,255,.85); padding:0 4px; font-size:1.15em; }
+.m3-rhs { color:#fff; }
+.m3-bar { color:rgba(255,255,255,.5); font-size:1.5em; margin:0 4px; line-height:1; }
+.m3-op { background:rgba(255,255,255,.18); border-radius:10px; padding:2px 12px; color:#fff8; font-weight:900; }
+.m3-hint { text-align:center; color:rgba(255,255,255,.68); font-size:.8rem; font-weight:600; margin-top:10px; position:relative; z-index:1; }
+.m3-undo-inline { background:none; border:none; color:rgba(255,255,255,.55); font-size:.72rem; font-weight:700; cursor:pointer; padding:0; margin-right:8px; vertical-align:middle; letter-spacing:.01em; }
+.m3-undo-inline:not([disabled]):hover { color:#fff; }
+.m3-undo-inline[disabled] { opacity:.25; cursor:default; }
+.m3lrm-chip-row { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:center; gap:0; padding:2px 0; }
+.m3lrm-chip { display:inline-block; padding:3px 8px; border-radius:20px; cursor:pointer; font-size:1.05em; font-weight:700; line-height:1.3; background:rgba(255,255,255,.15); color:#fff; border:2px solid rgba(255,255,255,.3); transition:background .12s; user-select:none; -webkit-user-select:none; vertical-align:middle; }
+.m3lrm-chip:hover { background:rgba(255,255,255,.28); }
+.m3lrm-chip.gc0 { background:#a855f7; border-color:#9333ea; }
+.m3lrm-chip.gc1 { background:#f97316; border-color:#ea580c; }
+.m3lrm-chip.gc2 { background:#22c55e; border-color:#16a34a; color:#052e16; }
+.m3lrm-chip.gc3 { background:#ef4444; border-color:#dc2626; }
+.m3lrm-chip-hint { font-size:.7rem; color:rgba(255,255,255,.65); text-align:center; margin:4px 0 2px; }
+.m3lrm-scroll { overflow-x:auto; width:100%; }
+.m3lrm-scroll .m3-eq-row { flex-wrap:nowrap; }
+.m3-forfeit-btn { display:block; width:100%; margin-top:8px; background:rgba(220,50,50,.14); border:2px solid rgba(200,50,50,.35); color:#8b0000; border-radius:12px; padding:9px 0; font-size:.9rem; font-weight:700; cursor:pointer; transition:background .15s; }
+.m3-forfeit-btn:hover { background:rgba(220,50,50,.25); }
+.m3-sol-steps { text-align:left; margin-top:5px; }
+.m3-sol-step { font-size:.8rem; color:#7f0000; margin:3px 0; line-height:1.4; }
+.m3-sol-lbl { color:#b71c1c; font-size:.75rem; }
+.m3-sol-eq { font-weight:800; color:#5d0000; background:rgba(183,28,28,.1); padding:1px 7px; border-radius:6px; letter-spacing:.01em; }
+.m3-solved { text-align:center; padding:10px 0; position:relative; z-index:1; }
+.m3-solved-icon { font-size:2.5rem; margin-bottom:6px; }
+.m3-solved-eq { font-size:2rem; font-weight:900; color:#fff; font-family:"Bahnschrift","DIN Alternate","Trebuchet MS",sans-serif; margin-bottom:6px; display:flex; align-items:center; justify-content:center; gap:4px; }
+.m3-solved-frac{display:inline-flex;flex-direction:column;align-items:center;margin:0 2px;vertical-align:middle;font-size:.8em;line-height:1.15;}
+.m3-solved-frac-num{border-bottom:2.5px solid rgba(255,255,255,.85);padding:0 6px 3px;min-width:1.4em;text-align:center;}
+.m3-solved-frac-den{padding:3px 6px 0;min-width:1.4em;text-align:center;}
+.m3-solved-msg { color:rgba(255,255,255,.82); font-size:.9rem; font-weight:700; margin-bottom:16px; }
+.m3-sign-cycle {
+  min-width:46px; background:rgba(255,255,255,.15); border:2px solid rgba(255,255,255,.35);
+  border-radius:8px; padding:4px 8px; color:#fff; font-size:1.25rem; font-weight:900;
+  font-family:inherit; cursor:pointer; transition:background .15s,border-color .15s;
+  position:relative; z-index:1; text-align:center;
+}
+.m3-sign-cycle:hover { background:rgba(255,255,255,.3); }
+.m3-sign-cycle.s-minus { background:rgba(255,80,80,.32); border-color:rgba(255,160,160,.75); }
+.m3-sign-cycle.s-mul   { background:rgba(80,200,80,.22); border-color:rgba(120,230,120,.65); }
+.m3-sign-cycle.s-div   { background:rgba(100,160,255,.28); border-color:rgba(150,190,255,.7); }
+.m3-val-inp {
+  width:62px; background:rgba(255,255,255,.15); border:2px solid rgba(255,255,255,.35);
+  border-radius:8px; padding:4px 6px; color:#fff; font-size:1.05rem; font-weight:700;
+  font-family:inherit; text-align:center; position:relative; z-index:1;
+}
+.m3-val-inp::placeholder { color:rgba(255,255,255,.45); }
+.m3-val-inp:focus { outline:none; border-color:rgba(255,255,255,.85); }
+.m3-choice-row { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-top:10px; position:relative; z-index:1; }
+.m3-choice-action {
+  flex:1; min-width:130px; padding:9px 10px; border-radius:12px;
+  border:2px solid rgba(255,255,255,.38); background:rgba(255,255,255,.13);
+  color:#fff; font-size:.82rem; font-weight:700; font-family:inherit;
+  cursor:pointer; text-align:center; transition:background .15s,border-color .15s;
+  line-height:1.3;
+}
+.m3-choice-action:hover { background:rgba(255,255,255,.28); border-color:rgba(255,255,255,.75); }
+.m3-transp-wrap { display:inline-flex; flex-direction:column; align-items:center; gap:3px; vertical-align:bottom; }
+.m3-transp-lbl { font-size:.72rem; font-weight:800; color:#ffd700; white-space:nowrap; min-height:1.1em; text-align:center; line-height:1; }
+.m3-transp-sel { background:rgba(255,213,0,.28)!important; border-color:rgba(255,213,0,.85)!important; }
+.m3-transp-apply {
+  padding:8px 22px; border-radius:12px;
+  border:2px solid rgba(255,255,255,.4); background:rgba(255,255,255,.18);
+  color:#fff; font-size:.88rem; font-weight:700; font-family:inherit;
+  cursor:pointer; transition:background .15s,border-color .15s; position:relative; z-index:1;
+}
+.m3-transp-apply:hover { background:rgba(255,255,255,.32); border-color:rgba(255,255,255,.75); }
+/* ── Moduł 3 — Lv6 ── */
+.m6-frac-chip{display:inline-flex;align-items:center;cursor:pointer;background:rgba(255,255,255,.12);border:2.5px solid rgba(255,255,255,.3);border-radius:10px;padding:3px 10px;color:#fff;font-family:"Bahnschrift","DIN Alternate","Trebuchet MS",sans-serif;font-size:inherit;font-weight:inherit;transition:background .15s,border-color .15s,transform .12s;}
+.m6-frac-chip:hover{background:rgba(255,255,255,.25);border-color:rgba(255,255,255,.8);transform:scale(1.05);}
+.m6-frac-chip.done{background:rgba(46,213,115,.28);border-color:#2ed573;}
+.m6-frac-chip.active{background:rgba(255,215,0,.22);border-color:#ffd700;}
+.m6-fill-panel{background:rgba(255,255,255,.1);border-radius:14px;padding:12px 14px;margin-top:8px;text-align:center;position:relative;z-index:1;}
+.m6-fill-eq{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
+.m6-inp-num{width:80px;height:44px;background:rgba(255,255,255,.92);color:#1a0030;border:2px solid rgba(255,255,255,.8);border-radius:10px;font-size:.9rem;font-weight:700;text-align:center;outline:none;font-family:"Bahnschrift","DIN Alternate","Trebuchet MS",sans-serif;}
+.m6-inp-num:focus{border-color:#ffd700;box-shadow:0 0 0 2px rgba(255,215,0,.3);}
+.m6-dalej-btn{display:block;width:100%;margin-top:8px;background:linear-gradient(135deg,var(--mod-dark),var(--mod-mid));border:none;color:#fff;border-radius:12px;padding:10px 0;font-size:.95rem;font-weight:700;cursor:pointer;transition:opacity .15s;position:relative;z-index:1;}
+.m6-dalej-btn:hover{opacity:.88;}
+.m6-lcd-hint{font-size:.78rem;color:rgba(255,255,255,.7);text-align:center;margin:4px 0 2px;position:relative;z-index:1;}
+.m3-frac-ans{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px;}
+.m3-frac-ans .frac-input{display:flex;flex-direction:column;align-items:center;}
+.m3-frac-ans .frac-bar{width:48px;height:2.5px;background:var(--text);margin:2px 0;}
+.m3-ans-sign-btn{background:var(--mod-dark);border:2px solid rgba(255,255,255,.2);color:#fff;font-size:1.15rem;font-weight:700;width:36px;height:36px;border-radius:8px;cursor:pointer;transition:background .15s,border-color .15s,opacity .15s;flex-shrink:0;}
+.m3-ans-sign-btn:hover{opacity:.82;}
+.m3-ans-sign-btn.s-empty{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.3);color:rgba(255,255,255,.55);}
+.m3-ans-sign-btn.s-plus{background:rgba(80,200,80,.3);border-color:rgba(120,230,120,.7);}
+.m3-ans-sign-btn.s-minus{background:rgba(255,80,80,.32);border-color:rgba(255,160,160,.75);}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="app-title"><a class="nav-app-btn" href="../matapki.html">← MatApki</a>Równania</div>
+  <div class="section-box">
+    <span class="section-label">Moduły:</span>
+    <button class="tab active" onclick="switchTab(0)">📝 Zapisywanie</button>
+    <button class="tab" onclick="switchTab(1)">✅ Sprawdzanie</button>
+    <button class="tab" onclick="switchTab(2)">🔢 Rozwiązywanie</button>
+  </div>
+
+  <!-- ── MODUŁ 1 ── -->
+  <div class="module active" id="mod0">
+    <div class="stats">
+      <div class="stat-box">
+        <div class="stat-label">Wynik</div>
+        <div class="stat-value" id="m1-score">0 / 0</div>
+      </div>
+      <div class="stat-box timer-box">
+        <div class="stat-label">Czas</div>
+        <div class="stat-value" id="m1-timer">0 s</div>
+      </div>
+    </div>
+    <div class="section-box" id="m1-lv-row">
+      <span class="section-label">Poziomy:</span>
+      <button class="lv-btn active" onclick="setM1Level(1)">Lv 1</button>
+      <button class="lv-btn" onclick="setM1Level(2)">Lv 2</button>
+      <button class="lv-btn" onclick="setM1Level(3)">Lv 3</button>
+      <button class="lv-btn" onclick="setM1Level(4)">Lv 4</button>
+    </div>
+    <div class="question-box" id="m1-qbox">
+      <div class="anim-layer" id="m1-anim"></div>
+      <div class="q-label" id="m1-qlabel">Zapisz jako równanie</div>
+      <div class="question" id="m1-sentence"></div>
+    </div>
+    <div class="eq-input-row" id="m1-input-row"></div>
+    <div class="feedback" id="m1-fb"></div>
+    <div class="m1-hint">Litery i cyfry — wąskie kratki; ułamek dziesiętny (np. 0,7) — szeroka kratka.</div>
+    <div class="btn-row">
+      <button class="btn btn-primary" style="flex:1" onclick="checkM1()">Sprawdź</button>
+      <button class="btn btn-next" id="m1-next" style="display:none" onclick="nextM1()">Następne →</button>
+    </div>
+  </div>
+
+  <!-- ── MODUŁ 2 ── -->
+  <div class="module" id="mod1">
+    <!-- Tryb: Normalny / Challenge -->
+    <div class="section-box">
+      <span class="section-label">Tryb:</span>
+      <button class="lv-btn active" id="m2-btn-normal" onclick="setM2Mode('normal')">Normalny</button>
+      <button class="lv-btn" id="m2-btn-challenge" onclick="setM2Mode('challenge')">⏱ Challenge</button>
+    </div>
+
+    <!-- Panel wyboru trudności (tylko Challenge) -->
+    <div id="m2-diff-panel" style="display:none">
+      <div class="diff-screen">
+        <div class="diff-heading">Wybierz poziom trudności</div>
+        <div class="diff-buttons">
+          <button class="diff-btn diff-easy" onclick="m2SelectDiff(15)">
+            <span class="diff-icon">🟢</span>
+            <span class="diff-info"><span class="diff-name">Easy</span><span class="diff-desc">15 sekund na odpowiedź</span></span>
+          </button>
+          <button class="diff-btn diff-medium" onclick="m2SelectDiff(10)">
+            <span class="diff-icon">🟡</span>
+            <span class="diff-info"><span class="diff-name">Medium</span><span class="diff-desc">10 sekund na odpowiedź</span></span>
+          </button>
+          <button class="diff-btn diff-hard" onclick="m2SelectDiff(5)">
+            <span class="diff-icon">🔴</span>
+            <span class="diff-info"><span class="diff-name">Hard</span><span class="diff-desc">5 sekund na odpowiedź</span></span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel gry -->
+    <div id="m2-game-panel">
+      <div class="stats">
+        <div class="stat-box">
+          <div class="stat-label">Wynik</div>
+          <div class="stat-value" id="m2-score">0 / 0</div>
+        </div>
+        <div class="stat-box timer-box" id="m2-timer-box">
+          <div class="stat-label" id="m2-timer-label">Czas</div>
+          <div class="stat-value" id="m2-timer">0 s</div>
+        </div>
+      </div>
+      <div class="section-box" id="m2-lv-row">
+        <span class="section-label">Poziomy:</span>
+        <button class="lv-btn active" onclick="setM2Level(1)">Lv 1</button>
+        <button class="lv-btn" onclick="setM2Level(2)">Lv 2</button>
+      </div>
+      <div class="question-box">
+        <div class="anim-layer" id="m2-anim"></div>
+        <div class="q-label">Które x spełnia równanie?</div>
+        <div class="question" id="m2-eq"></div>
+      </div>
+      <div class="choices" id="m2-choices"></div>
+      <div class="feedback" id="m2-fb"></div>
+      <div class="btn-row">
+        <button class="btn btn-next" style="display:none;flex:1" id="m2-next" onclick="nextM2()">Następne →</button>
+        <button class="btn btn-next" style="display:none" id="m2-change-diff" onclick="m2ChangeDiff()">Zmień poziom</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODUŁ 3 ── -->
+  <div class="module" id="mod2">
+    <div class="stats">
+      <div class="stat-box">
+        <div class="stat-label">Wynik</div>
+        <div class="stat-value" id="m3-score">0 / 0</div>
+      </div>
+      <div class="stat-box timer-box">
+        <div class="stat-label">Czas</div>
+        <div class="stat-value" id="m3-timer">0 s</div>
+      </div>
+    </div>
+    <div class="section-box" id="m3-lv-row">
+      <span class="section-label">Poziomy:</span>
+      <button class="lv-btn active" onclick="setM3Level(1)">Lv 1</button>
+      <button class="lv-btn" onclick="setM3Level(2)">Lv 2</button>
+      <button class="lv-btn" onclick="setM3Level(3)">Lv 3</button>
+      <button class="lv-btn" onclick="setM3Level(4)">Lv 4</button>
+      <button class="lv-btn" onclick="setM3Level(5)">Lv 5</button>
+      <button class="lv-btn" onclick="setM3Level(6)">Lv 6</button>
+    </div>
+    <div class="question-box" id="m3-box" style="min-height:110px;padding:16px 14px 14px">
+      <div class="anim-layer" id="m3-anim"></div>
+      <div id="m3-eq-area"></div>
+    </div>
+    <div id="m6-fill-area" style="display:none"></div>
+    <div id="m3-check-area" style="display:none">
+      <button class="btn btn-primary" style="width:100%" onclick="checkM3Sign()">Sprawdź</button>
+    </div>
+    <div id="m3-input-area" style="display:none">
+      <div class="ans-row" id="m3-sign-row" style="display:none">
+        <input class="ans-inp" id="m3-inp-sign" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="Wpisz liczbę...">
+        <button class="btn btn-primary" onclick="checkM3Sign()" style="padding:12px 16px">✓</button>
+      </div>
+      <div class="ans-row" id="m3-type-row" style="display:none">
+        <input class="ans-inp" id="m3-inp-type" type="text" autocomplete="off" spellcheck="false" placeholder="Wpisz równanie...">
+        <button class="btn btn-primary" onclick="checkM3Type()" style="padding:12px 16px">✓</button>
+      </div>
+      <div class="m3-frac-ans" id="m3-frac-ans-row" style="display:none">
+        <span class="eq-fixed" style="font-size:1.15rem;font-weight:700">x =</span>
+        <button class="m3-ans-sign-btn" id="m3-frac-sign-btn" onclick="m3ToggleAnsSign('frac')" style="display:none">−</button>
+        <div class="frac-input">
+          <input class="kratka" id="m3-inp-frac-num" type="text" inputmode="decimal" autocomplete="off" placeholder="p" onkeydown="if(event.key==='Enter')checkM3FracAns()">
+          <div class="frac-bar"></div>
+          <input class="kratka" id="m3-inp-frac-den" type="text" inputmode="decimal" autocomplete="off" placeholder="q" onkeydown="if(event.key==='Enter')checkM3FracAns()">
+        </div>
+        <button class="btn btn-primary" onclick="checkM3FracAns()" style="padding:12px 16px">✓</button>
+      </div>
+      <div class="m3-frac-ans" id="m3-int-ans-row" style="display:none">
+        <span class="eq-fixed" style="font-size:1.15rem;font-weight:700">x =</span>
+        <button class="m3-ans-sign-btn" id="m3-int-sign-btn" onclick="m3ToggleAnsSign('int')">−</button>
+        <input class="kratka" id="m3-inp-int-ans" type="text" inputmode="decimal" autocomplete="off" placeholder="?" onkeydown="if(event.key==='Enter')checkM3IntAns()" style="width:56px">
+        <button class="btn btn-primary" onclick="checkM3IntAns()" style="padding:12px 16px">✓</button>
+      </div>
+      <div class="m3-frac-ans" id="m3-pos-int-ans-row" style="display:none">
+        <span class="eq-fixed" style="font-size:1.15rem;font-weight:700">x =</span>
+        <input class="kratka" id="m3-inp-pos-int-ans" type="text" inputmode="decimal" autocomplete="off" placeholder="?" onkeydown="if(event.key==='Enter')checkM3PosIntAns()" style="width:56px">
+        <button class="btn btn-primary" onclick="checkM3PosIntAns()" style="padding:12px 16px">✓</button>
+      </div>
+      <div class="m3-frac-ans" id="m3-mixed-ans-row" style="display:none">
+        <span class="eq-fixed" style="font-size:1.15rem;font-weight:700">x =</span>
+        <button class="m3-ans-sign-btn" id="m3-mixed-sign-btn" onclick="m3ToggleAnsSign('mixed')" style="display:none">−</button>
+        <input class="kratka" id="m3-inp-mixed-whole" type="text" inputmode="decimal" autocomplete="off" placeholder="c" onkeydown="if(event.key==='Enter')checkM3MixedAns()" style="width:48px">
+        <div class="frac-input">
+          <input class="kratka" id="m3-inp-mixed-num" type="text" inputmode="decimal" autocomplete="off" placeholder="p" onkeydown="if(event.key==='Enter')checkM3MixedAns()">
+          <div class="frac-bar"></div>
+          <input class="kratka" id="m3-inp-mixed-den" type="text" inputmode="decimal" autocomplete="off" placeholder="q" onkeydown="if(event.key==='Enter')checkM3MixedAns()">
+        </div>
+        <button class="btn btn-primary" onclick="checkM3MixedAns()" style="padding:12px 16px">✓</button>
+      </div>
+    </div>
+    <div class="feedback" id="m3-fb"></div>
+    <div id="m3-forfeit-area" style="display:none">
+      <button class="m3-forfeit-btn" onclick="m3Forfeit()">Poddaję się</button>
+    </div>
+  </div>
+</div>
+<script>
+const randInt = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
+const shuffle = arr => { for(let i=arr.length-1;i>0;i--){const j=randInt(0,i);[arr[i],arr[j]]=[arr[j],arr[i]];}return arr; };
+
+// ── Tabs
+const tabs = document.querySelectorAll('.tab');
+const mods = document.querySelectorAll('.module');
+function switchTab(i){
+  if(i!==1) stopCountdownM2();
+  tabs.forEach((t,j)=>t.classList.toggle('active',i===j));
+  mods.forEach((m,j)=>m.classList.toggle('active',i===j));
+}
+
+// ── Timer
+function startTimer(id){
+  const el=document.getElementById(id);
+  clearInterval(el._iv);
+  const t0=Date.now(); el.textContent='0 s';
+  el._iv=setInterval(()=>{el.textContent=`${Math.floor((Date.now()-t0)/1000)} s`;},500);
+}
+function stopTimer(id){
+  const el=document.getElementById(id);
+  clearInterval(el._iv); el._iv=null;
+}
+
+// ── Animacje
+let _adv=null;
+function playCorrectAnim(animId,onDone){
+  const L=document.getElementById(animId); L.innerHTML='';
+  const f=document.createElement('div'); f.className='correct-flash'; L.appendChild(f);
+  const n=document.createElement('div'); n.className='anim-correct-num'; n.textContent='✓'; L.appendChild(n);
+  const S=['x','=','★','✦','✧','◆','✓'];
+  for(let i=0;i<14;i++){
+    const p=document.createElement('div'); p.className='particle';
+    p.textContent=S[i%S.length];
+    const a=(360/14)*i,d=90+Math.random()*80,r=a*Math.PI/180;
+    p.style.setProperty('--tx',`translate(${Math.cos(r)*d}px,${Math.sin(r)*d}px)`);
+    p.style.animationDelay=`${Math.random()*.12}s`;
+    p.style.fontSize=`${1.1+Math.random()*1.1}rem`;
+    L.appendChild(p);
+  }
+  setTimeout(()=>{L.innerHTML='';},1400);
+  if(onDone){clearTimeout(_adv);_adv=setTimeout(onDone,1700);}
+}
+function playWrongAnim(animId,onDone){
+  const L=document.getElementById(animId); L.innerHTML='';
+  const f=document.createElement('div'); f.className='wrong-flash'; L.appendChild(f);
+  const x=document.createElement('div'); x.className='anim-big-x'; x.textContent='✗'; L.appendChild(x);
+  setTimeout(()=>{L.innerHTML='';if(onDone)onDone();},1300);
+}
+function playFlash(animId,type){
+  const L=document.getElementById(animId); L.innerHTML='';
+  const f=document.createElement('div'); f.className=type+'-flash'; L.appendChild(f);
+  setTimeout(()=>{L.innerHTML='';},800);
+}
+
+// ════════════════════════════════════════
+// MODUŁ 1 – Zapisywanie z kratek
+// ════════════════════════════════════════
+let m1Cor=0,m1Tot=0,m1Cur=null,m1Locked=false,m1Sign='+',m1Level=1,m1Phase=1;
+const M1_VARS=['x','y','z','n','u','a','m','k'];
+const pick=arr=>arr[randInt(0,arr.length-1)];
+const rndVar=()=>pick(M1_VARS);
+function gcd(a,b){return b?gcd(b,Math.abs(a)%b):Math.abs(a);}
+function numToFracStr(n){
+  if(Number.isInteger(n))return String(n);
+  for(let d=2;d<=20;d++){const num=Math.round(n*d);if(Math.abs(num/d-n)<0.0001){const g=gcd(Math.abs(num),d);return`${num/g}/${d/g}`;}}
+  return String(Math.round(n*1000)/1000);
+}
+function numToDispHtml(n){
+  if(Number.isInteger(n))return String(n);
+  const neg=n<0,abs=Math.abs(n);
+  const mkFrac=(p,q)=>`<span class="m3-solved-frac"><span class="m3-solved-frac-num">${p}</span><span class="m3-solved-frac-den">${q}</span></span>`;
+  if(abs<1){
+    for(let d=2;d<=20;d++){const p=Math.round(abs*d);if(Math.abs(p/d-abs)<0.0001){const g=gcd(p,d);return(neg?'−':'')+mkFrac(p/g,d/g);}}
+    return numToFracStr(n);
+  }
+  const whole=Math.floor(abs),frac=abs-whole;
+  for(let d=2;d<=20;d++){const p=Math.round(frac*d);if(Math.abs(p/d-frac)<0.0001&&p>0){const g=gcd(p,d);return(neg?'−':'')+whole+' '+mkFrac(p/g,d/g);}}
+  return numToFracStr(n);
+}
+const WORD_A_EXT={2:'Dwukrotność',3:'Trzykrotność',4:'Czterokrotność',5:'Pięciokrotność',6:'Sześciokrotność',7:'Siedmiokrotność'};
+const FRAC_WORD={2:'Połowa',3:'Trzecia część',4:'Ćwierć',5:'Piąta część',6:'Szósta część',7:'Siódma część',8:'Ósma część'};
+
+const M1_LV1=[
+  ()=>{const v=rndVar(),b=randInt(2,20),c=randInt(b+2,60);
+    return{s:`Liczba o ${b} większa od ${v} wynosi ${c}.`,schema:'xbc',exp:{sign:'+',b,c,letter:v}};},
+  ()=>{const v=rndVar(),b=randInt(2,15),x=randInt(b+1,30),c=x-b;
+    return{s:`Liczba ${v} zmniejszona o ${b} wynosi ${c}.`,schema:'xbc',exp:{sign:'-',b,c,letter:v}};},
+  ()=>{const v=rndVar(),b=randInt(2,12),c=randInt(b+2,40);
+    return{s:`Do liczby ${v} dodano ${b} i otrzymano ${c}.`,schema:'xbc',exp:{sign:'+',b,c,letter:v}};},
+  ()=>{const v=rndVar(),b=randInt(2,12),x=randInt(b+2,30),c=x-b;
+    return{s:`Od liczby ${v} odjęto ${b} i otrzymano ${c}.`,schema:'xbc',exp:{sign:'-',b,c,letter:v}};},
+  ()=>{const v=rndVar(),b=randInt(2,15),c=randInt(b+2,50);
+    return{s:`Suma liczby ${v} i liczby ${b} wynosi ${c}.`,schema:'xbc',exp:{sign:'+',b,c,letter:v}};},
+  ()=>{const v=rndVar(),b=randInt(3,20),c=randInt(b+1,50);
+    return{s:`Liczba ${v} jest o ${b} mniejsza od ${c}.`,schema:'xbc',exp:{sign:'+',b,c,letter:v}};},
+  ()=>{const v=rndVar(),a=randInt(2,9),x=randInt(2,12),c=a*x;
+    return{s:`Iloczyn liczby ${v} i liczby ${a} wynosi ${c}.`,schema:'axc',exp:{a,c,letter:v}};},
+  ()=>{const v=rndVar(),a=randInt(2,5),x=randInt(2,12),c=a*x;
+    return{s:`${WORD_A_EXT[a]} liczby ${v} wynosi ${c}.`,schema:'axc',exp:{a,c,letter:v}};},
+  ()=>{const v=rndVar(),c=randInt(2,20);
+    return{s:`Połowa liczby ${v} wynosi ${c}.`,schema:'fracxc',exp:{num:1,den:2,c,letter:v}};},
+  ()=>{const v=rndVar(),den=pick([3,4]),c=randInt(2,12);
+    return{s:`${FRAC_WORD[den]} liczby ${v} wynosi ${c}.`,schema:'fracxc',exp:{num:1,den,c,letter:v}};},
+  ()=>{const v=rndVar(),den=randInt(5,8),c=randInt(2,10);
+    return{s:`${FRAC_WORD[den]||'Część'} liczby ${v} wynosi ${c}.`,schema:'fracxc',exp:{num:1,den,c,letter:v}};},
+  ()=>{const v=rndVar(),den=randInt(2,6),c=randInt(2,12);
+    const numStr=den===2?'1/2':`1/${den}`;
+    return{s:`${numStr} liczby ${v} stanowi ${c}.`,schema:'fracxc',exp:{num:1,den,c,letter:v}};},
+  ()=>{const v=rndVar(),x=randInt(1,15),c=randInt(1,20),b=x+c;
+    return{s:`Liczba o ${v} mniejsza od ${b} wynosi ${c}.`,schema:'bcxc',exp:{b,sign:'-',c,letter:v}};},
+  ()=>{const v=rndVar(),c=randInt(2,9),x=randInt(2,8),b=x*c;
+    return{s:`Iloraz liczby ${b} przez ${v} jest równy ${c}.`,schema:'bDivLtrc',exp:{b,c,letter:v}};},
+  ()=>{const v=rndVar(),x=randInt(2,12),c=x*x;
+    return{s:`Kwadrat liczby ${v} jest równy ${c}.`,schema:'ltrPow2c',exp:{c,letter:v}};},
+  ()=>{const v=rndVar(),x=randInt(2,5),c=x*x*x;
+    return{s:`Sześcian liczby ${v} wynosi ${c}.`,schema:'ltrPow3c',exp:{c,letter:v}};},
+];
+
+const M1_LV2=[
+  ()=>{const v=rndVar(),a=randInt(2,6),b=randInt(1,15),x=randInt(2,10),c=a*x+b;
+    return{s:`${WORD_A_EXT[a]||a+'x'} liczby ${v} powiększona o ${b} wynosi ${c}.`,schema:'axbc',exp:{a,sign:'+',b,c,letter:v}};},
+  ()=>{const v=rndVar(),a=randInt(2,6),b=randInt(1,10),x=randInt(3,12),c=a*x-b;
+    if(c<=0)return M1_LV2[1]();
+    return{s:`${WORD_A_EXT[a]||a+'x'} liczby ${v} pomniejszona o ${b} wynosi ${c}.`,schema:'axbc',exp:{a,sign:'-',b,c,letter:v}};},
+  ()=>{const v=rndVar(),a=randInt(2,4),b=randInt(5,20),x=randInt(2,12),c=a*x+b;
+    return{s:`Jeśli ${(WORD_A_EXT[a]||a+'x').toLowerCase()} liczby ${v} powiększymy o ${b}, otrzymamy ${c}.`,schema:'axbc',exp:{a,sign:'+',b,c,letter:v}};},
+  ()=>{const v=rndVar(),a=randInt(2,4),b=randInt(5,20),x=randInt(3,12),c=a*x-b;
+    if(c<=0)return M1_LV2[3]();
+    return{s:`Od ${(WORD_A_EXT[a]||a+'x').toLowerCase()} liczby ${v} odejmij ${b} i otrzymasz ${c}.`,schema:'axbc',exp:{a,sign:'-',b,c,letter:v}};},
+  ()=>{const v=rndVar(),den=pick([2,3,4,5]),b=randInt(5,20),x=randInt(3,15)*den,base=x/den,c=base-b;
+    if(c<=0)return M1_LV2[4]();
+    return{s:`${FRAC_WORD[den]||'1/'+den+' część'} liczby ${v} pomniejszona o ${b} wynosi ${c}.`,schema:'fracxbc',exp:{num:1,den,sign:'-',b,c,letter:v}};},
+  ()=>{const v=rndVar(),den=pick([2,3,4,5,6]),b=randInt(5,25),x=randInt(2,12),c=x+b;
+    return{s:`${FRAC_WORD[den]||'1/'+den+' część'} liczby ${v} powiększona o ${b} wynosi ${c}.`,schema:'fracxbc',exp:{num:1,den,sign:'+',b,c,letter:v}};},
+  ()=>{const v=rndVar(),den=pick([3,4,5,6]),b=randInt(10,30),x=randInt(2,12),c=x+b;
+    const ordt={3:'trzecią część',4:'ćwierć',5:'piątą część',6:'szóstą część'};
+    return{s:`Jeśli ${ordt[den]||'1/'+den+' część'} liczby ${v} powiększymy o ${b}, to otrzymamy ${c}.`,schema:'fracxbc',exp:{num:1,den,sign:'+',b,c,letter:v}};},
+  ()=>{const v=rndVar(),a=randInt(2,5),b=randInt(2,10),x=randInt(1,8),c=a*(x+b);
+    return{s:`${WORD_A_EXT[a]||a+'x'} sumy liczby ${v} i liczby ${b} wynosi ${c}.`,schema:'aparenbc',exp:{a,sign:'+',b,c,letter:v}};},
+  ()=>{const v=rndVar(),a=randInt(2,4),b=randInt(2,8),x=randInt(b+2,12),c=a*(x-b);
+    return{s:`${WORD_A_EXT[a]||a+'x'} różnicy liczby ${v} i liczby ${b} wynosi ${c}.`,schema:'aparenbc',exp:{a,sign:'-',b,c,letter:v}};},
+];
+
+const M1_LV3=[
+  ()=>{const v=rndVar(),b=randInt(1,8),x=randInt(1,7),base=x+b,c=base*base;
+    return{s:`Kwadrat sumy liczby ${v} i liczby ${b} wynosi ${c}.`,schema:'ltrParenPow2c',exp:{b,sign:'+',c,letter:v}};},
+  ()=>{const v=rndVar(),b=randInt(1,6),x=randInt(b+1,10),base=x-b,c=base*base;
+    return{s:`Kwadrat różnicy liczby ${v} i liczby ${b} wynosi ${c}.`,schema:'ltrParenPow2c',exp:{b,sign:'-',c,letter:v}};},
+  ()=>{const v=rndVar(),b=randInt(1,4),x=randInt(1,4),base=x+b,c=base*base*base;
+    return{s:`Sześcian sumy liczby ${v} i liczby ${b} wynosi ${c}.`,schema:'ltrParenPow3c',exp:{b,sign:'+',c,letter:v}};},
+  ()=>{const v=rndVar(),b=randInt(1,3),x=randInt(b+1,6),base=x-b,c=base*base*base;
+    return{s:`Sześcian różnicy liczby ${v} i liczby ${b} wynosi ${c}.`,schema:'ltrParenPow3c',exp:{b,sign:'-',c,letter:v}};},
+  ()=>{const v=rndVar(),b=randInt(2,15),x=randInt(2,10),c=x*x+b;
+    return{s:`Suma kwadratu liczby ${v} i liczby ${b} wynosi ${c}.`,schema:'ltrPow2SignBc',exp:{sign:'+',b,c,letter:v}};},
+  ()=>{const v=rndVar(),b=randInt(2,10),x=randInt(4,12),c=x*x-b;
+    if(c<=0)return M1_LV3[5]();
+    return{s:`Różnica kwadratu liczby ${v} i liczby ${b} wynosi ${c}.`,schema:'ltrPow2SignBc',exp:{sign:'-',b,c,letter:v}};},
+  ()=>{const v=rndVar(),a=pick([2,3]),b=randInt(2,8),x=randInt(2,3),c=a*(x*x*x+b);
+    const ADJ={2:'Podwojona',3:'Potrojona'};
+    return{s:`${ADJ[a]} suma sześcianu liczby ${v} i liczby ${b} wynosi ${c}.`,schema:'aLtrPow3PlusBc',exp:{a,b,c,letter:v}};},
+  ()=>{const v=rndVar(),a=randInt(2,3),d=randInt(2,4),x=randInt(2,8);
+    const rem=(a*x)%d,b=rem===0?d:(d-rem),c=(a*x+b)/d;
+    if(c<1||c>20||b>15)return M1_LV3[7]();
+    return{s:`Iloraz sumy ${(WORD_A_EXT[a]||a+'x').toLowerCase()} liczby ${v} i liczby ${b} przez liczbę ${d} wynosi ${c}.`,schema:'axbDivDc',exp:{a,sign:'+',b,d,c,letter:v}};},
+  ()=>{const v=rndVar(),a=randInt(2,3),d=randInt(2,4),x=randInt(3,10);
+    const rem=(a*x)%d,b=rem===0?d:rem;
+    if(b>=a*x)return M1_LV3[8]();
+    const c=(a*x-b)/d;
+    if(c<1||c>20)return M1_LV3[8]();
+    return{s:`Iloraz różnicy ${(WORD_A_EXT[a]||a+'x').toLowerCase()} liczby ${v} i liczby ${b} przez liczbę ${d} wynosi ${c}.`,schema:'axbDivDc',exp:{a,sign:'-',b,d,c,letter:v}};},
+  ()=>{const v=rndVar(),k=randInt(3,7),b=randInt(2,6),x=randInt(b+2,12),c=2*k*(x-b);
+    return{s:`Podwojony iloczyn liczby ${k} i różnicy liczb ${v} i ${b} wynosi ${c}.`,schema:'aparenbc',exp:{a:2*k,sign:'-',b,c,letter:v}};},
+];
+
+const M1_LV4=[
+  ()=>{const v=rndVar(),p=pick([10,20,25,50]),mults={10:10,20:5,25:4,50:2};
+    const x=randInt(2,8)*mults[p],c=x*p/100;
+    return{s:`${p}% liczby ${v} wynosi ${c}.`,schema:'percentXc',exp:{p,c,letter:v}};},
+  ()=>{const v=rndVar(),p=pick([10,20,25,50]),mults={10:10,20:5,25:4,50:2};
+    const x=randInt(3,8)*mults[p],base=x*p/100,b=randInt(2,Math.max(2,Math.floor(base)-1)),c=base-b;
+    if(c<=0)return M1_LV4[1]();
+    return{s:`${p}% liczby ${v} pomniejszone o ${b} wynosi ${c}.`,schema:'percentXbc',exp:{p,sign:'-',b,c,letter:v}};},
+  ()=>{const v=rndVar(),p=pick([10,20,25,50]),mults={10:10,20:5,25:4,50:2};
+    const x=randInt(2,8)*mults[p],base=x*p/100,b=randInt(2,15),c=base+b;
+    return{s:`${p}% liczby ${v} powiększone o ${b} wynosi ${c}.`,schema:'percentXbc',exp:{p,sign:'+',b,c,letter:v}};},
+  ()=>{const v=rndVar(),p=randInt(3,79),pLeft=100-p;
+    const x=randInt(10,300);
+    const c=Math.round(x*pLeft/100);
+    if(c<=0||c===x)return M1_LV4[3]();
+    return{s:`Liczba o ${p}% mniejsza od ${v} wynosi ${c}.`,schema:'percentSmaller',exp:{p,p_eff:pLeft/100,c,letter:v}};},
+  ()=>{const v=rndVar(),p=randInt(3,200),pMore=100+p;
+    const x=randInt(5,200);
+    const c=Math.round(x*pMore/100);
+    if(c<=0||c===x)return M1_LV4[4]();
+    return{s:`Liczba o ${p}% większa od ${v} wynosi ${c}.`,schema:'percentBigger',exp:{p,p_eff:pMore/100,c,letter:v}};},
+];
+// percentSmaller [3] i percentBigger [4] pojawiają się 3x częściej niż pozostałe
+M1_LV4.push(M1_LV4[3],M1_LV4[4],M1_LV4[3],M1_LV4[4]);
+
+const M1_POOLS=[M1_LV1,M1_LV2,M1_LV3,M1_LV4];
+
+function setM1Level(lv){
+  m1Level=lv;
+  document.querySelectorAll('#m1-lv-row .lv-btn').forEach((b,i)=>{
+    b.classList.toggle('active',i+1===lv);
+  });
+  nextM1();
+}
+
+// Buduje kratki dla danego schematu
+function renderM1Input(schema){
+  const row=document.getElementById('m1-input-row');
+  row.innerHTML=''; m1Sign='+';
+
+  const mkKratka=(id,narrow)=>{
+    const el=document.createElement('input');
+    el.type='text'; el.inputMode='numeric';
+    el.className='kratka'+(narrow?' narrow':'');
+    el.id=id; el.autocomplete='off';
+    el.addEventListener('keydown',e=>{if(e.key==='Enter')checkM1();});
+    return el;
+  };
+  const mkLetterKratka=(id)=>{
+    const el=document.createElement('input');
+    el.type='text'; el.maxLength=1;
+    el.className='kratka narrow'; el.id=id; el.autocomplete='off';
+    el.addEventListener('keydown',e=>{if(e.key==='Enter')checkM1();});
+    return el;
+  };
+  const mkTxt=(t,cls='eq-fixed')=>{
+    const s=document.createElement('span'); s.className=cls; s.textContent=t; return s;
+  };
+  const mkSignBtn=()=>{
+    const b=document.createElement('button'); b.type='button';
+    b.id='m1-sign'; b.className='sign-btn'; b.textContent='+';
+    m1Sign='+';
+    b.onclick=()=>{
+      m1Sign=m1Sign==='+'?'-':'+';
+      b.textContent=m1Sign==='+'?'+':'−';
+      b.className='sign-btn'+(m1Sign==='-'?' neg':'');
+    };
+    return b;
+  };
+  const mkFrac=(nId,dId)=>{
+    const wrap=document.createElement('div'); wrap.className='frac-input';
+    wrap.appendChild(mkKratka(nId,true));
+    const bar=document.createElement('div'); bar.className='frac-bar'; wrap.appendChild(bar);
+    wrap.appendChild(mkKratka(dId,true));
+    return wrap;
+  };
+  const mkSup=(t)=>{const s=document.createElement('span'); s.className='eq-fixed eq-sup'; s.textContent=t; return s;};
+  const mkPowKratka=(id)=>{
+    const el=document.createElement('input');
+    el.type='text'; el.maxLength=1;
+    el.className='kratka-pow'; el.id=id; el.autocomplete='off';
+    el.addEventListener('keydown',e=>{if(e.key==='Enter')checkM1();});
+    return el;
+  };
+  const mkDecKratka=(id)=>{
+    const el=document.createElement('input');
+    el.type='text'; el.maxLength=6;
+    el.className='kratka-dec'; el.id=id; el.autocomplete='off';
+    el.addEventListener('keydown',e=>{if(e.key==='Enter')checkM1();});
+    return el;
+  };
+  const mkFracEq=(numEls,denEls)=>{
+    const wrap=document.createElement('div'); wrap.className='eq-frac';
+    const num=document.createElement('div'); num.className='eq-frac-num';
+    numEls.forEach(el=>num.appendChild(el));
+    const den=document.createElement('div'); den.className='eq-frac-den';
+    denEls.forEach(el=>den.appendChild(el));
+    wrap.appendChild(num); wrap.appendChild(den);
+    return wrap;
+  };
+
+  switch(schema){
+    case 'xbc':
+      row.appendChild(mkLetterKratka('ltr'));
+      row.appendChild(mkSignBtn());
+      row.appendChild(mkKratka('b1'));
+      row.appendChild(mkTxt('='));
+      row.appendChild(mkKratka('b2'));
+      break;
+    case 'axc':
+      row.appendChild(mkKratka('b1'));
+      row.appendChild(mkLetterKratka('ltr'));
+      row.appendChild(mkTxt('='));
+      row.appendChild(mkKratka('b2'));
+      break;
+    case 'axbc':
+      row.appendChild(mkKratka('b1'));
+      row.appendChild(mkLetterKratka('ltr'));
+      row.appendChild(mkSignBtn());
+      row.appendChild(mkKratka('b2'));
+      row.appendChild(mkTxt('='));
+      row.appendChild(mkKratka('b3'));
+      break;
+    case 'fracxc':
+      row.appendChild(mkFrac('b1','b2'));
+      row.appendChild(mkLetterKratka('ltr'));
+      row.appendChild(mkTxt('='));
+      row.appendChild(mkKratka('b3'));
+      break;
+    case 'fracxbc':
+      row.appendChild(mkFrac('b1','b2'));
+      row.appendChild(mkLetterKratka('ltr'));
+      row.appendChild(mkSignBtn());
+      row.appendChild(mkKratka('b3'));
+      row.appendChild(mkTxt('='));
+      row.appendChild(mkKratka('b4'));
+      break;
+    case 'aparenbc':
+      row.appendChild(mkKratka('b1'));
+      row.appendChild(mkTxt('('));
+      row.appendChild(mkLetterKratka('ltr'));
+      row.appendChild(mkSignBtn());
+      row.appendChild(mkKratka('b2'));
+      row.appendChild(mkTxt(') ='));
+      row.appendChild(mkKratka('b3'));
+      break;
+    case 'bcxc':
+      row.appendChild(mkKratka('b1'));
+      row.appendChild(mkSignBtn());
+      row.appendChild(mkLetterKratka('ltr'));
+      row.appendChild(mkTxt('='));
+      row.appendChild(mkKratka('b2'));
+      break;
+    case 'bDivLtrc':
+      row.appendChild(mkFracEq([mkKratka('b1')],[mkLetterKratka('ltr')]));
+      row.appendChild(mkTxt('='));
+      row.appendChild(mkKratka('b2'));
+      break;
+    case 'ltrPow2c':
+      row.appendChild(mkLetterKratka('ltr'));
+      row.appendChild(mkPowKratka('pow'));
+      row.appendChild(mkTxt('='));
+      row.appendChild(mkKratka('b1'));
+      break;
+    case 'ltrPow3c':
+      row.appendChild(mkLetterKratka('ltr'));
+      row.appendChild(mkPowKratka('pow'));
+      row.appendChild(mkTxt('='));
+      row.appendChild(mkKratka('b1'));
+      break;
+    case 'ltrParenPow2c':
+      row.appendChild(mkTxt('('));
+      row.appendChild(mkLetterKratka('ltr'));
+      row.appendChild(mkSignBtn());
+      row.appendChild(mkKratka('b1'));
+      row.appendChild(mkTxt(')'));
+      row.appendChild(mkPowKratka('pow'));
+      row.appendChild(mkTxt('='));
+      row.appendChild(mkKratka('b2'));
+      break;
+    case 'ltrParenPow3c':
+      row.appendChild(mkTxt('('));
+      row.appendChild(mkLetterKratka('ltr'));
+      row.appendChild(mkSignBtn());
+      row.appendChild(mkKratka('b1'));
+      row.appendChild(mkTxt(')'));
+      row.appendChild(mkPowKratka('pow'));
+      row.appendChild(mkTxt('='));
+      row.appendChild(mkKratka('b2'));
+      break;
+    case 'ltrPow2SignBc':
+      row.appendChild(mkLetterKratka('ltr'));
+      row.appendChild(mkPowKratka('pow'));
+      row.appendChild(mkSignBtn());
+      row.appendChild(mkKratka('b1'));
+      row.appendChild(mkTxt('='));
+      row.appendChild(mkKratka('b2'));
+      break;
+    case 'aLtrPow3PlusBc':
+      row.appendChild(mkKratka('b1'));
+      row.appendChild(mkTxt('('));
+      row.appendChild(mkLetterKratka('ltr'));
+      row.appendChild(mkPowKratka('pow'));
+      row.appendChild(mkTxt('+'));
+      row.appendChild(mkKratka('b2'));
+      row.appendChild(mkTxt(') ='));
+      row.appendChild(mkKratka('b3'));
+      break;
+    case 'axbDivDc':
+      row.appendChild(mkFracEq(
+        [mkTxt('('),mkKratka('b1'),mkLetterKratka('ltr'),mkSignBtn(),mkKratka('b2'),mkTxt(')')],
+        [mkKratka('b3')]
+      ));
+      row.appendChild(mkTxt('='));
+      row.appendChild(mkKratka('b4'));
+      break;
+    case 'percentXc':
+    case 'percentXbc': {
+      const inp=document.createElement('input');
+      inp.type='text'; inp.className='kratka-eq'; inp.id='eq-input'; inp.autocomplete='off';
+      inp.placeholder='Zapisz równanie...';
+      inp.addEventListener('keydown',e=>{if(e.key==='Enter')checkM1();});
+      row.appendChild(inp);
+      break;
+    }
+    case 'percentSmaller':
+    case 'percentBigger': {
+      const inp=document.createElement('input');
+      inp.type='text'; inp.className='kratka-eq'; inp.id='eq-input'; inp.autocomplete='off';
+      inp.placeholder=m1Phase===1?'Zapisz równanie...':'Uprość lewą stronę...';
+      inp.addEventListener('keydown',e=>{if(e.key==='Enter')checkM1();});
+      row.appendChild(inp);
+      break;
+    }
+  }
+  // update hint text
+  const hintEl=document.querySelector('.m1-hint');
+  if(hintEl){
+    hintEl.textContent=['percentXc','percentXbc','percentSmaller','percentBigger'].includes(schema)
+      ?'Wpisz pełne równanie — spacje nie mają znaczenia.'
+      :'Litery i cyfry — wąskie kratki; ułamek dziesiętny (np. 0,7) — szeroka kratka.';
+  }
+  // focus first kratka
+  const first=row.querySelector('input'); if(first) first.focus();
+}
+
+function gn(id){
+  const el=document.getElementById(id);
+  if(!el)return NaN;
+  return parseFloat(el.value.replace(',','.').trim());
+}
+function fmtDec(d){
+  return String(Math.round(d*1000)/1000).replace('.',',');
+}
+function parseEqText(raw){
+  const s=raw.replace(/\s+/g,'').replace(/−/g,'-').replace(/–/g,'-');
+  const n='\\d+[,.]?\\d*';
+  // form 2: {dec}{ltr}={num}   e.g. 0,7x=15
+  const m2=s.match(new RegExp('^('+n+')([a-zA-Z])=('+n+')$'));
+  if(m2)return{type:2,dec:parseFloat(m2[1].replace(',','.')),ltr:m2[2].toLowerCase(),c:parseFloat(m2[3].replace(',','.'))};
+  // form 1: {ltr}[+-][opt: dec]{ltr}={num}  e.g. x-0,3x=15 or x+x=6 (coeff 1 omitted)
+  const m1=s.match(new RegExp('^([a-zA-Z])([+\\-])('+n+')?([a-zA-Z])=('+n+')$'));
+  if(m1)return{type:1,ltr1:m1[1].toLowerCase(),sign:m1[2],dec:m1[3]?parseFloat(m1[3].replace(',','.')):1,ltr2:m1[4].toLowerCase(),c:parseFloat(m1[5].replace(',','.'))};
+  // form 3: {dec}{ltr}[+-]{num}={num}  e.g. 0,25k-5=1
+  const m3=s.match(new RegExp('^('+n+')([a-zA-Z])([+\\-])('+n+')=('+n+')$'));
+  if(m3)return{type:3,dec:parseFloat(m3[1].replace(',','.')),ltr:m3[2].toLowerCase(),sign:m3[3],b:parseFloat(m3[4].replace(',','.')),c:parseFloat(m3[5].replace(',','.'))};
+  return null;
+}
+
+function nextM1(){
+  clearTimeout(_adv);
+  m1Phase=1;
+  const pool=M1_POOLS[m1Level-1];
+  m1Cur=pool[randInt(0,pool.length-1)]();
+  m1Locked=false;
+  document.getElementById('m1-sentence').textContent=m1Cur.s;
+  document.getElementById('m1-qbox').classList.remove('step2');
+  document.getElementById('m1-qlabel').textContent='Zapisz jako równanie';
+  document.getElementById('m1-fb').className='feedback';
+  document.getElementById('m1-next').style.display='none';
+  renderM1Input(m1Cur.schema);
+  startTimer('m1-timer');
+}
+
+function checkM1(){
+  if(m1Locked)return;
+  const {schema,exp}=m1Cur;
+  const expLtr=(exp.letter||'x').toLowerCase();
+
+  // two-step schemas (percentSmaller / percentBigger) — free text input
+  if(schema==='percentSmaller'||schema==='percentBigger'){
+    const inpEl=document.getElementById('eq-input');
+    if(!inpEl||inpEl.value.trim()===''){
+      document.getElementById('m1-fb').textContent='Wpisz równanie!';
+      document.getElementById('m1-fb').className='feedback bad'; return;
+    }
+    const parsed=parseEqText(inpEl.value);
+    const expectedSign=schema==='percentSmaller'?'-':'+';
+    const signStr=schema==='percentSmaller'?'−':'+';
+    const coeff1str=exp.p/100===1?'':fmtDec(exp.p/100);
+    const hintBoth=`np. ${expLtr} ${signStr} ${coeff1str}${expLtr} = ${exp.c}  lub  ${fmtDec(exp.p_eff)}${expLtr} = ${exp.c}`;
+    const hintStep2=`${fmtDec(exp.p_eff)}${expLtr} = ${exp.c}`;
+
+    const lockAndResult=(ok)=>{
+      m1Locked=true; m1Tot++;
+      stopTimer('m1-timer'); inpEl.disabled=true;
+      if(ok){
+        m1Cor++;
+        document.getElementById('m1-score').textContent=`${m1Cor} / ${m1Tot}`;
+        document.getElementById('m1-fb').textContent='✓ Poprawnie!';
+        document.getElementById('m1-fb').className='feedback good';
+        playCorrectAnim('m1-anim',nextM1);
+      }else{
+        document.getElementById('m1-score').textContent=`${m1Cor} / ${m1Tot}`;
+        document.getElementById('m1-fb').innerHTML=`✗ Niepoprawnie<span class="fb-hint">Poprawna odpowiedź: ${hintStep2}</span>`;
+        document.getElementById('m1-fb').className='feedback bad';
+        playWrongAnim('m1-anim',()=>{document.getElementById('m1-next').style.display='';});
+      }
+    };
+
+    if(m1Phase===1){
+      // check step2 form (direct shortcut)
+      if(parsed&&parsed.type===2){
+        const ok=Math.abs(parsed.dec-exp.p_eff)<0.001&&parsed.ltr===expLtr&&Math.abs(parsed.c-exp.c)<0.001;
+        lockAndResult(ok); return;
+      }
+      // check step1 form
+      if(parsed&&parsed.type===1){
+        const ok1=parsed.ltr1===expLtr&&parsed.sign===expectedSign
+          &&Math.abs(parsed.dec-exp.p/100)<0.001&&parsed.ltr2===expLtr&&Math.abs(parsed.c-exp.c)<0.001;
+        if(ok1){
+          const userEq=inpEl.value.trim();
+          m1Phase=2; renderM1Input(schema);
+          document.getElementById('m1-qbox').classList.add('step2');
+          document.getElementById('m1-qlabel').textContent='Krok 1:';
+          document.getElementById('m1-sentence').textContent=userEq;
+          document.getElementById('m1-fb').textContent='Poprawnie! Teraz uprość lewą stronę.';
+          document.getElementById('m1-fb').className='feedback step';
+          return;
+        }
+      }
+      // wrong — don't lock, allow retry
+      document.getElementById('m1-fb').innerHTML=`✗ Niepoprawnie<span class="fb-hint">${hintBoth}</span>`;
+      document.getElementById('m1-fb').className='feedback bad'; return;
+    }else{
+      // phase 2: check step2 form
+      const ok2=parsed&&parsed.type===2&&Math.abs(parsed.dec-exp.p_eff)<0.001&&parsed.ltr===expLtr&&Math.abs(parsed.c-exp.c)<0.001;
+      lockAndResult(ok2); return;
+    }
+  }
+
+  // empty check
+  const inputs=[...document.querySelectorAll('#m1-input-row input')];
+  if(inputs.some(i=>i.value.trim()==='')){
+    const fb=document.getElementById('m1-fb');
+    const isEqSchema=['percentXc','percentXbc'].includes(schema);
+    fb.textContent=isEqSchema?'Wpisz równanie!':'Wypełnij wszystkie kratki!';
+    fb.className='feedback bad'; return;
+  }
+
+  const ltrEl2=document.getElementById('ltr');
+  const ltrOk=ltrEl2&&ltrEl2.value.trim().toLowerCase()===expLtr;
+
+  const sc=s=>(s==='+'?'+':'−');
+  let ok=false, hint='';
+  if(schema==='xbc'){
+    const b=gn('b1'),c=gn('b2');
+    const normalOk=ltrOk&&m1Sign===exp.sign&&b===exp.b&&c===exp.c;
+    const commOk=exp.sign==='+'&&m1Sign==='+'
+      &&document.getElementById('ltr').value.trim()===String(exp.b)
+      &&document.getElementById('b1').value.trim().toLowerCase()===expLtr
+      &&c===exp.c;
+    ok=normalOk||commOk;
+    hint=`${expLtr} ${sc(exp.sign)} ${exp.b} = ${exp.c}`;
+  }else if(schema==='axc'){
+    const a=gn('b1'),c=gn('b2');
+    ok=ltrOk&&a===exp.a&&c===exp.c;
+    hint=`${exp.a}${expLtr} = ${exp.c}`;
+  }else if(schema==='axbc'){
+    const a=gn('b1'),b=gn('b2'),c=gn('b3');
+    ok=ltrOk&&a===exp.a&&m1Sign===exp.sign&&b===exp.b&&c===exp.c;
+    hint=`${exp.a}${expLtr} ${sc(exp.sign)} ${exp.b} = ${exp.c}`;
+  }else if(schema==='fracxc'){
+    const num=gn('b1'),den=gn('b2'),c=gn('b3');
+    ok=ltrOk&&den>0&&Math.abs(num*exp.den-den*exp.num)<0.001&&c===exp.c;
+    hint=`${exp.num}/${exp.den}·${expLtr} = ${exp.c}`;
+  }else if(schema==='fracxbc'){
+    const num=gn('b1'),den=gn('b2'),b=gn('b3'),c=gn('b4');
+    const fracOk=den>0&&Math.abs(num*exp.den-den*exp.num)<0.001;
+    ok=ltrOk&&fracOk&&m1Sign===exp.sign&&b===exp.b&&c===exp.c;
+    hint=`${exp.num}/${exp.den}·${expLtr} ${sc(exp.sign)} ${exp.b} = ${exp.c}`;
+  }else if(schema==='aparenbc'){
+    const a=gn('b1'),b=gn('b2'),c=gn('b3');
+    ok=ltrOk&&a===exp.a&&m1Sign===exp.sign&&b===exp.b&&c===exp.c;
+    hint=`${exp.a}(${expLtr} ${sc(exp.sign)} ${exp.b}) = ${exp.c}`;
+  }else if(schema==='bcxc'){
+    const b=gn('b1'),c=gn('b2');
+    const normalOk=ltrOk&&b===exp.b&&m1Sign===exp.sign&&c===exp.c;
+    const commOk=exp.sign==='+'&&m1Sign==='+'
+      &&document.getElementById('ltr').value.trim()===String(exp.b)
+      &&document.getElementById('b1').value.trim().toLowerCase()===expLtr
+      &&c===exp.c;
+    ok=normalOk||commOk;
+    hint=`${exp.b} ${sc(exp.sign)} ${expLtr} = ${exp.c}`;
+  }else if(schema==='bDivLtrc'){
+    const b=gn('b1'),c=gn('b2');
+    ok=ltrOk&&b===exp.b&&c===exp.c;
+    hint=`${exp.b}/${expLtr} = ${exp.c}`;
+  }else if(schema==='ltrPow2c'){
+    const c=gn('b1'),pow=document.getElementById('pow').value.trim();
+    ok=ltrOk&&pow==='2'&&c===exp.c;
+    hint=`${expLtr}² = ${exp.c}`;
+  }else if(schema==='ltrPow3c'){
+    const c=gn('b1'),pow=document.getElementById('pow').value.trim();
+    ok=ltrOk&&pow==='3'&&c===exp.c;
+    hint=`${expLtr}³ = ${exp.c}`;
+  }else if(schema==='ltrParenPow2c'){
+    const b=gn('b1'),c=gn('b2'),pow=document.getElementById('pow').value.trim();
+    ok=ltrOk&&pow==='2'&&m1Sign===exp.sign&&b===exp.b&&c===exp.c;
+    hint=`(${expLtr} ${sc(exp.sign)} ${exp.b})² = ${exp.c}`;
+  }else if(schema==='ltrParenPow3c'){
+    const b=gn('b1'),c=gn('b2'),pow=document.getElementById('pow').value.trim();
+    ok=ltrOk&&pow==='3'&&m1Sign===exp.sign&&b===exp.b&&c===exp.c;
+    hint=`(${expLtr} ${sc(exp.sign)} ${exp.b})³ = ${exp.c}`;
+  }else if(schema==='ltrPow2SignBc'){
+    const b=gn('b1'),c=gn('b2'),pow=document.getElementById('pow').value.trim();
+    ok=ltrOk&&pow==='2'&&m1Sign===exp.sign&&b===exp.b&&c===exp.c;
+    hint=`${expLtr}² ${sc(exp.sign)} ${exp.b} = ${exp.c}`;
+  }else if(schema==='aLtrPow3PlusBc'){
+    const a=gn('b1'),b=gn('b2'),c=gn('b3'),pow=document.getElementById('pow').value.trim();
+    ok=ltrOk&&pow==='3'&&a===exp.a&&b===exp.b&&c===exp.c;
+    hint=`${exp.a}(${expLtr}³ + ${exp.b}) = ${exp.c}`;
+  }else if(schema==='axbDivDc'){
+    const a=gn('b1'),b=gn('b2'),d=gn('b3'),c=gn('b4');
+    ok=ltrOk&&a===exp.a&&m1Sign===exp.sign&&b===exp.b&&d===exp.d&&c===exp.c;
+    hint=`(${exp.a}${expLtr} ${sc(exp.sign)} ${exp.b}) / ${exp.d} = ${exp.c}`;
+  }else if(schema==='percentXc'){
+    const p=parseEqText(document.getElementById('eq-input').value);
+    const expDec=exp.p/100;
+    ok=p&&p.type===2&&Math.abs(p.dec-expDec)<0.001&&p.ltr===expLtr&&Math.abs(p.c-exp.c)<0.001;
+    hint=`${fmtDec(expDec)}${expLtr} = ${exp.c}`;
+  }else if(schema==='percentXbc'){
+    const p=parseEqText(document.getElementById('eq-input').value);
+    const expDec=exp.p/100;
+    ok=p&&p.type===3&&Math.abs(p.dec-expDec)<0.001&&p.ltr===expLtr&&p.sign===exp.sign&&Math.abs(p.b-exp.b)<0.001&&Math.abs(p.c-exp.c)<0.001;
+    hint=`${fmtDec(expDec)}${expLtr} ${sc(exp.sign)} ${exp.b} = ${exp.c}`;
+  }
+
+  m1Locked=true; m1Tot++;
+  stopTimer('m1-timer');
+  inputs.forEach(i=>i.disabled=true);
+  document.querySelectorAll('#m1-input-row .sign-btn').forEach(b=>b.disabled=true);
+
+  if(ok){
+    m1Cor++;
+    document.getElementById('m1-score').textContent=`${m1Cor} / ${m1Tot}`;
+    document.getElementById('m1-fb').textContent='✓ Poprawnie!';
+    document.getElementById('m1-fb').className='feedback good';
+    playCorrectAnim('m1-anim',nextM1);
+  }else{
+    document.getElementById('m1-score').textContent=`${m1Cor} / ${m1Tot}`;
+    document.getElementById('m1-fb').innerHTML=`✗ Niepoprawnie<span class="fb-hint">Poprawna odpowiedź: ${hint}</span>`;
+    document.getElementById('m1-fb').className='feedback bad';
+    playWrongAnim('m1-anim',()=>{document.getElementById('m1-next').style.display='';});
+  }
+}
+
+// ════════════════════════════════════════
+// MODUŁ 2
+// ════════════════════════════════════════
+let m2Cor=0,m2Tot=0,m2Sol=null,m2Level=1,m2Mode='normal',m2Diff=null,m2Cdv=null,m2CdvLeft=0;
+const EQ_GEN=[
+  ()=>{const a=randInt(2,6),x=randInt(1,12);return{d:`${a}x = ${a*x}`,sol:x};},
+  ()=>{const b=randInt(2,20),x=randInt(1,20);return{d:`x + ${b} = ${x+b}`,sol:x};},
+  ()=>{const b=randInt(2,15),x=randInt(b+1,30);return{d:`x − ${b} = ${x-b}`,sol:x};},
+  ()=>{const a=randInt(2,4),b=randInt(1,10),x=randInt(1,10);return{d:`${a}x + ${b} = ${a*x+b}`,sol:x};},
+  ()=>{const a=randInt(2,4),b=randInt(1,10),x=randInt(2,10);const c=a*x-b;if(c<1)return EQ_GEN[4]();return{d:`${a}x − ${b} = ${c}`,sol:x};},
+];
+
+const fracHtml=(n,d)=>`<span class="eq-frac"><span class="eq-frac-num">${n}</span><span class="eq-frac-den">${d}</span></span>`;
+const EQ_GEN_LV2=[
+  // Ułamek: (ax−b)/c + d = e − fx
+  ()=>{
+    const sol=randInt(2,9),c=pick([2,3,4,5,7]),a=randInt(1,4),f=randInt(1,3),d=randInt(1,5);
+    const b=(a*sol)%c,numVal=(a*sol-b)/c,lhsVal=numVal+d,e=lhsVal+f*sol;
+    if(e>50||e<f*sol+2)return EQ_GEN_LV2[0]();
+    const numStr=b===0?`${a}x`:`${a}x − ${b}`;
+    const fxStr=f===1?`x`:`${f}x`;
+    return{d:`${fracHtml(numStr,c)} + ${d} = ${e} − ${fxStr}`,sol,isHtml:true};
+  },
+  // Ułamek: (ax+b)/c − d = fx − e
+  ()=>{
+    const sol=randInt(3,10),c=pick([2,3,5,6]),a=randInt(1,4),f=randInt(1,3),d=randInt(1,4);
+    const rem=(a*sol)%c,b=rem===0?0:c-rem,numVal=(a*sol+b)/c,lhsVal=numVal-d;
+    if(lhsVal<=0)return EQ_GEN_LV2[1]();
+    const e=f*sol-lhsVal;
+    if(e<0||e>50)return EQ_GEN_LV2[1]();
+    const numStr=b===0?`${a}x`:`${a}x + ${b}`;
+    const fxStr=f===1?`x`:`${f}x`;
+    return{d:`${fracHtml(numStr,c)} − ${d} = ${fxStr} − ${e}`,sol,isHtml:true};
+  },
+  // Ułamek prosty: (ax−b)/c = fx + e
+  ()=>{
+    const sol=randInt(2,10),c=pick([2,3,4,5,6]),a=randInt(c+1,4*c),f=randInt(1,3);
+    const b=(a*sol)%c,numVal=(a*sol-b)/c,e=numVal-f*sol;
+    if(e<=0)return EQ_GEN_LV2[2]();
+    const numStr=b===0?`${a}x`:`${a}x − ${b}`;
+    const fxStr=f===1?`x`:`${f}x`;
+    return{d:`${fracHtml(numStr,c)} = ${fxStr} + ${e}`,sol,isHtml:true};
+  },
+  // Nawiasy: (x+a)(x+b) = c  (drugi pierwiastek < 0)
+  ()=>{
+    const sol=randInt(2,9),a=randInt(1,6),b=randInt(1,6),c=(sol+a)*(sol+b);
+    return{d:`(x + ${a})(x + ${b}) = ${c}`,sol,isHtml:false};
+  },
+  // Nawiasy: (2x+a)(x+b) = c  (drugi pierwiastek < 0)
+  ()=>{
+    const sol=randInt(2,8),a=randInt(1,6),b=randInt(1,5),c=(2*sol+a)*(sol+b);
+    return{d:`(2x + ${a})(x + ${b}) = ${c}`,sol,isHtml:false};
+  },
+];
+
+function setM2Level(lv){
+  m2Level=lv;
+  document.querySelectorAll('#m2-lv-row .lv-btn').forEach((b,i)=>b.classList.toggle('active',i+1===lv));
+  nextM2();
+}
+
+function setM2Mode(mode){
+  m2Mode=mode;
+  stopCountdownM2();
+  document.getElementById('m2-btn-normal').classList.toggle('active',mode==='normal');
+  document.getElementById('m2-btn-challenge').classList.toggle('active',mode==='challenge');
+  if(mode==='normal'){
+    document.getElementById('m2-diff-panel').style.display='none';
+    document.getElementById('m2-game-panel').style.display='';
+    document.getElementById('m2-timer-label').textContent='Czas';
+    document.getElementById('m2-timer-box').className='stat-box timer-box';
+    document.getElementById('m2-change-diff').style.display='none';
+    m2Diff=null; nextM2();
+  } else {
+    document.getElementById('m2-game-panel').style.display='none';
+    document.getElementById('m2-diff-panel').style.display='';
+  }
+}
+
+function m2SelectDiff(secs){
+  m2Diff=secs; m2Cor=0; m2Tot=0;
+  document.getElementById('m2-score').textContent='0 / 0';
+  document.getElementById('m2-diff-panel').style.display='none';
+  document.getElementById('m2-game-panel').style.display='';
+  document.getElementById('m2-timer-label').textContent='Pozostały czas';
+  document.getElementById('m2-change-diff').style.display='';
+  nextM2();
+}
+
+function m2ChangeDiff(){
+  stopCountdownM2();
+  document.getElementById('m2-game-panel').style.display='none';
+  document.getElementById('m2-diff-panel').style.display='';
+}
+
+function startCountdownM2(){
+  m2CdvLeft=m2Diff;
+  _updateCdvDisplay();
+  m2Cdv=setInterval(()=>{
+    m2CdvLeft--;
+    _updateCdvDisplay();
+    if(m2CdvLeft<=0) timeUpM2();
+  },1000);
+}
+
+function stopCountdownM2(){
+  clearInterval(m2Cdv); m2Cdv=null;
+  const box=document.getElementById('m2-timer-box');
+  if(box) box.className='stat-box timer-box';
+}
+
+function _updateCdvDisplay(){
+  document.getElementById('m2-timer').textContent=`${m2CdvLeft} s`;
+  const ratio=m2Diff>0?m2CdvLeft/m2Diff:1;
+  document.getElementById('m2-timer-box').className='stat-box timer-box'+(ratio<=0.2?' danger':ratio<=0.5?' warn':'');
+}
+
+function timeUpM2(){
+  stopCountdownM2();
+  document.querySelectorAll('.choice-btn').forEach(b=>b.disabled=true);
+  m2Tot++;
+  document.getElementById('m2-score').textContent=`${m2Cor} / ${m2Tot}`;
+  document.getElementById('m2-fb').textContent=`⏰ Czas minął! Poprawna odpowiedź: x = ${m2Sol}`;
+  document.getElementById('m2-fb').className='feedback bad';
+  playWrongAnim('m2-anim',nextM2);
+}
+
+function nextM2(){
+  clearTimeout(_adv);
+  stopCountdownM2();
+  stopTimer('m2-timer');
+  const pool=m2Level===2?EQ_GEN_LV2:EQ_GEN;
+  const eq=pool[randInt(0,pool.length-1)]();
+  m2Sol=eq.sol;
+  const eqEl=document.getElementById('m2-eq');
+  if(eq.isHtml)eqEl.innerHTML=eq.d; else eqEl.textContent=eq.d;
+  document.getElementById('m2-fb').className='feedback';
+  document.getElementById('m2-fb').textContent='';
+  document.getElementById('m2-next').style.display='none';
+  const used=new Set([m2Sol]),opts=[m2Sol];
+  while(opts.length<4){const w=m2Sol+randInt(-10,10);if(w>0&&!used.has(w)){used.add(w);opts.push(w);}}
+  shuffle(opts);
+  const cont=document.getElementById('m2-choices'); cont.innerHTML='';
+  opts.forEach(v=>{
+    const btn=document.createElement('button');
+    btn.className='choice-btn'; btn.textContent=`x = ${v}`;
+    btn.onclick=()=>pickM2(v,btn); cont.appendChild(btn);
+  });
+  if(m2Mode==='challenge') startCountdownM2();
+  else startTimer('m2-timer');
+}
+
+function pickM2(val,btn){
+  document.querySelectorAll('.choice-btn').forEach(b=>b.disabled=true);
+  if(m2Mode==='challenge') stopCountdownM2(); else stopTimer('m2-timer');
+  m2Tot++;
+  if(val===m2Sol){
+    m2Cor++;
+    document.getElementById('m2-score').textContent=`${m2Cor} / ${m2Tot}`;
+    btn.classList.add('correct');
+    document.getElementById('m2-fb').textContent='✓ Poprawnie!';
+    document.getElementById('m2-fb').className='feedback good';
+    playCorrectAnim('m2-anim',nextM2);
+  }else{
+    document.getElementById('m2-score').textContent=`${m2Cor} / ${m2Tot}`;
+    btn.classList.add('wrong');
+    document.querySelectorAll('.choice-btn').forEach(b=>{
+      if(+b.textContent.replace('x = ','')===m2Sol)b.classList.add('correct');
+    });
+    document.getElementById('m2-fb').textContent=`✗ Błąd. Poprawna odpowiedź: x = ${m2Sol}`;
+    document.getElementById('m2-fb').className='feedback bad';
+    if(m2Mode==='challenge') playWrongAnim('m2-anim',nextM2);
+    else playWrongAnim('m2-anim',()=>{document.getElementById('m2-next').style.display='';});
+  }
+}
+
+// ════════════════════════════════════════
+// MODUŁ 3
+// ════════════════════════════════════════
+let m3Cor=0,m3Tot=0,m3Eq=null,m3Step=0,m3TotalSteps=0;
+let m3Phase='WAIT',m3Sel=null,m3OpSel=null,m3OpVal=null,m3ExpEq=null,m3Level=1,m3ChoiceMethod=null,m3TranspSel={},m3TranspRaw=null,m3TranspUserInput=null,m3LrmTranspRaw=null;
+let m3AnsSign=1,m3FracSubStep=null;
+let m3History=[];
+let m3LrmSel=[], m3LrmChipGrp=[];
+let m6FracDone=[],m6SelSet=new Set(),m6FillMode=false,m6ResultValidAnswers=null;
+
+// Lv1: 1-step — {a, b, c, xDiv}
+const EQ3_LV1=[
+  ()=>{const a=randInt(2,7),x=randInt(2,15);return{a,b:0,c:a*x,xDiv:1};},
+  ()=>{const a=randInt(6,12),x=randInt(2,10);return{a,b:0,c:a*x,xDiv:1};},
+  ()=>{const b=randInt(2,18),x=randInt(2,20);return{a:1,b,c:x+b,xDiv:1};},
+  ()=>{const b=randInt(2,15),x=randInt(2,20);return{a:1,b:-b,c:x-b,xDiv:1};},
+  ()=>{const d=pick([2,3,4,5,6,7,8,10]),x=randInt(2,15);return{a:1,b:0,c:x,xDiv:d};},
+  ()=>{const b=randInt(5,15),xN=randInt(1,10);return{a:1,b,c:b-xN,xDiv:1};},
+  ()=>{const b=randInt(5,15),xN=randInt(1,8);return{a:1,b:-b,c:-xN-b,xDiv:1};},
+  ()=>{const a=pick([2,3,4,5,6]);const c=randInt(2,20);if(c%a===0)return EQ3_LV1[7]();return{a,b:0,c,xDiv:1};},
+  ()=>{const a=pick([3,4,5,7]);const c=randInt(3,30);if(c%a===0)return EQ3_LV1[8]();return{a,b:0,c,xDiv:1};},
+  ()=>{const d=pick([3,4,5,6,8,9,10,12]),x=randInt(2,10);return{a:1,b:0,c:x,xDiv:d};},
+  // negative coefficient -ax = c (integer negative answer)
+  ()=>{const a=pick([2,3,4,5,6]);const x=randInt(2,12);return{a:-a,b:0,c:a*x,xDiv:1};},
+  // negative coefficient -ax = c (fraction answer)
+  ()=>{const a=pick([3,4,5,7]);const c=randInt(2,25);if(c%a===0)return EQ3_LV1[10]();return{a:-a,b:0,c,xDiv:1};},
+  // x + b = c where c < b (negative answer)
+  ()=>{const b=randInt(3,15),x=randInt(2,12);return{a:1,b,c:b-x,xDiv:1};},
+  // x/d = negative c
+  ()=>{const d=pick([2,3,4,5]);const x=randInt(2,10);return{a:1,b:0,c:-x,xDiv:d};},
+];
+
+// Lv2: 2-step — ax+b=c (b≠0, a≥2)
+const EQ3_LV2=[
+  ()=>{const a=randInt(2,6),x=randInt(2,12),b=randInt(2,14);return{a,b,c:a*x+b,xDiv:1};},
+  ()=>{const a=randInt(2,6),x=randInt(2,12),b=randInt(2,14);return{a,b:-b,c:a*x-b,xDiv:1};},
+  ()=>{const a=randInt(2,5),x=randInt(-9,-1),b=randInt(3,14);return{a,b,c:a*x+b,xDiv:1};},
+  ()=>{const a=randInt(2,5),x=randInt(-8,-1),b=randInt(3,10);return{a,b:-b,c:a*x-b,xDiv:1};},
+  ()=>{const a=pick([2,3,4,5]);const b=randInt(1,12);const c=b+randInt(2,a*8+1);if((c-b)%a===0)return EQ3_LV2[4]();return{a,b,c,xDiv:1};},
+  ()=>{const a=pick([2,3,4,5]);const b=randInt(2,10);const c=randInt(2,a*8+b);if((c+b)%a===0)return EQ3_LV2[5]();return{a,b:-b,c,xDiv:1};},
+  ()=>{const a=pick([2,3,4,5]);const b=randInt(4,15);const diff=-randInt(1,a*6);if(diff%a===0)return EQ3_LV2[6]();return{a,b,c:b+diff,xDiv:1};},
+  ()=>{const a=randInt(4,9),x=randInt(1,10),b=randInt(2,20);return{a,b,c:a*x+b,xDiv:1};},
+  ()=>{const a=randInt(4,9),x=randInt(1,10),b=randInt(2,15);return{a,b:-b,c:a*x-b,xDiv:1};},
+  // -ax + b = c (negative a, integer answer)
+  ()=>{const a=pick([2,3,4,5]);const b=randInt(3,15);const x=randInt(2,10);return{a:-a,b,c:-a*x+b,xDiv:1};},
+  // -ax - b = c (negative a, positive integer answer)
+  ()=>{const a=pick([2,3,4,5,6]);const b=randInt(2,8);const x=randInt(2,8);return{a:-a,b:-b,c:-a*x-b,xDiv:1};},
+  // -x + b = c  (a=-1, negative integer answer)
+  ()=>{const b=randInt(3,15);const x=randInt(2,12);return{a:-1,b,c:-x+b,xDiv:1};},
+  // -ax + b = c (fraction answer: c-b not divisible by a)
+  ()=>{const a=pick([2,3,5]);const b=randInt(1,12);const c=randInt(-10,14);if(c===b||(c-b)%a===0||(c-b)%(-a)===0)return EQ3_LV2[9]();return{a:-a,b,c,xDiv:1};},
+  // -ax - b = -c (negative both, positive fraction answer)
+  ()=>{const a=pick([3,4,5]);const b=randInt(1,8);const c=randInt(2,25);if(c%a===0)return EQ3_LV2[10]();return{a:-a,b:-b,c:-b-c,xDiv:1};},
+];
+
+// Lv3: LR (ax+b = cx+d)  OR  LRM (multi-term, needs simplification first)
+const EQ3_LV3=[
+  ()=>{
+    const x=randInt(1,8),lA=randInt(2,6),rA=randInt(1,lA-1);
+    const lB=(randInt(0,1)?1:-1)*randInt(1,8);
+    const rB=x*(lA-rA)+lB;
+    if(rB===0||Math.abs(rB)>25) return EQ3_LV3[0]();
+    return{type:'LR',lA,lB,rA,rB};
+  },
+  ()=>{
+    const x=randInt(1,8),lA=randInt(2,6),rA=randInt(1,lA-1);
+    const lB=(randInt(0,1)?1:-1)*randInt(1,8);
+    const rB=x*(lA-rA)+lB;
+    if(rB===0||Math.abs(rB)>25) return EQ3_LV3[1]();
+    return{type:'LR',lA,lB,rA,rB};
+  },
+  ()=>{
+    const x=randInt(-8,-1),lA=randInt(2,6),rA=randInt(1,lA-1);
+    const lB=(randInt(0,1)?1:-1)*randInt(1,8);
+    const rB=x*(lA-rA)+lB;
+    if(rB===0||Math.abs(rB)>30) return EQ3_LV3[2]();
+    return{type:'LR',lA,lB,rA,rB};
+  },
+  ()=>{
+    const lA=randInt(3,7),rA=randInt(1,lA-1);
+    const diff=lA-rA;
+    const lB=(randInt(0,1)?1:-1)*randInt(1,8);
+    for(let i=0;i<50;i++){
+      const rBdiff=(randInt(1,diff*6))*(randInt(0,1)?1:-1);
+      if(rBdiff%diff===0||rBdiff===0) continue;
+      const rB=lB+rBdiff;
+      if(rB===0||Math.abs(rB)>30) continue;
+      return{type:'LR',lA,lB,rA,rB};
+    }
+    return EQ3_LV3[0]();
+  },
+  ()=>{
+    const x=randInt(1,8),lA=randInt(5,9),rA=randInt(1,lA-2);
+    const lB=(randInt(0,1)?1:-1)*randInt(2,14);
+    const rB=x*(lA-rA)+lB;
+    if(rB===0||Math.abs(rB)>40) return EQ3_LV3[4]();
+    return{type:'LR',lA,lB,rA,rB};
+  },
+  ()=>{
+    const x=randInt(1,8),lA1=randInt(2,4),lA2=randInt(1,3);
+    const lB=(randInt(0,1)?1:-1)*randInt(1,8);
+    const rA=randInt(1,lA1+lA2-1);
+    const rB=x*(lA1+lA2-rA)+lB;
+    if(rB===0||Math.abs(rB)>25) return EQ3_LV3[5]();
+    return{type:'LRM',
+      lTerms:[{c:lA1,x:true},{c:lB,x:false},{c:lA2,x:true}],
+      rTerms:[{c:rB,x:false},{c:rA,x:true}],
+      simplified:{type:'LR',lA:lA1+lA2,lB,rA,rB}};
+  },
+  ()=>{
+    const x=randInt(1,8),lA1=randInt(2,4),lA2=randInt(1,3);
+    const lB=(randInt(0,1)?1:-1)*randInt(1,8);
+    const rA=randInt(1,lA1+lA2-1);
+    const rB=x*(lA1+lA2-rA)+lB;
+    if(rB===0||Math.abs(rB)>25) return EQ3_LV3[6]();
+    return{type:'LRM',
+      lTerms:[{c:lA1,x:true},{c:lB,x:false},{c:lA2,x:true}],
+      rTerms:[{c:rB,x:false},{c:rA,x:true}],
+      simplified:{type:'LR',lA:lA1+lA2,lB,rA,rB}};
+  },
+  ()=>{
+    const x=randInt(1,8),lA=randInt(4,7);
+    const lB=(randInt(0,1)?1:-1)*randInt(1,8);
+    const rA1=randInt(1,lA-2),rA2=randInt(1,Math.max(1,lA-rA1-1));
+    if(lA<=rA1+rA2) return EQ3_LV3[7]();
+    const rB=x*(lA-rA1-rA2)+lB;
+    if(rB===0||Math.abs(rB)>25) return EQ3_LV3[7]();
+    return{type:'LRM',
+      lTerms:[{c:lA,x:true},{c:lB,x:false}],
+      rTerms:[{c:rA1,x:true},{c:rB,x:false},{c:rA2,x:true}],
+      simplified:{type:'LR',lA,lB,rA:rA1+rA2,rB}};
+  },
+  ()=>{
+    const x=randInt(-6,-1),lA1=randInt(2,4),lA2=randInt(1,3);
+    const lB=(randInt(0,1)?1:-1)*randInt(1,8);
+    const rA=randInt(1,lA1+lA2-1);
+    const rB=x*(lA1+lA2-rA)+lB;
+    if(rB===0||Math.abs(rB)>30) return EQ3_LV3[8]();
+    return{type:'LRM',
+      lTerms:[{c:lA1,x:true},{c:lB,x:false},{c:lA2,x:true}],
+      rTerms:[{c:rB,x:false},{c:rA,x:true}],
+      simplified:{type:'LR',lA:lA1+lA2,lB,rA,rB}};
+  },
+  // LR with negative rA (e.g. 5x+2 = 7-3x → lA:5,lB:2,rA:-3,rB:7)
+  ()=>{
+    const lA=randInt(3,7),rA=-randInt(1,3);
+    const diff=lA-rA;
+    const lB=(randInt(0,1)?1:-1)*randInt(1,8);
+    for(let i=0;i<50;i++){
+      const rBdiff=(randInt(1,diff*5))*(randInt(0,1)?1:-1);
+      if(rBdiff%diff===0||rBdiff===0) continue;
+      const rB=lB+rBdiff;
+      if(rB===0||Math.abs(rB)>30) continue;
+      return{type:'LR',lA,lB,rA,rB};
+    }
+    return EQ3_LV3[0]();
+  },
+  // L3M with c=0: k(ax+b)=0
+  ()=>{
+    const k=pick([2,3,4,5]);
+    const a=randInt(1,3);
+    const b=(randInt(0,1)?1:-1)*randInt(1,8);
+    return{type:'L3M',k,a,b,c:0};
+  },
+  // L3M with negative k: -k(ax+b)=c (fraction/negative answer)
+  ()=>{
+    const k=pick([2,3,4,5]);
+    const a=randInt(1,2),x=randInt(1,8);
+    const b=(randInt(0,1)?1:-1)*randInt(1,5);
+    if(a*x+b===0) return EQ3_LV3[10]();
+    return{type:'L3M',k:-k,a,b,c:-k*(a*x+b)};
+  },
+  // LRM on both sides with negative x answer (fraction)
+  ()=>{
+    const lA=randInt(4,8),rA1=randInt(1,lA-2),rA2=randInt(1,Math.max(1,lA-rA1-1));
+    if(lA<=rA1+rA2) return EQ3_LV3[7]();
+    const diff=lA-rA1-rA2;
+    const lB=(randInt(0,1)?1:-1)*randInt(1,6);
+    for(let i=0;i<40;i++){
+      const rBdiff=(randInt(1,diff*5))*(randInt(0,1)?1:-1);
+      if(rBdiff%diff===0||rBdiff===0) continue;
+      const rB=lB+rBdiff;
+      if(rB===0||Math.abs(rB)>30) continue;
+      return{type:'LRM',
+        lTerms:[{c:lA,x:true},{c:lB,x:false}],
+        rTerms:[{c:rA1,x:true},{c:rB,x:false},{c:rA2,x:true}],
+        simplified:{type:'LR',lA,lB,rA:rA1+rA2,rB}};
+    }
+    return EQ3_LV3[7]();
+  },
+];
+
+// Lv4: fraction (ax+b)/d=c  OR  bracket k(ax+b)=c
+const EQ3_LV4=[
+  ()=>{
+    const d=randInt(2,4),a=randInt(2,4),x=randInt(1,8);
+    const ax=a*x,need=((d-(ax%d))%d);
+    const opts=[need,need-d,need+d].filter(v=>v!==0&&Math.abs(v)<=12);
+    if(!opts.length)return EQ3_LV4[0]();
+    const b=opts[randInt(0,opts.length-1)];
+    return{type:'L3F',a,b,d,c:(ax+b)/d};
+  },
+  ()=>{
+    const k=randInt(2,4),a=randInt(1,3),x=randInt(1,8);
+    const b=(randInt(0,1)?1:-1)*randInt(1,6);
+    if(a*x+b===0)return EQ3_LV4[1]();
+    return{type:'L3M',k,a,b,c:k*(a*x+b)};
+  },
+  ()=>{
+    const d=pick([2,3,4,5]),a=pick([2,3,4,5]);
+    const c=randInt(1,10);
+    for(let i=0;i<50;i++){
+      const b=(randInt(0,1)?1:-1)*randInt(1,12);
+      const num=c*d-b;
+      if(num>0&&num%a!==0) return{type:'L3F',a,b,d,c};
+    }
+    return EQ3_LV4[0]();
+  },
+  ()=>{
+    const k=pick([3,4,5]),a=randInt(2,4),x=randInt(1,6);
+    const b=(randInt(0,1)?1:-1)*randInt(1,5);
+    if(a*x+b===0)return EQ3_LV4[3]();
+    return{type:'L3M',k,a,b,c:k*(a*x+b)};
+  },
+  ()=>{
+    const d=pick([5,6,8]),a=randInt(2,5),x=randInt(1,6);
+    const ax=a*x,need=((d-(ax%d))%d);
+    const opts=[need,need-d,need+d].filter(v=>v!==0&&Math.abs(v)<=15);
+    if(!opts.length)return EQ3_LV4[4]();
+    const b=opts[randInt(0,opts.length-1)];
+    return{type:'L3F',a,b,d,c:(ax+b)/d};
+  },
+  ()=>{
+    const k=randInt(2,4),a=randInt(2,4),x=randInt(-6,-1);
+    const b=(randInt(0,1)?1:-1)*randInt(1,8);
+    if(a*x+b===0)return EQ3_LV4[5]();
+    return{type:'L3M',k,a,b,c:k*(a*x+b)};
+  },
+  // L3F with fraction answer: (ax+b)/d=c where (cd-b) not divisible by a
+  ()=>{
+    const d=pick([3,5,7]);const a=pick([2,3,4]);const c=randInt(1,8);
+    for(let i=0;i<50;i++){
+      const b=(randInt(0,1)?1:-1)*randInt(1,10);
+      const num=c*d-b;
+      if(num>0&&num%a!==0)return{type:'L3F',a,b,d,c};
+    }
+    return EQ3_LV4[0]();
+  },
+  // L3M with fraction answer: k(ax+b)=c where (c-kb) not divisible by ka
+  ()=>{
+    const k=pick([2,3,4,5]);const a=pick([2,3,4]);
+    const b=(randInt(0,1)?1:-1)*randInt(1,6);const ka=k*a;
+    for(let i=0;i<60;i++){
+      const c=(randInt(0,1)?1:-1)*randInt(2,30);
+      const num=c-k*b;
+      if(num===0||num%ka===0)continue;
+      const g=gcd(Math.abs(num),ka);
+      if(Math.abs(num/g/ka*g)>8)continue;
+      return{type:'L3M',k,a,b,c};
+    }
+    return EQ3_LV4[1]();
+  },
+  // L3M with negative k: -k(ax+b)=c
+  ()=>{
+    const k=pick([3,4,5,6]);const a=randInt(1,3);
+    const b=(randInt(0,1)?1:-1)*randInt(1,5);const x=randInt(1,8);
+    if(a*x+b===0)return EQ3_LV4[7]();
+    return{type:'L3M',k:-k,a,b,c:-k*(a*x+b)};
+  },
+];
+
+// Lv5: (ax+b)/d = ex+f  OR  k(ax+b) = ex+f
+const EQ3_LV5=[
+  ()=>{
+    const d=randInt(2,3),e=1;
+    const a=d+randInt(2,3),x=randInt(1,8),f=randInt(1,6);
+    const b=d*f-x*(a-d*e);
+    if(b===0)return EQ3_LV5[0]();
+    return{type:'L4F',a,b,d,e,f};
+  },
+  ()=>{
+    const k=randInt(2,4),a=randInt(3,4);
+    const ek=randInt(1,a-2);
+    const x=randInt(1,8),b=(randInt(0,1)?1:-1)*randInt(1,5);
+    const fk=x*(a-ek)+b;
+    if(fk===0||Math.abs(fk)>30)return EQ3_LV5[1]();
+    return{type:'L4M',k,a,b,e:k*ek,f:k*fk};
+  },
+  ()=>{
+    const k=pick([2,3]);
+    const a=randInt(2,4);
+    const x=randInt(1,8);
+    const b=(randInt(0,1)?1:-1)*randInt(1,4);
+    const cands=[];
+    for(let i=1;i<k*a;i++) if(i%k!==0) cands.push(i);
+    if(!cands.length) return EQ3_LV5[2]();
+    const e=pick(cands);
+    const f=x*(k*a-e)+k*b;
+    if(f===0||Math.abs(f)>30) return EQ3_LV5[2]();
+    return{type:'L4M',k,a,b,e,f};
+  },
+  ()=>{
+    const d=pick([3,4]),e=1;
+    const a=d+randInt(1,4),x=randInt(1,10),f=randInt(1,8);
+    const b=d*f-x*(a-d*e);
+    if(b===0)return EQ3_LV5[3]();
+    return{type:'L4F',a,b,d,e,f};
+  },
+  ()=>{
+    const k=pick([2,3]);
+    const a=randInt(2,4);
+    const x=randInt(-6,-1);
+    const b=(randInt(0,1)?1:-1)*randInt(1,5);
+    const cands=[];
+    for(let i=1;i<k*a;i++) if(i%k!==0) cands.push(i);
+    if(!cands.length) return EQ3_LV5[4]();
+    const e=pick(cands);
+    const f=x*(k*a-e)+k*b;
+    if(f===0||Math.abs(f)>40) return EQ3_LV5[4]();
+    return{type:'L4M',k,a,b,e,f};
+  },
+  ()=>{
+    const d=randInt(2,3),e=2;
+    const a=d*e+randInt(1,3),x=randInt(1,6),f=randInt(1,5);
+    const b=d*f-x*(a-d*e);
+    if(b===0)return EQ3_LV5[5]();
+    return{type:'L4F',a,b,d,e,f};
+  },
+  ()=>{
+    const k=pick([3,4,5]);
+    const a=randInt(2,3);
+    const x=randInt(1,6);
+    const b=(randInt(0,1)?1:-1)*randInt(1,4);
+    const cands=[];
+    for(let i=1;i<k*a;i++) if(i%k!==0) cands.push(i);
+    if(!cands.length) return EQ3_LV5[6]();
+    const e=pick(cands);
+    const f=x*(k*a-e)+k*b;
+    if(f===0||Math.abs(f)>40) return EQ3_LV5[6]();
+    return{type:'L4M',k,a,b,e,f};
+  },
+  // L4F fraction answer: (ax+b)/d=ex+f where (df-b) not divisible by (a-de)
+  ()=>{
+    const d=pick([2,3,4,5]);const e=1;
+    for(let i=0;i<60;i++){
+      const a=pick([3,4,5,6,7,8]);
+      const diff=a-d*e;if(diff<=0)continue;
+      const f=(randInt(0,1)?1:-1)*randInt(1,6);
+      const b=(randInt(0,1)?1:-1)*randInt(1,10);
+      const num=d*f-b;
+      if(num===0||num%diff===0)continue;
+      const g=gcd(Math.abs(num),Math.abs(diff));
+      if(Math.abs(num/g)>15)continue;
+      return{type:'L4F',a,b,d,e,f};
+    }
+    return EQ3_LV5[0]();
+  },
+  // L4M fraction answer: k(ax+b)=ex+f where (f-kb) not divisible by (ka-e)
+  ()=>{
+    const k=pick([2,3,4]);const a=pick([2,3,4]);const ka=k*a;
+    for(let i=0;i<60;i++){
+      const e=randInt(1,ka-1);if(e%k===0)continue;
+      const b=(randInt(0,1)?1:-1)*randInt(1,5);
+      const f=(randInt(0,1)?1:-1)*randInt(1,20);
+      const num=f-k*b,den=ka-e;
+      if(num===0||den===0||num%den===0)continue;
+      const g=gcd(Math.abs(num),Math.abs(den));
+      if(Math.abs(num/g/(den/g))>10||Math.abs(f)>40)continue;
+      return{type:'L4M',k,a,b,e,f};
+    }
+    return EQ3_LV5[1]();
+  },
+  // L4F fraction answer (e=2): (ax+b)/d=2x+f
+  ()=>{
+    const d=pick([3,4,5]);const e=2;
+    for(let i=0;i<60;i++){
+      const a=pick([5,6,7,8,9,10]);
+      const diff=a-d*e;if(diff<=0)continue;
+      const f=(randInt(0,1)?1:-1)*randInt(1,5);
+      const b=(randInt(0,1)?1:-1)*randInt(1,8);
+      const num=d*f-b;
+      if(num===0||num%diff===0)continue;
+      const g=gcd(Math.abs(num),Math.abs(diff));
+      if(Math.abs(num/g)>20)continue;
+      return{type:'L4F',a,b,d,e,f};
+    }
+    return EQ3_LV5[0]();
+  },
+];
+
+// ── Lv6 helpers & equations ─────────────────────────────────────────────────
+function m6FracNum(a,b){
+  if(a>0)return fmtSum(a,b);
+  if(a<0&&b>0)return String(b)+(a===-1?'-x':`${a}x`);
+  if(a===0)return String(b);
+  return fmtSum(a,b);
+}
+function m6TermHtml(t,done,lcd){
+  if(done){
+    const m=lcd/t.d,ea=t.a*m,eb=t.b*m;
+    if(ea===0)return fracHtml(String(eb),lcd);
+    if(eb===0)return fracHtml(fmtSum(ea,0),lcd);
+    return fracHtml(m6FracNum(ea,eb),lcd);
+  }
+  if(t.d===1)return t.a!==0?fmtSum(t.a,t.b||0):String(t.b);
+  return fracHtml(m6FracNum(t.a,t.b),t.d);
+}
+function m6ValidNumerForms(ea,eb){
+  const set=new Set();
+  const xa=ea===0?'':(ea===1?'x':ea===-1?'-x':`${ea}x`);
+  if(ea!==0&&eb!==0){
+    const xbSign=eb>0?`+${eb}`:String(eb);
+    const xbFirst=String(eb);
+    const xaAfter=ea>0?(ea===1?'+x':`+${ea}x`):(ea===-1?'-x':`${ea}x`);
+    set.add(normIn(xa+xbSign));
+    set.add(normIn(xbFirst+xaAfter));
+  }else if(ea!==0){set.add(normIn(xa));}
+  else{set.add(normIn(String(eb)));}
+  return set;
+}
+function m6ValidAnswersSet(resultEq){
+  const fmt=(v,first,x)=>{if(v===0)return'';const a=Math.abs(v);const part=x?(a===1?'x':`${a}x`):String(a);return(v>0?(first?'':'+'):'-')+part;};
+  const bld=ts=>{let o='',f=true;for(const t of ts){const k=fmt(t.c,f,t.x);if(k){o+=k;f=false;}}return o||'0';};
+  const perms=arr=>{if(arr.length<=1)return[arr.slice()];const r=[];for(let i=0;i<arr.length;i++){const rest=[...arr.slice(0,i),...arr.slice(i+1)];for(const p of perms(rest))r.push([arr[i],...p]);}return r;};
+  const set=new Set();
+  const eqToTerms=eq=>{const lt=[],rt=[];
+    if(eq.type==='LRM'){lt.push(...eq.lTerms);rt.push(...eq.rTerms);}
+    else if(eq.type==='LR'){const{lA,lB,rA,rB}=eq;if(lA)lt.push({c:lA,x:true});if(lB)lt.push({c:lB,x:false});if(rA)rt.push({c:rA,x:true});if(rB)rt.push({c:rB,x:false});}
+    else{const{a,b,c}=eq;if(a)lt.push({c:a,x:true});if(b)lt.push({c:b,x:false});rt.push({c,x:false});}
+    return{lt,rt};};
+  const addPerms=eq=>{const{lt,rt}=eqToTerms(eq);for(const lp of perms(lt))for(const rp of perms(rt))set.add(normIn(bld(lp)+'='+bld(rp)));};
+  addPerms(resultEq);
+  if(resultEq.type==='LRM')addPerms(resultEq.simplified);
+  return set;
+}
+function buildL6(lT,rT,lcd){
+  const expand=ts=>{const res=[];for(const t of ts){const m=lcd/t.d;if(t.a*m)res.push({c:t.a*m,x:true});if(t.b*m)res.push({c:t.b*m,x:false});}return res;};
+  const lE=expand(lT),rE=expand(rT);
+  const lA=lE.filter(t=>t.x).reduce((s,t)=>s+t.c,0);
+  const lB=lE.filter(t=>!t.x).reduce((s,t)=>s+t.c,0);
+  const rA=rE.filter(t=>t.x).reduce((s,t)=>s+t.c,0);
+  const rB=rE.filter(t=>!t.x).reduce((s,t)=>s+t.c,0);
+  const simple=lE.filter(t=>t.x).length<=1&&lE.filter(t=>!t.x).length<=1&&rE.filter(t=>t.x).length<=1&&rE.filter(t=>!t.x).length<=1;
+  const simplified=rA===0?{a:lA,b:lB,c:rB,xDiv:1}:{type:'LR',lA,lB,rA,rB};
+  const resultEq=simple?simplified:{type:'LRM',lTerms:lE,rTerms:rE,simplified};
+  return{type:'L6',lTerms:lT,rTerms:rT,lcd,resultEq};
+}
+// Lv6: równania ułamkowe ze wspólnym mianownikiem
+const EQ3_LV6=[
+  ()=>buildL6([{a:1,b:0,d:3},{a:0,b:1,d:1}],[{a:0,b:5,d:6},{a:1,b:0,d:2}],6),     // x/3+1=5/6+x/2 → x=1
+  ()=>buildL6([{a:1,b:2,d:9},{a:1,b:-1,d:3}],[{a:0,b:1,d:1}],9),                    // (x+2)/9+(x-1)/3=1 → x=5/2
+  ()=>buildL6([{a:2,b:3,d:5}],[{a:-1,b:2,d:3},{a:1,b:0,d:1}],15),                   // (2x+3)/5=(2-x)/3+x → x=-1/4
+  ()=>buildL6([{a:1,b:0,d:4},{a:0,b:3,d:1}],[{a:1,b:0,d:2},{a:0,b:1,d:1}],4),      // x/4+3=x/2+1 → x=8
+  ()=>buildL6([{a:1,b:1,d:2},{a:1,b:-3,d:4}],[{a:0,b:2,d:1}],4),                    // (x+1)/2+(x-3)/4=2 → x=3
+  ()=>buildL6([{a:2,b:1,d:3}],[{a:1,b:-1,d:6},{a:0,b:1,d:1}],6),                    // (2x+1)/3=(x-1)/6+1 → x=1
+  ()=>buildL6([{a:1,b:-2,d:3},{a:1,b:0,d:5}],[{a:0,b:2,d:1}],15),                   // (x-2)/3+x/5=2 → x=5
+  ()=>buildL6([{a:1,b:0,d:3},{a:0,b:2,d:1}],[{a:1,b:0,d:6},{a:0,b:5,d:1}],6),      // x/3+2=x/6+5 → x=18
+  ()=>buildL6([{a:1,b:1,d:3},{a:1,b:-2,d:6}],[{a:0,b:1,d:1}],6),                    // (x+1)/3+(x-2)/6=1 → x=2
+  ()=>buildL6([{a:3,b:1,d:4}],[{a:1,b:-1,d:2},{a:0,b:1,d:1}],4),                    // (3x+1)/4=(x-1)/2+1 → x=1
+  ()=>buildL6([{a:1,b:0,d:2}],[{a:1,b:3,d:4},{a:0,b:1,d:1}],4),                     // x/2=(x+3)/4+1 → x=7
+  ()=>buildL6([{a:2,b:-1,d:3},{a:1,b:2,d:6}],[{a:0,b:3,d:1}],6),                    // (2x-1)/3+(x+2)/6=3 → x=18/5
+  ()=>buildL6([{a:1,b:0,d:4},{a:1,b:0,d:6}],[{a:0,b:5,d:1}],12),                    // x/4+x/6=5 → x=12
+  ()=>buildL6([{a:1,b:5,d:3}],[{a:1,b:-1,d:6},{a:0,b:2,d:1}],6),                    // (x+5)/3=(x-1)/6+2 → x=1
+  ()=>buildL6([{a:3,b:-2,d:4}],[{a:1,b:1,d:2},{a:0,b:3,d:1}],4),                    // (3x-2)/4=(x+1)/2+3 → x=16
+  ()=>buildL6([{a:4,b:1,d:5},{a:2,b:-3,d:10}],[{a:0,b:3,d:1}],10),                  // (4x+1)/5+(2x-3)/10=3 → x=31/10
+  ()=>buildL6([{a:1,b:3,d:8},{a:1,b:-1,d:4}],[{a:1,b:0,d:2}],8),                    // (x+3)/8+(x-1)/4=x/2 → x=1
+  ()=>buildL6([{a:2,b:-1,d:6},{a:1,b:2,d:3}],[{a:0,b:2,d:1}],6),                    // (2x-1)/6+(x+2)/3=2 → x=9/4
+  ()=>buildL6([{a:1,b:0,d:5},{a:1,b:2,d:10}],[{a:0,b:1,d:1}],10),                   // x/5+(x+2)/10=1 → x=8/3
+  ()=>buildL6([{a:5,b:-3,d:4}],[{a:1,b:1,d:2},{a:0,b:3,d:1}],4),                    // (5x-3)/4=(x+1)/2+3 → x=17/3
+  ()=>buildL6([{a:1,b:2,d:5},{a:2,b:-1,d:10}],[{a:1,b:0,d:1}],10),                  // (x+2)/5+(2x-1)/10=x → x=1/2
+  ()=>buildL6([{a:1,b:-4,d:3},{a:1,b:0,d:1}],[{a:0,b:5,d:1}],3),                    // (x-4)/3+x=5 → x=19/4
+  ()=>buildL6([{a:1,b:1,d:4},{a:1,b:-3,d:12}],[{a:0,b:1,d:1}],12),                  // (x+1)/4+(x-3)/12=1 → x=3
+  ()=>buildL6([{a:1,b:1,d:3}],[{a:1,b:-1,d:2},{a:0,b:1,d:1}],6),                    // (x+1)/3=(x-1)/2+1 → x=-1
+  ()=>buildL6([{a:3,b:1,d:6}],[{a:1,b:2,d:4},{a:0,b:1,d:1}],12),                    // (3x+1)/6=(x+2)/4+1 → x=16/3
+  ()=>buildL6([{a:2,b:-3,d:4}],[{a:0,b:1,d:2},{a:1,b:0,d:1}],4),                   // (2x-3)/4=1/2+x → x=-5/2
+  ()=>buildL6([{a:1,b:1,d:2},{a:-1,b:1,d:3}],[{a:0,b:1,d:4}],12),                  // (x+1)/2-(x-1)/3=1/4 → x=-7/2
+  ()=>buildL6([{a:4,b:7,d:2},{a:-5,b:1,d:6}],[{a:1,b:5,d:1}],6),                   // (4x+7)/2-(5x-1)/6=x+5 → x=8
+  ()=>buildL6([{a:1,b:5,d:4},{a:-2,b:-1,d:8}],[{a:-1,b:2,d:2}],8),                 // (x+5)/4-(2x+1)/8=(2-x)/2 → x=-1/4
+  ()=>buildL6([{a:3,b:-5,d:2}],[{a:5,b:-1,d:10}],10),                               // (3x-5)/2=(5x-1)/10 → x=12/5
+  ()=>buildL6([{a:2,b:-1,d:5},{a:-1,b:2,d:2}],[{a:7,b:0,d:10}],10),                // (2x-1)/5-(x-2)/2=7x/10 → x=1
+  ()=>buildL6([{a:2,b:0,d:1},{a:-3,b:-5,d:4}],[{a:-1,b:0,d:4},{a:0,b:-1,d:1}],4), // 2x-(3x+5)/4=-x/4-1 → x=1/6
+  ()=>buildL6([{a:3,b:1,d:5},{a:-1,b:1,d:10}],[{a:0,b:1,d:1}],10),                 // (3x+1)/5-(x-1)/10=1 → x=7/5
+  ()=>buildL6([{a:2,b:1,d:3},{a:1,b:-2,d:9}],[{a:0,b:1,d:1}],9),                   // (2x+1)/3+(x-2)/9=1 → x=8/7
+  ()=>buildL6([{a:5,b:-2,d:3},{a:-1,b:-1,d:6}],[{a:0,b:1,d:1}],6),                 // (5x-2)/3-(x+1)/6=1 → x=11/9
+  ()=>buildL6([{a:3,b:-1,d:4},{a:1,b:2,d:8}],[{a:0,b:2,d:1}],8),                   // (3x-1)/4+(x+2)/8=2 → x=16/7
+  ()=>buildL6([{a:1,b:3,d:5},{a:2,b:-1,d:10}],[{a:0,b:2,d:1}],10),                 // (x+3)/5+(2x-1)/10=2 → x=15/4
+];
+function normIn(s){
+  return s.replace(/\s+/g,'').toLowerCase()
+    .replace(/[·×⋅]/g,'').replace(/\*/g,'')
+    .replace(/[−–—]/g,'-')
+    .replace(/(?<!\d)1x/g,'x');
+}
+function fmtSum(a,b){
+  const xp=a===0?'':(a===1?'x':a===-1?'-x':`${a}x`);
+  const bp=b>0?(xp?`+${b}`:String(b)):b<0?String(b):'';
+  if(!xp&&!bp)return'0';
+  return xp+bp;
+}
+function fmtTerms(terms){
+  let s='';
+  for(let i=0;i<terms.length;i++){
+    const{c,x}=terms[i];
+    const abs=Math.abs(c);
+    const part=x?(abs===1?'x':`${abs}x`):String(abs);
+    if(i===0) s+=(c<0?'−':'')+part;
+    else s+=` ${c<0?'−':'+'} ${part}`;
+  }
+  return s;
+}
+function expNorm(eq){
+  if(!eq)return'';
+  if(eq.type==='LR')return fmtSum(eq.lA,eq.lB)+'='+fmtSum(eq.rA,eq.rB);
+  const{a,b,c,xDiv=1}=eq;
+  const xPart=xDiv>1?`x/${xDiv}`:a===1?'x':a===-1?'-x':`${a}x`;
+  const bp=b>0?`+${b}`:b<0?`-${Math.abs(b)}`:'';
+  return`${xPart}${bp}=${c}`;
+}
+function applyOp(lhs,op,val){
+  if(op==='+')return lhs+val;
+  if(op==='-')return lhs-val;
+  if(op==='·')return lhs*val;
+  if(op==='÷')return val!==0?lhs/val:Infinity;
+  return lhs;
+}
+function m3CountSteps(eq){
+  if(eq.type==='L6')return 2+m3CountSteps(eq.resultEq);
+  if(eq.type==='LRM')return 1+m3CountSteps(eq.simplified);
+  if(eq.type==='LR')return 1+m3CountSteps({a:eq.lA-eq.rA,b:eq.lB,c:eq.rB,xDiv:1});
+  if(eq.type==='L3F'||eq.type==='L3M')return 1+m3CountSteps({a:eq.a,b:eq.b,c:0,xDiv:1});
+  if(eq.type==='L4F')return 1+m3CountSteps({type:'LR',lA:eq.a,lB:eq.b,rA:eq.d*eq.e,rB:eq.d*eq.f});
+  if(eq.type==='L4M'){
+    if(eq.e%eq.k===0&&eq.f%eq.k===0)
+      return 1+m3CountSteps({type:'LR',lA:eq.a,lB:eq.b,rA:eq.e/eq.k,rB:eq.f/eq.k});
+    return 1+m3CountSteps({type:'LR',lA:eq.k*eq.a,lB:eq.k*eq.b,rA:eq.e,rB:eq.f});
+  }
+  const{a,b,xDiv=1}=eq;
+  return(b!==0?1:0)+(a!==1||xDiv!==1?1:0);
+}
+function m3GetXHtml({a,xDiv=1}){
+  if(xDiv>1) return fracHtml('x',xDiv);
+  return a===1?'x':a===-1?'-x':`${a}x`;
+}
+function m3GetBLbl({b}){if(b===0)return null;return b>0?`+ ${b}`:`− ${Math.abs(b)}`;}
+
+function setM3Level(lv){
+  m3Level=lv;
+  document.querySelectorAll('#m3-lv-row .lv-btn').forEach((b,i)=>b.classList.toggle('active',i+1===lv));
+  nextM3();
+}
+
+function m3SaveState(){
+  m3History.push({phase:m3Phase,eq:JSON.parse(JSON.stringify(m3Eq||null)),
+    sel:m3Sel,opSel:m3OpSel,opVal:m3OpVal,
+    expEq:m3ExpEq?JSON.parse(JSON.stringify(m3ExpEq)):null,
+    choiceMethod:m3ChoiceMethod,transpSel:JSON.parse(JSON.stringify(m3TranspSel)),
+    transpRaw:m3TranspRaw,transpUserInput:m3TranspUserInput,
+    step:m3Step,totalSteps:m3TotalSteps,
+    lrmSel:m3LrmSel.slice(),lrmChipGrp:m3LrmChipGrp.slice(),lrmTranspRaw:m3LrmTranspRaw,
+    fracDone:m6FracDone.slice(),selSet:[...m6SelSet],fillMode:m6FillMode,resultValidAnswers:m6ResultValidAnswers,ansSign:m3AnsSign});
+}
+function m3Undo(){
+  if(!m3History.length) return;
+  const s=m3History.pop();
+  m3Phase=s.phase; m3Eq=s.eq; m3Sel=s.sel; m3OpSel=s.opSel; m3OpVal=s.opVal;
+  m3ExpEq=s.expEq; m3ChoiceMethod=s.choiceMethod;
+  m3TranspSel=s.transpSel; m3TranspRaw=s.transpRaw; m3TranspUserInput=s.transpUserInput;
+  m3Step=s.step; m3TotalSteps=s.totalSteps;
+  m3LrmSel=s.lrmSel||[]; m3LrmChipGrp=s.lrmChipGrp||[]; m3LrmTranspRaw=s.lrmTranspRaw||null;
+  m6FracDone=s.fracDone||[]; m6SelSet=new Set(s.selSet||[]); m6FillMode=s.fillMode||false; m6ResultValidAnswers=s.resultValidAnswers||null; m3AnsSign=s.ansSign||1;
+  document.getElementById('m3-fb').className='feedback';
+  document.getElementById('m3-fb').textContent='';
+  renderM3();
+}
+function m3ShowUndo(){
+  document.getElementById('m3-undo-row').style.display=
+    (m3History.length>0&&m3Phase!=='WAIT'&&m3Phase!=='SOLVED')?'':'none';
+}
+function renderM3(){
+  const area=document.getElementById('m3-eq-area');
+  const inputArea=document.getElementById('m3-input-area');
+  const m6FillAreaEl=document.getElementById('m6-fill-area');
+  const m3BoxEl=document.getElementById('m3-box');
+  if(m6FillAreaEl){m6FillAreaEl.style.display='none';m6FillAreaEl.innerHTML='';}
+  if(m3BoxEl){m3BoxEl.style.borderRadius='';m3BoxEl.style.marginBottom='';}
+  document.getElementById('m3-fb').className='feedback';
+  inputArea.style.display='none';
+  document.getElementById('m3-sign-row').style.display='none';
+  document.getElementById('m3-type-row').style.display='none';
+  document.getElementById('m3-frac-ans-row').style.display='none';
+  document.getElementById('m3-int-ans-row').style.display='none';
+  document.getElementById('m3-pos-int-ans-row').style.display='none';
+  document.getElementById('m3-mixed-ans-row').style.display='none';
+  document.getElementById('m3-check-area').style.display='none';
+
+  if(m3Phase==='WAIT'){
+    area.innerHTML='<div class="m3-hint" style="margin:18px 0">Generowanie pierwszego równania...</div>';
+    return;
+  }
+  if(m3Phase==='SOLVED'){
+    const _eq=m3ExpEq||m3Eq;
+    const solNum=_eq.type==='LR'?_eq.rB:_eq.c;
+    const solHtml=numToDispHtml(solNum);
+    area.innerHTML=`<div class="m3-solved"><div class="m3-solved-icon">🎉</div><div class="m3-solved-eq"><span>x =</span><span>${solHtml}</span></div><div class="m3-solved-msg">Brawo! Równanie rozwiązane!</div></div>`;
+    return;
+  }
+  area.style.pointerEvents='';
+  if(m3Phase==='FORFEIT'){
+    inputArea.style.display='none';
+    document.getElementById('m3-check-area').style.display='none';
+    document.getElementById('m3-forfeit-area').style.display='none';
+    area.style.pointerEvents='none';
+    return;
+  }
+
+  document.getElementById('m3-forfeit-area').style.display='';
+
+  const _undoDisabled=m3History.length===0?' disabled':'';
+  const badge=`<div class="m3-step"><button class="m3-undo-inline"${_undoDisabled} onclick="m3Undo()">← Cofnij</button>KROK ${m3Step} Z ${m3TotalSteps}</div>`;
+  const _lbl=m3OpSel==='-'?'−':m3OpSel==='·'?'·':m3OpSel==='÷'?'÷':'+';
+  const _cls=m3OpSel==='-'?'s-minus':m3OpSel==='·'?'s-mul':m3OpSel==='÷'?'s-div':'';
+  const signInputs=`<button class="m3-sign-cycle${_cls?' '+_cls:''}" id="m3-sign-cyc" onclick="m3CycleSign()">${_lbl}</button>`
+    +`<input class="m3-val-inp" id="m3-inp-sign" type="text" autocomplete="off" placeholder="?" onkeydown="if(event.key==='Enter')checkM3Sign()">`;
+  function showSign(){document.getElementById('m3-check-area').style.display='';const i=document.getElementById('m3-inp-sign');if(i){i.value='';i.focus();}}
+  function showType(){inputArea.style.display='';document.getElementById('m3-type-row').style.display='';const i=document.getElementById('m3-inp-type');if(i){i.value='';i.focus();}}
+  function showFracAns(){
+    inputArea.style.display='';document.getElementById('m3-frac-ans-row').style.display='';
+    const neg=m3ExpEq&&m3ExpEq.c<0; m3AnsSign=neg?-1:1;
+    const sb=document.getElementById('m3-frac-sign-btn');
+    if(sb){sb.style.display=neg?'':'none';sb.textContent='−';}
+    const ni=document.getElementById('m3-inp-frac-num');if(ni){ni.value='';ni.focus();}
+    const di=document.getElementById('m3-inp-frac-den');if(di)di.value='';
+  }
+  function showIntAns(){
+    inputArea.style.display='';document.getElementById('m3-int-ans-row').style.display='';
+    m3AnsSign=1;
+    const sb=document.getElementById('m3-int-sign-btn');
+    if(sb){sb.textContent='+';sb.className='m3-ans-sign-btn s-plus';}
+    const inp=document.getElementById('m3-inp-int-ans');if(inp){inp.value='';inp.focus();}
+  }
+  function showPosIntAns(){
+    inputArea.style.display='';document.getElementById('m3-pos-int-ans-row').style.display='';
+    m3AnsSign=1;
+    const inp=document.getElementById('m3-inp-pos-int-ans');if(inp){inp.value='';inp.focus();}
+  }
+  function showMixedAns(){
+    inputArea.style.display='';document.getElementById('m3-mixed-ans-row').style.display='';
+    const neg=m3ExpEq&&m3ExpEq.c<0; m3AnsSign=neg?-1:1;
+    const sb=document.getElementById('m3-mixed-sign-btn');
+    if(sb){sb.style.display=neg?'':'none';sb.textContent='−';}
+    const wi=document.getElementById('m3-inp-mixed-whole');if(wi){wi.value='';wi.focus();}
+    const ni=document.getElementById('m3-inp-mixed-num');if(ni)ni.value='';
+    const di=document.getElementById('m3-inp-mixed-den');if(di)di.value='';
+  }
+
+  // ── L6: równania ułamkowe ─────────────────────────────────────────────────
+  if(m3Eq.type==='L6'){
+    const lcd=m3Eq.lcd;
+    const mkLcdTermHtml=t=>{const m=lcd/t.d,ea=t.a*m,eb=t.b*m;if(ea===0)return fracHtml(String(eb),lcd);if(eb===0)return fracHtml(fmtSum(ea,0),lcd);return fracHtml(m6FracNum(ea,eb),lcd);};
+    const mkEqRow=(lTs,rTs,chipFn)=>{
+      let lStr='',rStr='';
+      lTs.forEach((t,i)=>{if(i>0)lStr+=`<span class="m3-sep">+</span>`;lStr+=chipFn(t,i);});
+      rTs.forEach((t,j)=>{if(j>0)rStr+=`<span class="m3-sep">+</span>`;rStr+=chipFn(t,m3Eq.lTerms.length+j);});
+      return`<div class="m3-eq-row">${lStr}<span class="m3-sep">=</span>${rStr}</div>`;
+    };
+
+    if(m3Phase==='L6_LCD'){
+      const allTermsL6=[...m3Eq.lTerms,...m3Eq.rTerms];
+      const needsConv=t=>t.d>1&&t.d!==lcd;
+      const convIdxs=allTermsL6.map((t,i)=>needsConv(t)?i:-1).filter(i=>i>=0);
+      const anyConverted=convIdxs.some(i=>m6FracDone[i]);
+      const canDalej=anyConverted||convIdxs.length===0;
+      const stillLeft=convIdxs.filter(i=>!m6FracDone[i]).length;
+      const warnHint=canDalej&&stillLeft>0?`<div class="m6-lcd-hint" style="color:#ffd700;margin-top:4px">Jest jeszcze ${stillLeft===1?'jeden ułamek':'kilka ułamków'} do sprowadzenia — możesz to zrobić lub przejść dalej</div>`:'';
+      if(!m6FillMode){
+        const chipFn=(t,idx)=>{
+          const done=m6FracDone[idx];const sel=m6SelSet.has(idx);
+          const monomial=t.d===1;
+          const cls=done?'done':sel?'active':'';
+          if(monomial)return`<span class="m6-frac-chip" style="opacity:0.6;cursor:default">${m6TermHtml(t,false,lcd)}</span>`;
+          return`<button class="m6-frac-chip${cls?' '+cls:''}" onclick="${done?'':'m6ToggleChip('+idx+')'}">${m6TermHtml(t,done,lcd)}</button>`;
+        };
+        const canSprowadz=m6SelSet.size>0;
+        const sprowadzBtn=canSprowadz?`<button class="m6-dalej-btn" style="margin-top:8px" onclick="m6Sprowadz()">Sprowadź →</button>`:'';
+        const dalejBtn=canDalej?`<button class="m6-dalej-btn" onclick="m6Dalej()">Dalej →</button>`:'';
+        area.innerHTML=badge+mkEqRow(m3Eq.lTerms,m3Eq.rTerms,chipFn)+`<div class="m6-lcd-hint">LCD = ${lcd} — zaznacz wyrażenia, które chcesz sprowadzić, potem kliknij "Sprowadź"</div>`+warnHint+sprowadzBtn+dalejBtn;
+      } else {
+        const termHtmlFill=(t,idx)=>{
+          if(m6FracDone[idx]) return mkLcdTermHtml(t,lcd);
+          if(m6SelSet.has(idx)) return fracHtml(`<input class="m6-inp-num" id="m6-inp-${idx}" type="text" autocomplete="off" onkeydown="if(event.key==='Enter')m6ConfirmFill()">`,lcd);
+          return m6TermHtml(t,false,lcd);
+        };
+        let origL='',origR='',lStr='',rStr='';
+        m3Eq.lTerms.forEach((t,i)=>{const sep=i>0?`<span class="m3-sep">+</span>`:'';origL+=sep+m6TermHtml(t,false,lcd);lStr+=sep+termHtmlFill(t,i);});
+        m3Eq.rTerms.forEach((t,j)=>{const sep=j>0?`<span class="m3-sep">+</span>`:'';origR+=sep+m6TermHtml(t,false,lcd);rStr+=sep+termHtmlFill(t,m3Eq.lTerms.length+j);});
+        const origRow=`<div class="m3-eq-row" style="pointer-events:none">${origL}<span class="m3-sep">=</span>${origR}</div>`;
+        const eqRow=`<div class="m3-eq-row" style="flex-wrap:nowrap;overflow-x:auto;margin-top:6px">${lStr}<span class="m3-sep">=</span>${rStr}</div>`;
+        area.innerHTML=badge+origRow;
+        m3BoxEl.style.borderRadius='18px 18px 0 0';
+        m3BoxEl.style.marginBottom='0';
+        m6FillAreaEl.style.display='';
+        m6FillAreaEl.innerHTML=eqRow+`<button class="m3-transp-apply" style="margin-top:8px" onclick="m6ConfirmFill()">Zatwierdź</button>`;
+        const firstSel=[...m6SelSet].sort((a,b)=>a-b)[0];
+        if(firstSel!==undefined){const inp=document.getElementById(`m6-inp-${firstSel}`);if(inp)inp.focus();}
+      }
+      return;
+    }
+
+    if(m3Phase==='L6_MULTIPLY'){
+      const chipHtml=(t,i)=>`<span class="m3-term-static">${m6FracDone[i]?mkLcdTermHtml(t):m6TermHtml(t,false,lcd)}</span>`;
+      let lStr='',rStr='';
+      m3Eq.lTerms.forEach((t,i)=>{if(i>0)lStr+=`<span class="m3-sep">+</span>`;lStr+=chipHtml(t,i);});
+      m3Eq.rTerms.forEach((t,j)=>{if(j>0)rStr+=`<span class="m3-sep">+</span>`;rStr+=chipHtml(t,m3Eq.lTerms.length+j);});
+      area.innerHTML=badge+`<div class="m3-eq-row" style="flex-wrap:nowrap;overflow-x:auto;font-size:clamp(0.8rem,3.2vw,1.25rem)">${lStr}<span class="m3-sep">=</span>${rStr}<span class="m3-bar">|</span>${signInputs}</div><div class="m3-hint">Pomnóż obie strony przez LCD = ${lcd}, żeby usunąć mianowniki</div>`;
+      showSign(); return;
+    }
+
+    if(m3Phase==='L6_TYPE_UNSIMPL'){
+      const chipHtml=(t,i)=>`<span class="m3-term-static">${m6FracDone[i]?mkLcdTermHtml(t):m6TermHtml(t,false,lcd)}</span>`;
+      let lStr='',rStr='';
+      m3Eq.lTerms.forEach((t,i)=>{if(i>0)lStr+=`<span class="m3-sep">+</span>`;lStr+=chipHtml(t,i);});
+      m3Eq.rTerms.forEach((t,j)=>{if(j>0)rStr+=`<span class="m3-sep">+</span>`;rStr+=chipHtml(t,m3Eq.lTerms.length+j);});
+      area.innerHTML=badge+`<div class="m3-eq-row" style="flex-wrap:nowrap;overflow-x:auto;font-size:clamp(0.8rem,3.2vw,1.25rem)">${lStr}<span class="m3-sep">=</span>${rStr}<span class="m3-bar">|</span><span class="m3-op">× ${lcd}</span></div><div class="m3-hint">Wpisz wynik mnożenia (może być nieuproszczona, np. x+2+3x-3=9)</div>`;
+      showType(); return;
+    }
+  }
+
+  // ── L3F / L4F: (ax+b)/d = c or ex+f ──────────────────────────────────────
+  if(m3Eq.type==='L3F'||m3Eq.type==='L4F'){
+    const{a,b,d,e,f,c}=m3Eq;
+    const numHtml=fracHtml(fmtSum(a,b),d);
+    const rhsStr=m3Eq.type==='L4F'?fmtSum(e,f):String(c);
+    if(m3Phase==='PICK'){
+      area.innerHTML=badge+`<div class="m3-eq-row"><button class="m3-term-btn" onclick="m3click('frac')">${numHtml}</button><span class="m3-sep">=</span><span class="m3-rhs">${rhsStr}</span></div><div class="m3-hint">Kliknij ułamek, żeby go wyeliminować</div>`;
+      return;
+    }
+    if(m3Phase==='CHOOSE'){
+      area.innerHTML=badge+`<div class="m3-eq-row"><span class="m3-term-sel">${numHtml}</span><span class="m3-sep">=</span><span class="m3-rhs">${rhsStr}</span></div><div class="m3-choice-row"><button class="m3-choice-action" onclick="m3choose('simplify')">Podziel sumę przez mianownik</button><button class="m3-choice-action" onclick="m3choose('elim')">Pozbądź się mianownika</button></div>`;
+      return;
+    }
+    if(m3Phase==='SIGN'){
+      area.innerHTML=badge+`<div class="m3-eq-row"><span class="m3-term-sel">${numHtml}</span><span class="m3-sep">=</span><span class="m3-rhs">${rhsStr}</span><span class="m3-bar">|</span>${signInputs}</div><div class="m3-hint">Kliknij znak, żeby zmienić, wpisz liczbę</div>`;
+      showSign(); return;
+    }
+    if(m3Phase==='TYPE'){
+      const opDisp=m3OpSel==='·'?`× ${m3OpVal}`:`÷ ${m3OpVal}`;
+      const hint=m3ExpEq&&m3ExpEq.type==='LR'?'Wpisz wynik nowego równania (np. 2x+1=x+5)':'Wpisz wynik nowego równania (np. 2x+3=11)';
+      const opPart=m3ChoiceMethod==='simplify'?'':`<span class="m3-bar">|</span><span class="m3-op">${opDisp}</span>`;
+      area.innerHTML=badge+`<div class="m3-eq-row"><span class="m3-term-sel">${numHtml}</span><span class="m3-sep">=</span><span class="m3-rhs">${rhsStr}</span>${opPart}</div><div class="m3-hint">${hint}</div>`;
+      showType(); return;
+    }
+  }
+
+  // ── L3M / L4M: k(ax+b) = c or ex+f ───────────────────────────────────────
+  if(m3Eq.type==='L3M'||m3Eq.type==='L4M'){
+    const{k,a,b,e,f,c}=m3Eq;
+    const sumHtml=`(${fmtSum(a,b)})`;
+    const rhsStr=m3Eq.type==='L4M'?fmtSum(e,f):String(c);
+    if(m3Phase==='PICK'){
+      area.innerHTML=badge+`<div class="m3-eq-row"><button class="m3-term-btn" onclick="m3click('mul')">${k}</button><span class="m3-term-static">${sumHtml}</span><span class="m3-sep">=</span><span class="m3-rhs">${rhsStr}</span></div><div class="m3-hint">Kliknij liczbę przed nawiasem</div>`;
+      return;
+    }
+    if(m3Phase==='CHOOSE'){
+      area.innerHTML=badge+`<div class="m3-eq-row"><span class="m3-term-sel">${k}</span><span class="m3-term-static">${sumHtml}</span><span class="m3-sep">=</span><span class="m3-rhs">${rhsStr}</span></div><div class="m3-choice-row"><button class="m3-choice-action" onclick="m3choose('expand')">Pomnóż nawias przez liczbę</button><button class="m3-choice-action" onclick="m3choose('elim')">Pozbądź się liczby sprzed nawiasu</button></div>`;
+      return;
+    }
+    if(m3Phase==='SIGN'){
+      area.innerHTML=badge+`<div class="m3-eq-row"><span class="m3-term-sel">${k}</span><span class="m3-term-static">${sumHtml}</span><span class="m3-sep">=</span><span class="m3-rhs">${rhsStr}</span><span class="m3-bar">|</span>${signInputs}</div><div class="m3-hint">Kliknij znak, żeby zmienić, wpisz liczbę</div>`;
+      showSign(); return;
+    }
+    if(m3Phase==='TYPE'){
+      const opDisp=m3OpSel==='·'?`× ${m3OpVal}`:`÷ ${m3OpVal}`;
+      const hint=m3ExpEq&&m3ExpEq.type==='LR'?'Wpisz wynik nowego równania (np. 2x+1=x+5)':'Wpisz wynik nowego równania (np. 2x+3=11)';
+      const opPart=m3ChoiceMethod==='expand'?'':`<span class="m3-bar">|</span><span class="m3-op">${opDisp}</span>`;
+      area.innerHTML=badge+`<div class="m3-eq-row"><span class="m3-term-sel">${k}</span><span class="m3-term-static">${sumHtml}</span><span class="m3-sep">=</span><span class="m3-rhs">${rhsStr}</span>${opPart}</div><div class="m3-hint">${hint}</div>`;
+      showType(); return;
+    }
+  }
+
+  // ── LRM: multi-term both sides (Lv3) ─────────────────────────────────────────
+  if(m3Eq.type==='LRM'){
+    const lhs=fmtTerms(m3Eq.lTerms);
+    const rhs=fmtTerms(m3Eq.rTerms);
+    const ll=m3Eq.lTerms.length;
+
+    // Helper: chips HTML for one side
+    const mkChips=(terms,offset,forTransp)=>{
+      let h='';
+      terms.forEach((t,i)=>{
+        const idx=offset+i;
+        const abs=Math.abs(t.c);
+        const part=t.x?(abs===1?'x':`${abs}x`):String(abs);
+        if(i===0){if(t.c<0) h+='<span class="m3-sign-sep">−</span>';}
+        else h+=`<span class="m3-sign-sep">${t.c<0?'−':'+'}</span>`;
+        if(forTransp){
+          const sel=m3LrmSel[idx]?' m3-transp-sel':'';
+          h+=`<button id="m3-lrm-t${idx}" class="m3-term-btn${sel}" data-lrm-ti="${idx}" onclick="m3LRMToggleTerm(${idx})">${part}</button>`;
+        } else {
+          const grp=m3LrmChipGrp[idx];
+          const cls='m3lrm-chip'+(grp>=0?' gc'+grp:'');
+          h+=`<span class="${cls}" data-ci="${idx}" onclick="m3LRMChipCycle(${idx})">${part}</span>`;
+        }
+      });
+      return h;
+    };
+
+    if(m3Phase==='PICK'){
+      area.innerHTML=badge
+        +`<div class="m3lrm-scroll"><div class="m3-eq-row"><span class="m3-term-static">${lhs}</span><span class="m3-sep">=</span><span class="m3-term-static">${rhs}</span></div></div>`
+        +`<div class="m3-choice-row"><button class="m3-choice-action" onclick="m3LRMCombine()">Uprość obie strony</button><button class="m3-choice-action" onclick="m3LRMTransposeStart()">Przerzuć na drugą stronę</button></div>`;
+      return;
+    }
+    if(m3Phase==='COMBINE'){
+      const lC=mkChips(m3Eq.lTerms,0,false);
+      const rC=mkChips(m3Eq.rTerms,ll,false);
+      area.innerHTML=badge
+        +`<div class="m3-eq-row m3lrm-chip-row">${lC}<span class="m3-sep">=</span>${rC}</div>`
+        +`<p class="m3lrm-chip-hint">Kliknij wyraz, aby zmienić kolor — zaznacz wyrazy podobne</p>`
+        +`<div class="m3-hint">Wpisz nowe równanie po uproszczeniu</div>`;
+      showType(); return;
+    }
+    if(m3Phase==='LRM_TRANSPOSE'){
+      const lT=mkChips(m3Eq.lTerms,0,true);
+      const rT=mkChips(m3Eq.rTerms,ll,true);
+      area.innerHTML=badge
+        +`<div id="m3-lrm-tcont" style="position:relative;padding-top:170px">`
+        +`<svg id="m3-lrm-tsvg" style="position:absolute;top:0;left:0;width:100%;height:100%;overflow:visible;pointer-events:none"></svg>`
+        +`<div class="m3lrm-scroll"><div class="m3-eq-row" style="position:relative;z-index:1">${lT}<span class="m3-sep">=</span>${rT}</div></div>`
+        +`</div>`
+        +`<div class="m3-hint">Kliknij wyrazy do przerzucenia, potem zatwierdź</div>`
+        +`<div style="text-align:center;margin-top:8px"><button class="m3-transp-apply" onclick="m3LRMApplyTranspose()">Zatwierdź →</button></div>`;
+      drawLRMTranspArrows();
+      return;
+    }
+    if(m3Phase==='TYPE'){
+      if(m3ChoiceMethod==='lrm_transpose'){
+        const mkSta=(terms,offset)=>{
+          let h='';
+          terms.forEach((t,i)=>{
+            const idx=offset+i;
+            const abs=Math.abs(t.c);
+            const part=t.x?(abs===1?'x':`${abs}x`):String(abs);
+            if(i===0){if(t.c<0)h+='<span class="m3-sign-sep">−</span>';}
+            else h+=`<span class="m3-sign-sep">${t.c<0?'−':'+'}</span>`;
+            const cls=m3LrmSel[idx]?'m3-term-btn m3-transp-sel':'m3-term-static';
+            h+=`<span id="m3-lrm-t${idx}" class="${cls}">${part}</span>`;
+          });
+          return h;
+        };
+        const lS=mkSta(m3Eq.lTerms,0), rS=mkSta(m3Eq.rTerms,ll);
+        area.innerHTML=badge
+          +`<div id="m3-lrm-tcont" style="position:relative;padding-top:170px">`
+          +`<svg id="m3-lrm-tsvg" style="position:absolute;top:0;left:0;width:100%;height:100%;overflow:visible;pointer-events:none"></svg>`
+          +`<div class="m3lrm-scroll"><div class="m3-eq-row" style="position:relative;z-index:1">${lS}<span class="m3-sep">=</span>${rS}</div></div>`
+          +`</div>`
+          +`<div class="m3-hint">Wpisz wynik po przerzuceniu i uproszczeniu (np. 6x=12)</div>`;
+        drawLRMTranspArrows();
+        showType(); return;
+      }
+      if(m3ChoiceMethod==='lrm_transp_simplify'){
+        area.innerHTML=badge
+          +`<div class="m3lrm-scroll"><div class="m3-eq-row"><span class="m3-term-static">${m3TranspUserInput}</span></div></div>`
+          +`<div class="m3-hint">Uprość obie strony i wpisz wynik (np. x=4)</div>`;
+        showType(); return;
+      }
+      area.innerHTML=badge
+        +`<div class="m3lrm-scroll"><div class="m3-eq-row"><span class="m3-term-static">${lhs}</span><span class="m3-sep">=</span><span class="m3-term-static">${rhs}</span></div></div>`
+        +`<div class="m3-hint">Uprość obie strony i zapisz nowe równanie (np. 7x−4=5x+12)</div>`;
+      showType(); return;
+    }
+  }
+
+  // ── LR: lAx+lB = rAx+rB ──────────────────────────────────────────────────
+  if(m3Eq.type==='LR'){
+    const{lA,lB,rA,rB}=m3Eq;
+    const lhsStr=fmtSum(lA,lB);
+
+    if(m3Phase==='PICK'){
+      area.innerHTML=badge+`<div class="m3-eq-row"><span class="m3-term-static">${lhsStr}</span><span class="m3-sep">=</span><span class="m3-term-static">${fmtSum(rA,rB)}</span></div><div class="m3-choice-row"><button class="m3-choice-action" onclick="m3LRChoose('transpose')">Przerzuć na drugą stronę</button><button class="m3-choice-action" onclick="m3LRChoose('equiv')">Równania równoważne</button></div>`;
+      return;
+    }
+    if(m3Phase==='TRANSPOSE'){
+      const sel=m3TranspSel;
+      const lADisp=lA===1?'x':lA===-1?'-x':`${lA}x`;
+      const lBDisp=String(lB);
+      const rADisp=rA===1?'x':rA===-1?'-x':`${rA}x`;
+      const rBDisp=String(rB);
+      const bc=key=>sel[key]?' m3-transp-sel':'';
+      const lBSignT=lB!==0?(lB>0?'+':'−'):'';
+      const lBValT=String(Math.abs(lB));
+      const rBSignT=rB!==0?(rB>0?'+':'−'):'';
+      const rBValT=String(Math.abs(rB));
+      area.innerHTML=badge
+        +`<div id="m3-transp-cont" style="position:relative;padding-top:170px">`
+        +`<svg id="m3-transp-svg" style="position:absolute;top:0;left:0;width:100%;height:100%;overflow:visible;pointer-events:none"></svg>`
+        +`<div class="m3-eq-row" style="position:relative;z-index:1">`
+        +`<button id="m3-tb-lA" class="m3-term-btn${bc('lA')}" onclick="m3ToggleTransp('lA')">${lADisp}</button>`
+        +(lB!==0?`<span class="m3-sign-sep">${lBSignT}</span><button id="m3-tb-lB" class="m3-term-btn${bc('lB')}" onclick="m3ToggleTransp('lB')">${lBValT}</button>`:'')
+        +`<span class="m3-sep">=</span>`
+        +`<button id="m3-tb-rA" class="m3-term-btn${bc('rA')}" onclick="m3ToggleTransp('rA')">${rADisp}</button>`
+        +(rB!==0?`<span class="m3-sign-sep">${rBSignT}</span><button id="m3-tb-rB" class="m3-term-btn${bc('rB')}" onclick="m3ToggleTransp('rB')">${rBValT}</button>`:'')
+        +`</div></div>`
+        +`<div class="m3-hint">Kliknij jednomiany do przerzucenia, potem zatwierdź</div>`
+        +`<div style="text-align:center;margin-top:8px;position:relative;z-index:1"><button class="m3-transp-apply" onclick="m3ApplyTranspose()">Zatwierdź →</button></div>`;
+      drawTranspArrows();
+      return;
+    }
+    if(m3Phase==='LR_EQUIV'){
+      const lAD=lA===1?'x':lA===-1?'-x':`${lA}x`;
+      const rAD=rA===1?'x':rA===-1?'-x':`${rA}x`;
+      let h=badge+'<div class="m3-eq-row">';
+      if(lA!==0&&lB!==0){
+        h+=`<button class="m3-term-btn" onclick="m3clickLREquiv('lA')">${lAD}</button>`;
+        h+=`<span class="m3-sign-sep">${lB>0?'+':'−'}</span>`;
+        h+=`<button class="m3-term-btn" onclick="m3clickLREquiv('lB')">${Math.abs(lB)}</button>`;
+      } else if(lA!==0){
+        h+=`<button class="m3-term-btn" onclick="m3clickLREquiv('lA')">${lAD}</button>`;
+      } else if(lB!==0){
+        h+=`<button class="m3-term-btn" onclick="m3clickLREquiv('lB')">${String(lB)}</button>`;
+      }
+      h+=`<span class="m3-sep">=</span>`;
+      if(rA!==0&&rB!==0){
+        h+=`<button class="m3-term-btn" onclick="m3clickLREquiv('rA')">${rAD}</button>`;
+        h+=`<span class="m3-sign-sep">${rB>0?'+':'−'}</span>`;
+        h+=`<button class="m3-term-btn" onclick="m3clickLREquiv('rB')">${Math.abs(rB)}</button>`;
+      } else if(rA!==0){
+        h+=`<button class="m3-term-btn" onclick="m3clickLREquiv('rA')">${rAD}</button>`;
+      } else if(rB!==0){
+        h+=`<button class="m3-term-btn" onclick="m3clickLREquiv('rB')">${String(rB)}</button>`;
+      }
+      h+=`</div><div class="m3-hint">Kliknij element do obustronnego działania</div>`;
+      area.innerHTML=h; return;
+    }
+    if(m3Phase==='SIGN'){
+      const lAD=lA===1?'x':lA===-1?'-x':`${lA}x`;
+      const rAD=rA===1?'x':rA===-1?'-x':`${rA}x`;
+      const mkT=(key,d)=>m3Sel===key?`<span class="m3-term-sel">${d}</span>`:`<span class="m3-term-static">${d}</span>`;
+      let h=badge+'<div class="m3-eq-row">';
+      if(lA!==0&&lB!==0){
+        h+=mkT('lA',lAD);
+        h+=`<span class="m3-sign-sep">${lB>0?'+':'−'}</span>`;
+        h+=mkT('lB',String(Math.abs(lB)));
+      } else if(lA!==0){ h+=mkT('lA',lAD);
+      } else if(lB!==0){ h+=mkT('lB',String(lB)); }
+      h+=`<span class="m3-sep">=</span>`;
+      if(rA!==0&&rB!==0){
+        h+=mkT('rA',rAD);
+        h+=`<span class="m3-sign-sep">${rB>0?'+':'−'}</span>`;
+        h+=mkT('rB',String(Math.abs(rB)));
+      } else if(rA!==0){ h+=mkT('rA',rAD);
+      } else if(rB!==0){ h+=mkT('rB',String(rB)); }
+      h+=`<span class="m3-bar">|</span>${signInputs}</div><div class="m3-hint">Kliknij znak, żeby zmienić, wpisz liczbę</div>`;
+      area.innerHTML=h; showSign(); return;
+    }
+    if(m3Phase==='TYPE'){
+      const hint=m3ExpEq&&m3ExpEq.type==='LR'?'Wpisz wynik nowego równania (np. 2x+1=x+5)':'Wpisz wynik nowego równania (np. 2x+3=11)';
+      if(m3ChoiceMethod==='transp_simplify'){
+        area.innerHTML=badge+`<div class="m3-eq-row"><span class="m3-term-static">${m3TranspUserInput}</span></div><div class="m3-hint">Uprość obie strony i wpisz wynik (np. 2x=10)</div>`;
+      } else if(m3ChoiceMethod==='transpose'){
+        const lADisp=lA===1?'x':lA===-1?'-x':`${lA}x`;
+        const rADisp=rA===1?'x':rA===-1?'-x':`${rA}x`;
+        const sc=key=>m3TranspSel[key]?'m3-term-btn m3-transp-sel':'m3-term-static';
+        const lBSignTT=lB!==0?(lB>0?'+':'−'):'';
+        const lBValTT=String(Math.abs(lB));
+        const rBSignTT=rB!==0?(rB>0?'+':'−'):'';
+        const rBValTT=String(Math.abs(rB));
+        area.innerHTML=badge
+          +`<div id="m3-transp-cont" style="position:relative;padding-top:170px">`
+          +`<svg id="m3-transp-svg" style="position:absolute;top:0;left:0;width:100%;height:100%;overflow:visible;pointer-events:none"></svg>`
+          +`<div class="m3-eq-row" style="position:relative;z-index:1">`
+          +`<span id="m3-tb-lA" class="${sc('lA')}">${lADisp}</span>`
+          +(lB!==0?`<span class="m3-sign-sep">${lBSignTT}</span><span id="m3-tb-lB" class="${sc('lB')}">${lBValTT}</span>`:'')
+          +`<span class="m3-sep">=</span>`
+          +`<span id="m3-tb-rA" class="${sc('rA')}">${rADisp}</span>`
+          +(rB!==0?`<span class="m3-sign-sep">${rBSignTT}</span><span id="m3-tb-rB" class="${sc('rB')}">${rBValTT}</span>`:'')
+          +`</div></div>`
+          +`<div class="m3-hint">${hint}</div>`;
+        drawTranspArrows();
+      } else {
+        const lAD=lA===1?'x':lA===-1?'-x':`${lA}x`;
+        const rAD=rA===1?'x':rA===-1?'-x':`${rA}x`;
+        const mkT=(key,d)=>m3Sel===key?`<span class="m3-term-sel">${d}</span>`:`<span class="m3-term-static">${d}</span>`;
+        const isXSel=m3Sel==='lA'||m3Sel==='rA';
+        const opValDisp=(isXSel&&(m3OpSel==='+'||m3OpSel==='-'))?(m3OpVal===1?'x':`${m3OpVal}x`):m3OpVal;
+        const opLbl=m3OpSel==='÷'?`÷ ${m3OpVal}`:m3OpSel==='·'?`× ${m3OpVal}`:m3OpSel==='-'?`− ${opValDisp}`:`+ ${opValDisp}`;
+        let h=badge+'<div class="m3-eq-row">';
+        if(lA!==0&&lB!==0){
+          h+=mkT('lA',lAD);
+          h+=`<span class="m3-sign-sep">${lB>0?'+':'−'}</span>`;
+          h+=mkT('lB',String(Math.abs(lB)));
+        } else if(lA!==0){ h+=mkT('lA',lAD);
+        } else if(lB!==0){ h+=mkT('lB',String(lB)); }
+        h+=`<span class="m3-sep">=</span>`;
+        if(rA!==0&&rB!==0){
+          h+=mkT('rA',rAD);
+          h+=`<span class="m3-sign-sep">${rB>0?'+':'−'}</span>`;
+          h+=mkT('rB',String(Math.abs(rB)));
+        } else if(rA!==0){ h+=mkT('rA',rAD);
+        } else if(rB!==0){ h+=mkT('rB',String(rB)); }
+        h+=`<span class="m3-bar">|</span><span class="m3-op">${opLbl}</span></div><div class="m3-hint">${hint}</div>`;
+        area.innerHTML=h;
+      }
+      showType(); return;
+    }
+  }
+
+  // ── Standard form {a, b, c, xDiv} ─────────────────────────────────────────
+  const{a,b,c,xDiv=1}=m3Eq;
+  const xHtml=m3GetXHtml(m3Eq);
+  const bLbl=m3GetBLbl(m3Eq);
+
+  if(m3Phase==='PICK'){
+    let h=badge+'<div class="m3-eq-row">';
+    if(b===0){
+      h+=`<button class="m3-term-btn" onclick="m3click('a')">${xHtml}</button>`;
+    } else if(a===1&&xDiv===1){
+      h+=`<span class="m3-term-static">${xHtml}</span>`;
+      h+=`<button class="m3-term-btn" onclick="m3click('b')">${bLbl}</button>`;
+    } else {
+      h+=`<button class="m3-term-btn" onclick="m3click('a')">${xHtml}</button>`;
+      h+=`<button class="m3-term-btn" onclick="m3click('b')">${bLbl}</button>`;
+    }
+    h+=`<span class="m3-sep">=</span><span class="m3-rhs">${c}</span>`;
+    h+='</div><div class="m3-hint">Kliknij element, który chcesz wyeliminować</div>';
+    area.innerHTML=h; return;
+  }
+
+  if(m3Phase==='SIGN'){
+    let h=badge+'<div class="m3-eq-row">';
+    if(m3Sel==='b'){
+      h+=`<span class="m3-term-static">${xHtml}</span>`;
+      h+=`<span class="m3-term-sel">${bLbl}</span>`;
+    } else {
+      h+=`<span class="m3-term-sel">${xHtml}</span>`;
+    }
+    h+=`<span class="m3-sep">=</span><span class="m3-rhs">${c}</span>`;
+    h+=`<span class="m3-bar">|</span>${signInputs}`;
+    h+='</div><div class="m3-hint">Kliknij znak, żeby zmienić, wpisz liczbę</div>';
+    area.innerHTML=h;
+    showSign(); return;
+  }
+
+  if(m3Phase==='TYPE'){
+    if(m3FracSubStep==='mixed'&&m3ExpEq&&m3ExpEq.a===1&&m3ExpEq.b===0){
+      const _c=m3ExpEq.c;
+      const neg=_c<0;
+      const fracStr=numToFracStr(neg?-_c:_c);
+      const[pStr,qStr]=fracStr.split('/');
+      const rhsHtml=(neg?'<span style="font-weight:900;margin-right:2px">−</span>':'')+fracHtml(pStr,qStr);
+      area.innerHTML=badge+`<div class="m3-eq-row"><span class="m3-term-static">x</span><span class="m3-sep">=</span><span class="m3-rhs">${rhsHtml}</span></div><div class="m3-hint">Wyłącz całości i zapisz jako liczbę mieszaną</div>`;
+      showMixedAns();return;
+    }
+    const opDisp=m3OpSel==='-'?`− ${m3OpVal}`:m3OpSel==='+'?`+ ${m3OpVal}`:m3OpSel==='·'?`× ${m3OpVal}`:`÷ ${m3OpVal}`;
+    let h=badge+'<div class="m3-eq-row">';
+    if(m3Sel==='b'){
+      h+=`<span class="m3-term-static">${xHtml}</span>`;
+      h+=`<span class="m3-term-sel">${bLbl}</span>`;
+    } else {
+      h+=`<span class="m3-term-sel">${xHtml}</span>`;
+    }
+    h+=`<span class="m3-sep">=</span><span class="m3-rhs">${c}</span>`;
+    h+=`<span class="m3-bar">|</span><span class="m3-op">${opDisp}</span>`;
+    h+='</div><div class="m3-hint">Wpisz wynik nowego równania (np. x=5 lub 2x=10)</div>';
+    area.innerHTML=h;
+    if(m3ExpEq&&m3ExpEq.a===1&&m3ExpEq.b===0){
+      const _c=m3ExpEq.c;
+      if(!Number.isInteger(_c)){
+        if(Math.abs(_c)<1){showFracAns();return;}
+        const hintEl=area.querySelector('.m3-hint');
+        m3FracSubStep='improper';
+        if(hintEl)hintEl.textContent='Zapisz wynik jako ułamek niewłaściwy (p/q)';
+        showFracAns();return;
+      }
+      if(_c<0){showIntAns();return;}
+      showPosIntAns();return;
+    }
+    showType(); return;
+  }
+}
+
+function m3click(term){
+  if(m3Level>=2&&!m3Eq.type&&term==='a'&&m3Eq.b!==0){
+    document.getElementById('m3-fb').textContent='Najpierw wyeliminuj wyraz wolny (liczbę bez x)!';
+    document.getElementById('m3-fb').className='feedback bad';
+    playFlash('m3-anim','wrong'); return;
+  }
+  m3SaveState();
+  m3Sel=term; m3OpSel=null; m3OpVal=null; m3ChoiceMethod=null;
+  document.getElementById('m3-fb').className='feedback';
+  document.getElementById('m3-fb').textContent='';
+  if((m3Eq.type==='L3M'||m3Eq.type==='L4M')&&term==='mul'){
+    if(m3Eq.type==='L4M'&&(m3Eq.e%m3Eq.k!==0||m3Eq.f%m3Eq.k!==0)){
+      m3ChoiceMethod='expand';
+      m3ExpEq={type:'LR',lA:m3Eq.k*m3Eq.a,lB:m3Eq.k*m3Eq.b,rA:m3Eq.e,rB:m3Eq.f};
+      m3Phase='TYPE'; renderM3(); return;
+    }
+    m3Phase='CHOOSE'; renderM3(); return;
+  }
+  if((m3Eq.type==='L3F'||m3Eq.type==='L4F')&&term==='frac'){
+    const{a,b,d}=m3Eq;
+    if(a%d===0&&b%d===0){m3Phase='CHOOSE';renderM3();return;}
+  }
+  m3OpSel='+'; m3Phase='SIGN'; renderM3();
+}
+function m3LRMCombine(){
+  m3SaveState();
+  m3ChoiceMethod='lrm_combine';
+  m3ExpEq=m3Eq.simplified;
+  m3LrmChipGrp=Array(m3Eq.lTerms.length+m3Eq.rTerms.length).fill(-1);
+  m3Phase='COMBINE';
+  document.getElementById('m3-fb').className='feedback';
+  document.getElementById('m3-fb').textContent='';
+  renderM3();
+}
+function m3LRMChipCycle(i){
+  m3LrmChipGrp[i]=(m3LrmChipGrp[i]+2)%5-1;
+  const chip=document.querySelector(`.m3lrm-chip[data-ci="${i}"]`);
+  if(chip) chip.className='m3lrm-chip'+(m3LrmChipGrp[i]>=0?' gc'+m3LrmChipGrp[i]:'');
+}
+function m3LRMTransposeStart(){
+  m3SaveState();
+  m3ChoiceMethod='lrm_transpose';
+  m3LrmSel=Array(m3Eq.lTerms.length+m3Eq.rTerms.length).fill(false);
+  m3Phase='LRM_TRANSPOSE';
+  document.getElementById('m3-fb').className='feedback';
+  document.getElementById('m3-fb').textContent='';
+  renderM3();
+}
+function m3LRMToggleTerm(i){
+  m3LrmSel[i]=!m3LrmSel[i];
+  const btn=document.querySelector(`[data-lrm-ti="${i}"]`);
+  if(btn) btn.classList.toggle('m3-transp-sel',m3LrmSel[i]);
+  drawLRMTranspArrows();
+}
+function m3LRMTranspUnordStrs(){
+  const lT=m3Eq.lTerms, rT=m3Eq.rTerms, ll=lT.length;
+  const newL=[], newR=[];
+  lT.forEach((t,i)=>{
+    if(m3LrmSel[i]) newR.push({v:-t.c,x:t.x});
+    else newL.push({v:t.c,x:t.x});
+  });
+  rT.forEach((t,j)=>{
+    if(m3LrmSel[ll+j]) newL.push({v:-t.c,x:t.x});
+    else newR.push({v:t.c,x:t.x});
+  });
+  const fmt=(v,first,isX)=>{
+    if(v===0)return'';
+    const a=Math.abs(v);
+    const part=isX?(a===1?'x':`${a}x`):String(a);
+    return(v>0?(first?'':'+'):'-')+part;
+  };
+  const bld=ts=>{let o='',f=true;for(const t of ts){const k=fmt(t.v,f,t.x);if(k){o+=k;f=false;}}return o||'0';};
+  const perms=arr=>{if(arr.length<=1)return[arr.slice()];const r=[];for(let i=0;i<arr.length;i++){const rest=[...arr.slice(0,i),...arr.slice(i+1)];for(const p of perms(rest))r.push([arr[i],...p]);}return r;};
+  const set=new Set();
+  for(const lp of perms(newL))for(const rp of perms(newR))set.add(normIn(bld(lp)+'='+bld(rp)));
+  return set;
+}
+function m3LRMApplyTranspose(){
+  const lT=m3Eq.lTerms, rT=m3Eq.rTerms, ll=lT.length;
+  let nLX=0,nLC=0,nRX=0,nRC=0;
+  lT.forEach((t,i)=>{
+    if(m3LrmSel[i]){if(t.x)nRX+=(-t.c);else nRC+=(-t.c);}
+    else{if(t.x)nLX+=t.c;else nLC+=t.c;}
+  });
+  rT.forEach((t,j)=>{
+    const i=ll+j;
+    if(m3LrmSel[i]){if(t.x)nLX+=(-t.c);else nLC+=(-t.c);}
+    else{if(t.x)nRX+=t.c;else nRC+=t.c;}
+  });
+  m3ExpEq=nRX===0?{a:nLX,b:nLC,c:nRC,xDiv:1}:{type:'LR',lA:nLX,lB:nLC,rA:nRX,rB:nRC};
+  m3LrmTranspRaw=m3LRMTranspUnordStrs();
+  m3Phase='TYPE';
+  document.getElementById('m3-fb').className='feedback';
+  document.getElementById('m3-fb').textContent='';
+  renderM3();
+}
+function m3LRChoose(method){
+  m3SaveState();
+  m3ChoiceMethod=method;
+  document.getElementById('m3-fb').className='feedback';
+  if(method==='transpose'){
+    m3TranspSel={lA:false,lB:false,rA:false,rB:false};
+    m3Phase='TRANSPOSE'; renderM3();
+  } else {
+    m3Phase='LR_EQUIV'; renderM3();
+  }
+}
+function m3clickLREquiv(key){
+  m3SaveState();
+  m3Sel=key; m3OpSel='+'; m3OpVal=null;
+  document.getElementById('m3-fb').className='feedback';
+  m3Phase='SIGN'; renderM3();
+}
+function m3ToggleTransp(key){
+  m3TranspSel[key]=!m3TranspSel[key];
+  document.getElementById('m3-fb').className='feedback';
+  renderM3();
+}
+function drawTranspArrows(){
+  requestAnimationFrame(()=>{
+    const cont=document.getElementById('m3-transp-cont');
+    const svgEl=document.getElementById('m3-transp-svg');
+    if(!cont||!svgEl)return;
+    const cr=cont.getBoundingClientRect();
+    const ns='http://www.w3.org/2000/svg';
+    svgEl.innerHTML=`<defs>
+      <marker id="tah-r" markerWidth="10" markerHeight="8" refX="10" refY="4" orient="auto"><polygon points="0 0,10 4,0 8" fill="#ef4444"/></marker>
+      <marker id="tah-g" markerWidth="10" markerHeight="8" refX="10" refY="4" orient="auto"><polygon points="0 0,10 4,0 8" fill="#22c55e"/></marker>
+    </defs>`;
+    const {lA,lB,rA,rB}=m3Eq;
+    const sel=m3TranspSel;
+    const negX=a=>{const n=-a;return(n>0?'+'+n:String(n))+'x';};
+    const negN=b=>{const n=-b;return n>0?'+'+n:String(n);};
+    const gr=id=>{const el=document.getElementById(id);return el?el.getBoundingClientRect():null;};
+    const arcs=[];
+    if(sel.lA) arcs.push({id:'m3-tb-lA',dir:'R',lbl:negX(lA)});
+    if(sel.lB&&lB!==0) arcs.push({id:'m3-tb-lB',dir:'R',lbl:negN(lB)});
+    if(sel.rA) arcs.push({id:'m3-tb-rA',dir:'L',lbl:negX(rA)});
+    if(sel.rB&&rB!==0) arcs.push({id:'m3-tb-rB',dir:'L',lbl:negN(rB)});
+    const rBs=['m3-tb-rA','m3-tb-rB'].map(gr).filter(Boolean);
+    const lBs=['m3-tb-lA','m3-tb-lB'].map(gr).filter(Boolean);
+    const rEnd=rBs.length?Math.max(...rBs.map(r=>r.right))-cr.left+14:cr.width*0.9;
+    const lEnd=lBs.length?Math.min(...lBs.map(r=>r.left))-cr.left-14:cr.width*0.1;
+    const hs=[55,90,125,160];
+    arcs.forEach((arc,i)=>{
+      const sr=gr(arc.id);
+      if(!sr)return;
+      const col=arc.dir==='R'?'#ef4444':'#22c55e';
+      const mid=arc.dir==='R'?'url(#tah-r)':'url(#tah-g)';
+      const sx=sr.left+sr.width/2-cr.left;
+      const sy=sr.top+sr.height/2-cr.top;
+      const dx=arc.dir==='R'?rEnd:lEnd;
+      const dy=sy;
+      const mx=(sx+dx)/2;
+      const py=sy-hs[i];
+      const path=document.createElementNS(ns,'path');
+      path.setAttribute('d',`M${sx},${sy} Q${mx},${py} ${dx},${dy}`);
+      path.setAttribute('fill','none');
+      path.setAttribute('stroke',col);
+      path.setAttribute('stroke-width','3');
+      path.setAttribute('marker-end',mid);
+      svgEl.appendChild(path);
+      const lx=mx;
+      const ly=0.25*sy+0.5*py+0.25*dy;
+      const txt=document.createElementNS(ns,'text');
+      txt.setAttribute('x',String(lx));
+      txt.setAttribute('y',String(ly-7));
+      txt.setAttribute('text-anchor','middle');
+      txt.setAttribute('fill',col);
+      txt.setAttribute('font-size','14');
+      txt.setAttribute('font-weight','800');
+      txt.setAttribute('font-family','Nunito,Segoe UI,sans-serif');
+      txt.textContent=arc.lbl;
+      svgEl.appendChild(txt);
+    });
+  });
+}
+function drawLRMTranspArrows(){
+  requestAnimationFrame(()=>{
+    const cont=document.getElementById('m3-lrm-tcont');
+    const svgEl=document.getElementById('m3-lrm-tsvg');
+    if(!cont||!svgEl)return;
+    const cr=cont.getBoundingClientRect();
+    const ns='http://www.w3.org/2000/svg';
+    svgEl.innerHTML=`<defs>
+      <marker id="lah-r" markerWidth="10" markerHeight="8" refX="10" refY="4" orient="auto"><polygon points="0 0,10 4,0 8" fill="#ef4444"/></marker>
+      <marker id="lah-g" markerWidth="10" markerHeight="8" refX="10" refY="4" orient="auto"><polygon points="0 0,10 4,0 8" fill="#22c55e"/></marker>
+    </defs>`;
+    const lT=m3Eq.lTerms, rT=m3Eq.rTerms, ll=lT.length;
+    const gr=id=>{const el=document.getElementById(id);return el?el.getBoundingClientRect():null;};
+    const negLbl=t=>{const n=-t.c;const abs=Math.abs(n);const part=t.x?(abs===1?'x':`${abs}x`):String(abs);return(n<0?'-':'+')+part;};
+    const arcs=[];
+    lT.forEach((t,i)=>{if(m3LrmSel[i])arcs.push({id:`m3-lrm-t${i}`,dir:'R',lbl:negLbl(t)});});
+    rT.forEach((t,j)=>{if(m3LrmSel[ll+j])arcs.push({id:`m3-lrm-t${ll+j}`,dir:'L',lbl:negLbl(t)});});
+    if(!arcs.length)return;
+    const rBs=rT.map((_,j)=>gr(`m3-lrm-t${ll+j}`)).filter(Boolean);
+    const lBs=lT.map((_,i)=>gr(`m3-lrm-t${i}`)).filter(Boolean);
+    const rEnd=rBs.length?Math.max(...rBs.map(r=>r.right))-cr.left+14:cr.width*0.9;
+    const lEnd=lBs.length?Math.min(...lBs.map(r=>r.left))-cr.left-14:cr.width*0.1;
+    const hs=[55,90,125,160];
+    arcs.forEach((arc,i)=>{
+      const sr=gr(arc.id);
+      if(!sr)return;
+      const col=arc.dir==='R'?'#ef4444':'#22c55e';
+      const mid=arc.dir==='R'?'url(#lah-r)':'url(#lah-g)';
+      const sx=sr.left+sr.width/2-cr.left;
+      const sy=sr.top+sr.height/2-cr.top;
+      const dx=arc.dir==='R'?rEnd:lEnd;
+      const mx=(sx+dx)/2;
+      const py=sy-hs[i%4];
+      const path=document.createElementNS(ns,'path');
+      path.setAttribute('d',`M${sx},${sy} Q${mx},${py} ${dx},${sy}`);
+      path.setAttribute('fill','none');
+      path.setAttribute('stroke',col);
+      path.setAttribute('stroke-width','3');
+      path.setAttribute('marker-end',mid);
+      svgEl.appendChild(path);
+      const txt=document.createElementNS(ns,'text');
+      txt.setAttribute('x',String(mx));
+      txt.setAttribute('y',String(0.25*sy+0.5*py+0.25*sy-7));
+      txt.setAttribute('text-anchor','middle');
+      txt.setAttribute('fill',col);
+      txt.setAttribute('font-size','14');
+      txt.setAttribute('font-weight','800');
+      txt.setAttribute('font-family','Nunito,Segoe UI,sans-serif');
+      txt.textContent=arc.lbl;
+      svgEl.appendChild(txt);
+    });
+  });
+}
+function m6ToggleChip(idx){
+  if(m6FracDone[idx])return;
+  if(m6SelSet.has(idx))m6SelSet.delete(idx);
+  else m6SelSet.add(idx);
+  renderM3();
+}
+function m6Sprowadz(){
+  m6FillMode=true;
+  renderM3();
+}
+function m6ConfirmFill(){
+  const allTerms=[...m3Eq.lTerms,...m3Eq.rTerms];
+  let allOk=true;
+  for(const idx of m6SelSet){
+    const inp=document.getElementById(`m6-inp-${idx}`);
+    const raw=(inp?inp.value:'').trim();
+    const t=allTerms[idx];
+    const m=m3Eq.lcd/t.d;
+    const ea=t.a*m,eb=t.b*m;
+    const valid=m6ValidNumerForms(ea,eb);
+    if(!valid.has(normIn(raw))){
+      allOk=false;
+      if(inp){inp.style.borderColor='#ff4757';}
+    } else {
+      if(inp)inp.style.borderColor='';
+    }
+  }
+  if(!allOk){
+    const firstWrong=[...m6SelSet].find(idx=>{
+      const inp=document.getElementById(`m6-inp-${idx}`);
+      return inp&&inp.style.borderColor==='#ff4757';
+    });
+    if(firstWrong!==undefined){const inp=document.getElementById(`m6-inp-${firstWrong}`);if(inp)inp.focus();}
+    document.getElementById('m3-fb').textContent='✗ Sprawdź zaznaczone pola.';
+    document.getElementById('m3-fb').className='feedback bad';
+    playFlash('m3-anim','wrong'); return;
+  }
+  for(const idx of m6SelSet) m6FracDone[idx]=true;
+  m6SelSet.clear(); m6FillMode=false;
+  document.getElementById('m3-fb').className='feedback';
+  renderM3(); playFlash('m3-anim','correct');
+}
+function m6Dalej(){
+  m3SaveState();
+  m3Step=2; m6SelSet=new Set(); m6FillMode=false; m3OpSel=null;
+  m3Phase='L6_MULTIPLY';
+  document.getElementById('m3-fb').className='feedback';
+  renderM3();
+}
+function m3ToggleAnsSign(type){
+  const id=type==='frac'?'m3-frac-sign-btn':type==='mixed'?'m3-mixed-sign-btn':'m3-int-sign-btn';
+  const btn=document.getElementById(id);
+  if(type==='int'){
+    m3AnsSign=-m3AnsSign;
+    if(btn){btn.textContent=m3AnsSign>0?'+':'−';btn.className='m3-ans-sign-btn '+(m3AnsSign>0?'s-plus':'s-minus');}
+  } else {
+    m3AnsSign=-m3AnsSign;
+    if(btn)btn.textContent=m3AnsSign>0?'+':'−';
+  }
+}
+function checkM3IntAns(){
+  const inp=document.getElementById('m3-inp-int-ans');
+  if(!inp)return;
+  const v=parseInt(inp.value.trim(),10);
+  if(isNaN(v)||v<=0){
+    document.getElementById('m3-fb').textContent='Wpisz liczbę dodatnią!';
+    document.getElementById('m3-fb').className='feedback bad'; return;
+  }
+  const result=m3AnsSign*v;
+  const expected=(m3ExpEq||m3Eq).c;
+  if(result!==expected){
+    document.getElementById('m3-fb').textContent='✗ Niepoprawna odpowiedź — spróbuj jeszcze raz.';
+    document.getElementById('m3-fb').className='feedback bad';
+    playFlash('m3-anim','wrong'); return;
+  }
+  m3Cor++; m3Tot++; stopTimer('m3-timer');
+  document.getElementById('m3-score').textContent=`${m3Cor} / ${m3Tot}`;
+  m3Phase='SOLVED'; renderM3(); playCorrectAnim('m3-anim',nextM3);
+}
+function checkM3PosIntAns(){
+  const inp=document.getElementById('m3-inp-pos-int-ans');
+  if(!inp)return;
+  const v=parseInt(inp.value.trim(),10);
+  if(isNaN(v)||v<=0){
+    document.getElementById('m3-fb').textContent='Wpisz liczbę dodatnią!';
+    document.getElementById('m3-fb').className='feedback bad'; return;
+  }
+  const expected=(m3ExpEq||m3Eq).c;
+  if(v!==expected){
+    document.getElementById('m3-fb').textContent='✗ Niepoprawna odpowiedź — spróbuj jeszcze raz.';
+    document.getElementById('m3-fb').className='feedback bad';
+    playFlash('m3-anim','wrong'); return;
+  }
+  m3Cor++; m3Tot++; stopTimer('m3-timer');
+  document.getElementById('m3-score').textContent=`${m3Cor} / ${m3Tot}`;
+  m3Phase='SOLVED'; renderM3(); playCorrectAnim('m3-anim',nextM3);
+}
+function checkM3MixedAns(){
+  const wi=document.getElementById('m3-inp-mixed-whole');
+  const ni=document.getElementById('m3-inp-mixed-num');
+  const di=document.getElementById('m3-inp-mixed-den');
+  if(!wi||!ni||!di)return;
+  const wholeStr=wi.value.trim();
+  const whole=wholeStr===''?0:Math.abs(parseInt(wholeStr,10));
+  const p=Math.abs(parseInt(ni.value.trim(),10));
+  const q=Math.abs(parseInt(di.value.trim(),10));
+  if(isNaN(whole)||isNaN(p)||isNaN(q)||q===0){
+    document.getElementById('m3-fb').textContent='Wpisz ułamek (licznik p i mianownik q)!';
+    document.getElementById('m3-fb').className='feedback bad'; return;
+  }
+  const result=m3AnsSign*(whole+p/q);
+  const expected=(m3ExpEq||m3Eq).c;
+  if(Math.abs(result-expected)>0.0001){
+    document.getElementById('m3-fb').textContent='✗ Niepoprawna odpowiedź — spróbuj jeszcze raz.';
+    document.getElementById('m3-fb').className='feedback bad';
+    playFlash('m3-anim','wrong'); return;
+  }
+  m3Cor++; m3Tot++; stopTimer('m3-timer');
+  document.getElementById('m3-score').textContent=`${m3Cor} / ${m3Tot}`;
+  m3Phase='SOLVED'; renderM3(); playCorrectAnim('m3-anim',nextM3);
+}
+function checkM3FracAns(){
+  const numInp=document.getElementById('m3-inp-frac-num');
+  const denInp=document.getElementById('m3-inp-frac-den');
+  if(!numInp||!denInp)return;
+  const p=Math.abs(parseInt(numInp.value.trim(),10));
+  const q=Math.abs(parseInt(denInp.value.trim(),10));
+  if(isNaN(p)||isNaN(q)||q===0){
+    document.getElementById('m3-fb').textContent='Wpisz licznik i mianownik!';
+    document.getElementById('m3-fb').className='feedback bad'; return;
+  }
+  const _eq=m3ExpEq||m3Eq;
+  const solNum=_eq.type==='LR'?_eq.rB:_eq.c;
+  if(Math.abs(m3AnsSign*p/q-solNum)>0.0001){
+    document.getElementById('m3-fb').textContent='✗ Niepoprawna odpowiedź — spróbuj jeszcze raz.';
+    document.getElementById('m3-fb').className='feedback bad';
+    playFlash('m3-anim','wrong'); return;
+  }
+  if(m3FracSubStep==='improper'){
+    m3FracSubStep='mixed';
+    document.getElementById('m3-fb').textContent='✓ Dobry ułamek! Teraz wyłącz całości.';
+    document.getElementById('m3-fb').className='feedback ok';
+    renderM3(); return;
+  }
+  m3Cor++; m3Tot++; stopTimer('m3-timer');
+  document.getElementById('m3-score').textContent=`${m3Cor} / ${m3Tot}`;
+  m3Phase='SOLVED'; renderM3(); playCorrectAnim('m3-anim',nextM3);
+}
+
+function m3BuildSolutionHTML(){
+  const steps=[];
+  const addStep=(lbl,eq)=>steps.push({lbl,eq});
+  function processEq(ceq){
+    if(ceq.type==='LRM'){
+      const s=ceq.simplified;
+      if(s.type==='LR'){
+        addStep('Uprość obie strony',fmtSum(s.lA,s.lB)+' = '+fmtSum(s.rA,s.rB));
+      } else {
+        addStep('Uprość obie strony',fmtSum(s.a,s.b)+' = '+s.c);
+      }
+      processEq(s);
+    } else if(ceq.type==='LR'){
+      const{lA,lB,rA,rB}=ceq;
+      const a=lA-rA,c=rB-lB;
+      addStep('Przenieś wyrazy podobne',fmtSum(a,0)+' = '+c);
+      processEq({a,b:0,c,xDiv:1});
+    } else if(ceq.type==='L6'){
+      const{lcd,lTerms,rTerms,resultEq}=ceq;
+      const termStr=t=>{const m=lcd/t.d,ea=t.a*m,eb=t.b*m;return ea===0?String(eb):eb===0?fmtSum(ea,0):fmtSum(ea,eb);};
+      addStep(`Pomnóż przez LCD = ${lcd}`,lTerms.map(termStr).join('+')+' = '+rTerms.map(termStr).join('+'));
+      processEq(resultEq);
+    } else if(ceq.type==='L3F'){
+      const{a,b,d,c}=ceq;
+      addStep(`Pomnóż obie strony przez ${d}`,fmtSum(a,b)+' = '+c*d);
+      processEq({a,b,c:c*d,xDiv:1});
+    } else if(ceq.type==='L4F'){
+      const{a,b,d,e,f}=ceq;
+      addStep(`Pomnóż obie strony przez ${d}`,fmtSum(a,b)+' = '+fmtSum(d*e,d*f));
+      processEq({type:'LR',lA:a,lB:b,rA:d*e,rB:d*f});
+    } else if(ceq.type==='L3M'){
+      const{k,a,b,c}=ceq;
+      addStep(`Rozwiń nawias (×${k})`,fmtSum(k*a,k*b)+' = '+c);
+      processEq({a:k*a,b:k*b,c,xDiv:1});
+    } else if(ceq.type==='L4M'){
+      const{k,a,b,e,f}=ceq;
+      addStep(`Rozwiń nawias (×${k})`,fmtSum(k*a,k*b)+' = '+fmtSum(e,f));
+      processEq({type:'LR',lA:k*a,lB:k*b,rA:e,rB:f});
+    } else {
+      const{a,b,xDiv=1}=ceq;
+      let cc=ceq.c;
+      if(b!==0){
+        const lbl=b>0?`Odejmij ${b} od obu stron`:`Dodaj ${Math.abs(b)} do obu stron`;
+        cc-=b; addStep(lbl,fmtSum(a,0)+' = '+cc);
+      }
+      if(a!==1||xDiv!==1){
+        const x=xDiv>1?cc*xDiv/a:cc/a;
+        const lbl=xDiv>1?`Pomnóż obie strony przez ${xDiv}`:`Podziel obie strony przez ${a}`;
+        addStep(lbl,'x = '+numToFracStr(x));
+      }
+    }
+  }
+  processEq(m3Eq);
+  let html='<div class="m3-sol-steps">';
+  steps.forEach((s,i)=>{
+    html+=`<div class="m3-sol-step"><span class="m3-sol-lbl">${i+1}. ${s.lbl}:</span> <span class="m3-sol-eq">${s.eq}</span></div>`;
+  });
+  return html+'</div>';
+}
+function m3Forfeit(){
+  if(m3Phase==='WAIT'||m3Phase==='SOLVED'||m3Phase==='FORFEIT')return;
+  m3Tot++;
+  stopTimer('m3-timer');
+  document.getElementById('m3-score').textContent=`${m3Cor} / ${m3Tot}`;
+  m3Phase='FORFEIT';
+  renderM3();
+  const fb=document.getElementById('m3-fb');
+  fb.className='feedback bad';
+  fb.innerHTML='🏳️ Poddano się.<br>'+m3BuildSolutionHTML()
+    +'<div style="text-align:center;margin-top:10px"><button class="btn btn-primary" onclick="nextM3()">Następne →</button></div>';
+  playFlash('m3-anim','wrong');
+}
+function transpUnordStrs(lA,lB,rA,rB,s){
+  const fmt=(v,first,isX)=>{if(v===0)return'';const aV=Math.abs(v);const sg=v>0?(first?'':'+'):'-';return isX?sg+(aV===1?'':aV)+'x':sg+aV;};
+  const lT=[],rT=[];
+  if(!s.lA&&lA!==0)lT.push({v:lA,x:true});   if(s.rA&&rA!==0)lT.push({v:-rA,x:true});
+  if(!s.lB&&lB!==0)lT.push({v:lB,x:false});   if(s.rB&&rB!==0)lT.push({v:-rB,x:false});
+  if(!s.rA&&rA!==0)rT.push({v:rA,x:true});    if(s.lA&&lA!==0)rT.push({v:-lA,x:true});
+  if(!s.rB&&rB!==0)rT.push({v:rB,x:false});   if(s.lB&&lB!==0)rT.push({v:-lB,x:false});
+  const perms=arr=>{if(arr.length<=1)return[arr.slice()];const r=[];for(let i=0;i<arr.length;i++){const rest=[...arr.slice(0,i),...arr.slice(i+1)];for(const p of perms(rest))r.push([arr[i],...p]);}return r;};
+  const bld=ts=>{let o='',f=true;for(const t of ts){const tk=fmt(t.v,f,t.x);o+=tk;if(tk)f=false;}return o||'0';};
+  const set=new Set();
+  for(const lp of perms(lT))for(const rp of perms(rT))set.add(normIn(bld(lp)+'='+bld(rp)));
+  return set;
+}
+function m3ApplyTranspose(){
+  const s=m3TranspSel;
+  if(!s.lA&&!s.lB&&!s.rA&&!s.rB){
+    document.getElementById('m3-fb').textContent='Kliknij co najmniej jeden jednomian!';
+    document.getElementById('m3-fb').className='feedback bad'; return;
+  }
+  m3SaveState();
+  const{lA,lB,rA,rB}=m3Eq;
+  const nLA=(s.lA?0:lA)+(s.rA?-rA:0);
+  const nLB=(s.lB?0:lB)+(s.rB?-rB:0);
+  const nRA=(s.rA?0:rA)+(s.lA?-lA:0);
+  const nRB=(s.rB?0:rB)+(s.lB?-lB:0);
+  if(nRA===0) m3ExpEq={a:nLA,b:nLB,c:nRB,xDiv:1};
+  else m3ExpEq={type:'LR',lA:nLA,lB:nLB,rA:nRA,rB:nRB};
+  m3TranspRaw=transpUnordStrs(lA,lB,rA,rB,s);
+  m3Phase='TYPE'; renderM3();
+}
+function m3choose(method){
+  m3SaveState();
+  m3ChoiceMethod=method;
+  if(method==='expand'){
+    const{k,a,b,c,e,f}=m3Eq;
+    m3OpSel='·'; m3OpVal=k;
+    if(m3Eq.type==='L3M') m3ExpEq={a:k*a,b:k*b,c,xDiv:1};
+    else m3ExpEq={type:'LR',lA:k*a,lB:k*b,rA:e,rB:f};
+    m3Phase='TYPE'; renderM3();
+  } else if(method==='simplify'){
+    const{a,b,d,c,e,f}=m3Eq;
+    m3OpSel='÷'; m3OpVal=d;
+    if(m3Eq.type==='L3F') m3ExpEq={a:a/d,b:b/d,c,xDiv:1};
+    else m3ExpEq={type:'LR',lA:a/d,lB:b/d,rA:e,rB:f};
+    m3Phase='TYPE'; renderM3();
+  } else {
+    m3OpSel='+'; m3Phase='SIGN'; renderM3();
+  }
+}
+
+function m3CycleSign(){
+  const ops=['+','-','·','÷'];
+  const lbls=['+','−','·','÷'];
+  const cls=['','s-minus','s-mul','s-div'];
+  const idx=ops.indexOf(m3OpSel);
+  m3OpSel=ops[(idx+1)%4];
+  const ni=(idx+1)%4;
+  const btn=document.getElementById('m3-sign-cyc');
+  if(btn){btn.textContent=lbls[ni];btn.className='m3-sign-cycle'+(cls[ni]?' '+cls[ni]:'');}
+}
+
+function checkM3Sign(){
+  if(!m3OpSel){
+    document.getElementById('m3-fb').textContent='Wybierz najpierw znak!';
+    document.getElementById('m3-fb').className='feedback bad'; return;
+  }
+  const rawStr=(document.getElementById('m3-inp-sign').value||'').trim();
+  let val;
+  const xCoeffM=rawStr.match(/^(\d*\.?\d*)x$/i);
+  if(xCoeffM){const c=xCoeffM[1];val=(c==='')?1:parseFloat(c.replace(',','.'));}
+  else if(/^-?(\d+\.?\d*|\.\d+)$/.test(rawStr.replace(',','.'))){val=parseFloat(rawStr.replace(',','.'));}
+  else{val=NaN;}
+  if(isNaN(val)||val===0||rawStr===''){
+    document.getElementById('m3-fb').textContent='Wpisz liczbę lub wyrażenie z x (np. 3 lub 2x)!';
+    document.getElementById('m3-fb').className='feedback bad'; return;
+  }
+  if(m3Phase==='L6_MULTIPLY'){
+    if(m3OpSel!=='·'||Math.abs(val-m3Eq.lcd)>0.001){
+      document.getElementById('m3-fb').textContent=`✗ Pomnóż obie strony przez LCD = ${m3Eq.lcd}`;
+      document.getElementById('m3-fb').className='feedback bad'; return;
+    }
+    m3OpVal=val; m3SaveState();
+    document.getElementById('m3-fb').className='feedback';
+    m3Phase='L6_TYPE_UNSIMPL'; renderM3(); return;
+  }
+  if(m3ChoiceMethod==='equiv'&&m3Eq.type==='LR'){
+    const{lA,lB,rA,rB}=m3Eq;
+    const isX=(m3Sel==='lA'||m3Sel==='rA');
+    let ne;
+    if(m3OpSel==='·'||m3OpSel==='÷'){
+      const r=v=>Math.round(applyOp(v,m3OpSel,val)*1000)/1000;
+      ne={type:'LR',lA:r(lA),lB:r(lB),rA:r(rA),rB:r(rB)};
+    } else if(isX){
+      const sv=m3OpSel==='-'?-val:val;
+      ne={type:'LR',lA:lA+sv,lB,rA:rA+sv,rB};
+    } else {
+      ne={type:'LR',lA,lB:Math.round(applyOp(lB,m3OpSel,val)*1000)/1000,rA,rB:Math.round(applyOp(rB,m3OpSel,val)*1000)/1000};
+    }
+    m3OpVal=val; m3ExpEq=ne;
+    m3SaveState();
+    document.getElementById('m3-fb').className='feedback';
+    m3Phase='TYPE'; renderM3(); return;
+  }
+  let coeff,target;
+  if(m3Sel==='frac'){coeff=1/m3Eq.d;target=1;}
+  else if(m3Sel==='mul'){coeff=m3Eq.k;target=1;}
+  else if(m3Sel==='rhs-a'){coeff=m3Eq.rA;target=0;}
+  else{const{a,b,xDiv=1}=m3Eq;coeff=m3Sel==='b'?b:a/xDiv;target=m3Sel==='b'?0:1;}
+  if(Math.abs(applyOp(coeff,m3OpSel,val)-target)>0.001){
+    document.getElementById('m3-fb').textContent='✗ Ta operacja nie eliminuje zaznaczonego elementu. Spróbuj jeszcze raz.';
+    document.getElementById('m3-fb').className='feedback bad';
+    playFlash('m3-anim','wrong'); return;
+  }
+  m3OpVal=val;
+  if(m3Sel==='frac'){
+    if(m3Eq.type==='L3F') m3ExpEq={a:m3Eq.a,b:m3Eq.b,c:m3Eq.c*val,xDiv:1};
+    else m3ExpEq={type:'LR',lA:m3Eq.a,lB:m3Eq.b,rA:m3Eq.d*m3Eq.e,rB:m3Eq.d*m3Eq.f};
+  } else if(m3Sel==='mul'){
+    if(m3Eq.type==='L3M') m3ExpEq={a:m3Eq.a,b:m3Eq.b,c:m3Eq.c/val,xDiv:1};
+    else m3ExpEq={type:'LR',lA:m3Eq.a,lB:m3Eq.b,rA:m3Eq.e/val,rB:m3Eq.f/val};
+  } else if(m3Sel==='rhs-a'){
+    const{lA,lB,rA,rB}=m3Eq;
+    m3ExpEq={a:applyOp(lA,m3OpSel,val),b:lB,c:rB,xDiv:1};
+  } else {
+    const{a,b,c,xDiv=1}=m3Eq;
+    const newC=Math.round(applyOp(c,m3OpSel,val)*10000)/10000;
+    if(m3Sel==='b') m3ExpEq={a,b:0,c:newC,xDiv};
+    else m3ExpEq={a:1,b:0,c:newC,xDiv:1};
+  }
+  m3SaveState();
+  document.getElementById('m3-fb').className='feedback';
+  m3Phase='TYPE'; renderM3();
+}
+
+function checkM3Type(){
+  const raw=(document.getElementById('m3-inp-type').value||'').trim();
+  if(!raw) return;
+  if(m3Phase==='L6_TYPE_UNSIMPL'){
+    if(!m6ResultValidAnswers) m6ResultValidAnswers=m6ValidAnswersSet(m3Eq.resultEq);
+    if(!m6ResultValidAnswers.has(normIn(raw))){
+      document.getElementById('m3-fb').textContent='✗ Niepoprawnie — sprawdź wynik mnożenia.';
+      document.getElementById('m3-fb').className='feedback bad';
+      playFlash('m3-anim','wrong'); return;
+    }
+    m3Eq=m3Eq.resultEq; m3Step++;
+    m3Sel=null; m3OpSel=null; m3OpVal=null; m3ExpEq=null;
+    m3Phase='PICK';
+    document.getElementById('m3-fb').className='feedback';
+    renderM3(); playFlash('m3-anim','correct'); return;
+  }
+  const inp=normIn(raw);
+  const isUnord=m3ChoiceMethod==='transpose'&&m3TranspRaw&&m3TranspRaw.has(inp);
+  const isLrmUnord=m3ChoiceMethod==='lrm_transpose'&&m3LrmTranspRaw&&m3LrmTranspRaw.has(inp);
+  const ok=inp===expNorm(m3ExpEq)||isUnord||isLrmUnord;
+  if(!ok){
+    document.getElementById('m3-fb').textContent='✗ Niepoprawnie — popraw i spróbuj jeszcze raz.';
+    document.getElementById('m3-fb').className='feedback bad';
+    playFlash('m3-anim','wrong'); return;
+  }
+  if(isUnord&&inp!==expNorm(m3ExpEq)){
+    m3TranspUserInput=raw;
+    m3ChoiceMethod='transp_simplify';
+    m3TotalSteps++;
+    m3Step++;
+    m3Phase='TYPE';
+    document.getElementById('m3-fb').className='feedback';
+    renderM3(); playFlash('m3-anim','correct'); return;
+  }
+  if(isLrmUnord&&inp!==expNorm(m3ExpEq)){
+    m3TranspUserInput=raw;
+    m3ChoiceMethod='lrm_transp_simplify';
+    m3TotalSteps++;
+    m3Step++;
+    m3Phase='TYPE';
+    document.getElementById('m3-fb').className='feedback';
+    renderM3(); playFlash('m3-anim','correct'); return;
+  }
+  m3Eq=m3ExpEq; m3Step++;
+  const lrSolved=m3Eq.type==='LR'&&m3Eq.lA===1&&m3Eq.lB===0&&m3Eq.rA===0;
+  const stdSolved=!m3Eq.type&&m3Eq.a===1&&m3Eq.b===0&&(m3Eq.xDiv===undefined||m3Eq.xDiv===1);
+  if(lrSolved||stdSolved){
+    m3Cor++; m3Tot++; stopTimer('m3-timer');
+    document.getElementById('m3-score').textContent=`${m3Cor} / ${m3Tot}`;
+    m3Phase='SOLVED'; renderM3(); playCorrectAnim('m3-anim',nextM3);
+  } else if(m3Eq.type==='LR'&&m3ChoiceMethod==='equiv'){
+    m3TotalSteps++; m3Sel=null; m3OpSel=null; m3OpVal=null; m3ExpEq=null;
+    m3Phase='LR_EQUIV';
+    document.getElementById('m3-fb').className='feedback';
+    renderM3(); playFlash('m3-anim','correct');
+  } else {
+    m3Sel=null; m3OpSel=null; m3OpVal=null; m3ExpEq=null;
+    m3Phase='PICK';
+    document.getElementById('m3-fb').className='feedback';
+    renderM3(); playFlash('m3-anim','correct');
+  }
+}
+
+function nextM3(){
+  clearTimeout(_adv);
+  const pool=m3Level===6?EQ3_LV6:m3Level===5?EQ3_LV5:m3Level===4?EQ3_LV4:m3Level===3?EQ3_LV3:m3Level===2?EQ3_LV2:EQ3_LV1;
+  m3Eq=pool[randInt(0,pool.length-1)]();
+  m3TotalSteps=m3CountSteps(m3Eq);
+  m3Sel=null; m3OpSel=null; m3OpVal=null; m3ExpEq=null; m3ChoiceMethod=null; m3TranspSel={}; m3TranspRaw=null; m3TranspUserInput=null; m3History=[]; m3LrmSel=[]; m3LrmChipGrp=[]; m3LrmTranspRaw=null; m3FracSubStep=null;
+  m6FracDone=[]; m6SelSet=new Set(); m6FillMode=false; m6ResultValidAnswers=null;
+  if(m3Eq.type==='L6'){
+    m6FracDone=new Array(m3Eq.lTerms.length+m3Eq.rTerms.length).fill(false);
+    [...m3Eq.lTerms,...m3Eq.rTerms].forEach((t,i)=>{if(t.d===m3Eq.lcd)m6FracDone[i]=true;});
+    m6SelSet=new Set(); m6FillMode=false;
+    m3Step=1; m3Phase='L6_LCD';
+  } else {
+    m3Step=1; m3Phase='PICK';
+  }
+  document.getElementById('m3-fb').className='feedback';
+  document.getElementById('m3-fb').textContent='';
+  startTimer('m3-timer'); renderM3();
+}
+
+document.getElementById('m3-inp-sign').addEventListener('keydown',e=>{if(e.key==='Enter')checkM3Sign();});
+document.getElementById('m3-inp-type').addEventListener('keydown',e=>{if(e.key==='Enter')checkM3Type();});
+
+nextM1(); nextM2(); nextM3();
+</script>
+</body>
+</html>
