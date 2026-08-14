@@ -1,0 +1,50 @@
+<svg viewBox="0 0 397 280" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7a4e08"/>
+      <stop offset="55%" stop-color="#a9781a"/>
+      <stop offset="100%" stop-color="#c99a2e"/>
+    </linearGradient>
+    <marker id="ay" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#FFE055"/>
+    </marker>
+    <marker id="am" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#FFFFFF"/>
+    </marker>
+  </defs>
+
+  <rect width="397" height="280" fill="url(#bg)"/>
+
+  <!-- Watermark -->
+  <text x="200" y="185" font-size="200" fill="rgba(255,255,255,0.06)"
+        text-anchor="middle" font-family="Georgia,serif" font-weight="bold">=</text>
+
+  <!-- Length conversion: 5 km = 5000 m -->
+  <text x="198" y="70" text-anchor="middle" font-family="Georgia,'Times New Roman',serif"
+        font-size="30" font-weight="bold" font-style="italic">
+    <tspan fill="white">5 </tspan><tspan fill="#FFE055">km</tspan><tspan fill="white"> = 5000 </tspan><tspan fill="#FFE055">m</tspan>
+  </text>
+
+  <!-- arrow: x1000 -->
+  <path d="M 130,88 Q 198,112 266,88"
+        fill="none" stroke="white" stroke-width="2.5" marker-end="url(#am)"/>
+  <text x="198" y="118" text-anchor="middle" font-family="Georgia,'Times New Roman',serif"
+        font-size="16" font-weight="bold" font-style="italic" fill="white">&#215;1000</text>
+
+  <!-- divider -->
+  <line x1="30" y1="140" x2="367" y2="140" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-dasharray="8,4"/>
+
+  <!-- Mass conversion: 3 kg = 3000 g -->
+  <text x="198" y="185" text-anchor="middle" font-family="Georgia,'Times New Roman',serif"
+        font-size="30" font-weight="bold" font-style="italic">
+    <tspan fill="white">3 </tspan><tspan fill="#FFE055">kg</tspan><tspan fill="white"> = 3000 </tspan><tspan fill="#FFE055">g</tspan>
+  </text>
+
+  <!-- arrow: x1000 -->
+  <path d="M 130,203 Q 198,227 266,203"
+        fill="none" stroke="white" stroke-width="2.5" marker-end="url(#am)"/>
+  <text x="198" y="233" text-anchor="middle" font-family="Georgia,'Times New Roman',serif"
+        font-size="16" font-weight="bold" font-style="italic" fill="white">&#215;1000</text>
+</svg>

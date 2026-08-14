@@ -1,0 +1,757 @@
+﻿<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#e3f2fd">
+<title>Zamiana jednostek</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #e3f2fd; --card: #fff; --text: #0d2137;
+  --score-bg: #e8f5e9; --score-text: #1b5e20; --score-bdr: #a5d6a7;
+  --timer-bg: #f0e8ff; --timer-text: #4527a0; --timer-bdr: #c8aaf5;
+  --mod-dark: #c2930f; --mod-mid: #e0b23c; --mod-light: #fbf6e8;
+  --mod-bg: #f8eed4; --mod-shadow: rgba(194,147,15,.25); --mod-border: #e4ce93;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: var(--bg);
+  font-family: "Segoe UI", Verdana, Arial, sans-serif; color: var(--text); }
+body { display: flex; align-items: center; justify-content: center;
+  min-height: 100vh; padding: 12px; }
+.card {
+  background: var(--card); width: 100%; max-width: 480px;
+  border-radius: 24px; padding: 22px 20px 26px;
+  box-shadow: 0 8px 36px rgba(21,101,192,.14), 0 2px 8px rgba(21,101,192,.08);
+}
+.app-title {
+  font-family: 'Nunito', "Segoe UI", sans-serif;
+  font-size: 1.45rem; font-weight: 900; letter-spacing: 2px;
+  text-align: center; margin: 0 0 14px; padding: 13px 20px;
+  background: linear-gradient(135deg, #7a4e08 0%, #a9781a 55%, #c99a2e 100%);
+  border-radius: 16px; color: #fff;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.35), 0 0 28px rgba(220,180,90,0.35);
+  box-shadow: 0 4px 22px rgba(154,110,20,.4), 0 1px 4px rgba(0,0,0,0.15);
+}
+.section-box {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 5px;
+  background: var(--mod-bg); border-radius: 14px; padding: 5px 6px; margin-bottom: 12px;
+}
+.section-label {
+  flex: 0 0 auto;
+  background: linear-gradient(135deg, var(--mod-dark), var(--mod-mid));
+  color: #fff; font-size: .72rem; font-weight: 700; padding: 5px 10px; border-radius: 8px;
+  white-space: nowrap; cursor: default; user-select: none;
+  box-shadow: 0 2px 6px var(--mod-shadow);
+}
+.mod-select {
+  flex: 1; min-width: 0;
+  border: 2px solid var(--mod-border); border-radius: 10px; padding: 7px 10px;
+  font-size: .88rem; font-weight: 700; font-family: inherit;
+  color: var(--mod-dark); background: #fff;
+  cursor: pointer; outline: none; appearance: auto;
+}
+.mod-select:focus { border-color: var(--mod-mid); }
+.lv-btn {
+  flex: 1; border: 2px solid var(--mod-border); border-radius: 10px;
+  padding: 7px 4px; font-size: .78rem; font-weight: 700;
+  background: transparent; color: var(--mod-mid);
+  cursor: pointer; font-family: inherit; transition: all .15s;
+}
+.lv-btn:hover:not(:disabled) { background: var(--mod-light); }
+.lv-btn.active { color: #fff; }
+.lv-btn:disabled { opacity: .4; cursor: default; }
+.stats { display: flex; gap: 10px; margin-bottom: 14px; }
+.stat-box {
+  flex: 1; border-radius: 14px; padding: 10px 6px;
+  font-weight: 700; text-align: center;
+  background: var(--score-bg); color: var(--score-text); border: 2px solid var(--score-bdr);
+}
+.timer-box { background: var(--timer-bg); color: var(--timer-text); border: 2px solid var(--timer-bdr); }
+.stat-label { font-size: .7rem; text-transform: uppercase; letter-spacing: .8px; opacity: .7; margin-bottom: 2px; }
+.stat-value { font-size: 1.35rem; }
+.question-box {
+  background: linear-gradient(145deg, var(--mod-dark), var(--mod-mid)); color: #fff;
+  border-radius: 18px; padding: 20px 14px 22px; text-align: center; margin-bottom: 10px;
+  position: relative; overflow: hidden; min-height: 96px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.anim-layer {
+  position: absolute; inset: 0; z-index: 10;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none;
+}
+.q-label { font-size: .76rem; font-weight: 600; opacity: .8; margin-bottom: 12px; }
+.eq-line {
+  display: flex; align-items: center; justify-content: center;
+  gap: 8px; flex-wrap: nowrap; position: relative; z-index: 1;
+  font-family: "Bahnschrift","DIN Alternate","Trebuchet MS",sans-serif;
+  font-size: clamp(1rem, 5.5vw, 1.75rem); font-weight: 700; color: #fff;
+  width: 100%;
+}
+#eq-left, #eq-right { white-space: nowrap; flex-shrink: 0; }
+.eq-inp {
+  width: 86px; height: 46px; flex-shrink: 0;
+  background: rgba(255,255,255,.93); color: #0d2137;
+  border: 2.5px solid rgba(255,255,255,.45); border-radius: 10px;
+  font-family: "Bahnschrift","DIN Alternate","Trebuchet MS",sans-serif;
+  font-size: inherit; font-weight: 700; text-align: center;
+  outline: none; -moz-appearance: textfield; transition: border-color .15s, box-shadow .15s;
+}
+.eq-inp::-webkit-outer-spin-button,
+.eq-inp::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.eq-inp:focus { border-color: #fff; box-shadow: 0 0 0 3px rgba(255,255,255,.35); }
+.eq-inp:disabled { opacity: .65; }
+.eq-mid { display: inline-flex; align-items: flex-start; gap: 3px; flex-shrink: 0; }
+.eq-x10 { white-space: nowrap; align-self: center; }
+.eq-inp-exp { width: 48px; height: 30px; font-size: .62em; margin-top: -3px; }
+.conv-hint {
+  text-align: center; font-size: .82rem; font-weight: 700;
+  color: var(--mod-dark);
+  background: var(--mod-light); border: 2px solid var(--mod-border); border-radius: 10px;
+  padding: 5px 12px; margin-bottom: 10px;
+}
+.btn {
+  border: none; border-radius: 14px; padding: 12px 22px;
+  font-size: .95rem; font-weight: 700; cursor: pointer;
+  font-family: inherit; transition: opacity .18s, transform .1s;
+}
+.btn:active { transform: scale(.97); }
+.btn-primary { background: linear-gradient(135deg, var(--mod-dark), var(--mod-mid)); color: #fff; }
+.btn-primary:hover:not(:disabled) { opacity: .88; }
+.btn-primary:disabled { opacity: .5; cursor: default; }
+.btn-next { background: var(--mod-light); color: var(--mod-dark); border: 2px solid var(--mod-border); }
+.btn-next:hover { background: var(--mod-border); }
+.btn-row { display: flex; gap: 8px; }
+.feedback {
+  border-radius: 14px; padding: 11px 14px; font-weight: 700;
+  text-align: center; margin-bottom: 12px; font-size: .93rem; display: none;
+  line-height: 1.4;
+}
+.feedback.good { display: block; background: #e8f5e9; color: #1b5e20; border: 2px solid #a5d6a7; }
+.feedback.bad  { display: block; background: #ffebee; color: #b71c1c; border: 2px solid #ef9a9a; }
+/* Animacje */
+.correct-flash {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at center, rgba(40,220,100,.45) 0%, rgba(40,220,100,0) 70%);
+  animation: flashFade 1.3s ease-out forwards;
+}
+.wrong-flash {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at center, rgba(220,0,0,.4) 0%, rgba(220,0,0,0) 70%);
+  animation: flashFade 1.2s ease-out forwards;
+}
+@keyframes flashFade { 0%{opacity:0;} 15%{opacity:1;} 100%{opacity:0;} }
+.anim-correct-num {
+  font-size: 5rem; font-weight: 900; color: #fff; line-height: 1;
+  text-shadow: 0 0 10px #7fffb0, 0 0 25px #50ff80, 0 0 55px #20e860;
+  animation: correctPop 1.3s cubic-bezier(.22,1,.36,1) forwards;
+  position: relative; z-index: 2;
+}
+@keyframes correctPop {
+  0%   { opacity:0; transform:scale(.2) rotate(-8deg); }
+  28%  { opacity:1; transform:scale(1.18) rotate(2deg); }
+  60%  { transform:scale(.95) rotate(0); }
+  100% { opacity:0; transform:scale(1.1); }
+}
+.anim-big-x {
+  font-size: 5rem; font-weight: 900; color: #ff1a1a; line-height: 1;
+  position: absolute; z-index: 3;
+  animation: wrongGlow 1.2s ease-out forwards;
+}
+@keyframes wrongGlow {
+  0%   { opacity:0; transform:scale(.4); }
+  18%  { opacity:1; transform:scale(1.12); }
+  60%  { transform:scale(1.05); }
+  100% { opacity:0; transform:scale(1.2); }
+}
+.particle {
+  position: absolute; z-index: 3; font-size: 1.6rem; font-weight: 900; color: #fff;
+  pointer-events: none; animation: particleFly 1s ease-out forwards;
+}
+@keyframes particleFly {
+  0%   { opacity:1; transform:translate(0,0) scale(1.1); }
+  100% { opacity:0; transform:var(--tx) scale(.2); }
+}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="app-title">Zamiana jednostek</div>
+
+  <div class="section-box">
+    <span class="section-label">Moduł:</span>
+    <select id="module-select" class="mod-select" onchange="setModule(this.value)">
+      <option value="money">💰 Jednostki monetarne</option>
+      <option value="mass">⚖️ Jednostki masy</option>
+      <option value="length">📏 Jednostki długości</option>
+      <option value="area">📐 Jednostki pola</option>
+      <option value="volume">🧪 Jednostki objętości</option>
+    </select>
+  </div>
+
+  <div class="section-box">
+    <span class="section-label">Poziom:</span>
+    <button class="lv-btn active" id="lv1-btn" onclick="setLevel(1)">Lv 1</button>
+    <button class="lv-btn" id="lv2-btn" onclick="setLevel(2)">Lv 2</button>
+    <button class="lv-btn" id="lv3-btn" onclick="setLevel(3)">Lv 3</button>
+    <button class="lv-btn" id="lv4-btn" onclick="setLevel(4)">Lv 4</button>
+    <button class="lv-btn" id="lv5-btn" onclick="setLevel(5)">Lv 5</button>
+  </div>
+
+  <div class="stats">
+    <div class="stat-box">
+      <div class="stat-label">Wynik</div>
+      <div class="stat-value" id="score">0 / 0</div>
+    </div>
+    <div class="stat-box timer-box">
+      <div class="stat-label">Czas</div>
+      <div class="stat-value" id="timer">0 s</div>
+    </div>
+  </div>
+
+  <div class="question-box" id="qbox">
+    <div class="anim-layer" id="anim"></div>
+    <div class="q-label">Zamień jednostki</div>
+    <div class="eq-line">
+      <span id="eq-left"></span>
+      <span>=</span>
+      <input class="eq-inp" id="eq-inp" type="text" inputmode="numeric"
+             autocomplete="off" spellcheck="false" placeholder="?">
+      <span class="eq-mid" id="eq-mid" style="display:none">
+        <span class="eq-x10">· 10</span><input class="eq-inp eq-inp-exp" id="eq-inp-exp" type="text" inputmode="text"
+               autocomplete="off" spellcheck="false" placeholder="?">
+      </span>
+      <span id="eq-right"></span>
+    </div>
+  </div>
+
+  <div class="conv-hint" id="conv-hint" style="display:none"></div>
+
+  <div class="btn-row" style="margin-bottom:12px">
+    <button class="btn btn-primary" style="flex:1" id="check-btn" onclick="checkAnswer()">Sprawdź</button>
+  </div>
+
+  <div class="feedback" id="feedback"></div>
+
+  <div class="btn-row">
+    <button class="btn btn-next" id="next-btn" style="display:none;flex:1" onclick="nextQuestion()">Następne →</button>
+  </div>
+</div>
+
+<script>
+const randInt = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
+const pick = arr => arr[randInt(0, arr.length - 1)];
+const fmtN = n => n.toLocaleString('pl-PL');
+const fmtU = u => u.replace(/²/g, '<sup>2</sup>').replace(/³/g, '<sup>3</sup>');
+const fmtExp = e => '<sup>' + e + '</sup>';
+
+const EXP_TABLE = {
+  money:  { gr:0, 'zł':2 },
+  mass:   { mg:0, g:3, dag:4, kg:6, t:9 },
+  length: { mm:0, cm:1, dm:2, m:3, km:6 },
+  area:   { 'mm²':0, 'cm²':2, 'dm²':4, 'm²':6, a:8, ha:10, 'km²':12 },
+  volume: { 'mm³':-3, ml:0, 'cm³':0, l:3, 'dm³':3, 'm³':6, 'km³':15 }
+};
+
+function genMantissa() {
+  var decimals = pick([0,1,1,1,2]);
+  var intPart = randInt(1,9);
+  if (decimals === 0) return { value: intPart, str: intPart.toString() };
+  var max = Math.pow(10, decimals) - 1;
+  var decPart = randInt(1, max);
+  var decStr = decPart.toString().padStart(decimals, '0');
+  return { value: parseFloat(intPart + '.' + decStr), str: intPart + ',' + decStr };
+}
+
+function isValidLv5Pair(mod, fromU, toU) {
+  if (mod !== 'volume') return true;
+  if ((fromU === 'km³' && toU !== 'm³') || (toU === 'km³' && fromU !== 'm³')) return false;
+  if ((fromU === 'mm³' && (toU === 'm³' || toU === 'km³')) || (toU === 'mm³' && (fromU === 'm³' || fromU === 'km³'))) return false;
+  return true;
+}
+
+function genLv5Question() {
+  var table = EXP_TABLE[curMod];
+  var units = Object.keys(table);
+  var fromU = pick(units);
+  var toU;
+  do { toU = pick(units); } while (toU === fromU || !isValidLv5Pair(curMod, fromU, toU));
+  var shift = table[fromU] - table[toU];
+  var m = genMantissa();
+  var eFrom = randInt(-15, 30);
+  return {
+    mantissa: m.value, mantissaStr: m.str,
+    expFrom: eFrom, expTo: eFrom + shift,
+    from: fromU, to: toU
+  };
+}
+
+const MODS = {
+  money: {
+    pairs: [
+      { from:'zł',  to:'gr',  hint:'1 zł = 100 gr',    gen:function(){var n=randInt(2,20); return{val:n,   ans:n*100};} },
+      { from:'gr',  to:'zł',  hint:'100 gr = 1 zł',    gen:function(){var n=randInt(1,20); return{val:n*100,ans:n};} },
+    ],
+    lv4Pairs: [
+      { from:'gr',  to:'zł',  hint:'100 gr = 1 zł',    gen:function(){var n=randInt(1,9); return{val:n*10,  ans:n/10};} },
+      { from:'zł',  to:'gr',  hint:'1 zł = 100 gr',    gen:function(){var n=randInt(1,9); return{val:n/10,  ans:n*10};} },
+    ]
+  },
+  mass: {
+    pairs: [
+      { from:'dag', to:'g',   hint:'1 dag = 10 g',      gen:function(){var n=randInt(2,20); return{val:n,    ans:n*10};} },
+      { from:'g',   to:'dag', hint:'10 g = 1 dag',      gen:function(){var n=randInt(1,20); return{val:n*10, ans:n};} },
+      { from:'kg',  to:'dag', hint:'1 kg = 100 dag',    gen:function(){var n=randInt(2,10); return{val:n,    ans:n*100};} },
+      { from:'dag', to:'kg',  hint:'100 dag = 1 kg',    gen:function(){var n=randInt(1,10); return{val:n*100,ans:n};} },
+      { from:'kg',  to:'g',   hint:'1 kg = 1000 g',     gen:function(){var n=randInt(2,10); return{val:n,    ans:n*1000};} },
+      { from:'g',   to:'kg',  hint:'1000 g = 1 kg',     gen:function(){var n=randInt(1,10); return{val:n*1000,ans:n};} },
+      { from:'t',   to:'kg',  hint:'1 t = 1000 kg',     gen:function(){var n=randInt(2,5);  return{val:n,    ans:n*1000};} },
+      { from:'kg',  to:'t',   hint:'1000 kg = 1 t',     gen:function(){var n=randInt(1,5);  return{val:n*1000,ans:n};} },
+    ],
+    rarePairs: [
+      { from:'g',   to:'mg',  hint:'1 g = 1000 mg',     gen:function(){var n=randInt(2,10); return{val:n,    ans:n*1000};} },
+      { from:'mg',  to:'g',   hint:'1000 mg = 1 g',     gen:function(){var n=randInt(2,10); return{val:n*1000,ans:n};} },
+    ],
+    lv4Pairs: [
+      { from:'g',   to:'dag', hint:'10 g = 1 dag',       gen:function(){var n=randInt(1,9); return{val:n,     ans:n/10};} },
+      { from:'dag', to:'g',   hint:'1 dag = 10 g',       gen:function(){var n=randInt(1,9); return{val:n/10,  ans:n};} },
+      { from:'dag', to:'kg',  hint:'100 dag = 1 kg',     gen:function(){var n=randInt(1,9); return{val:n*10,  ans:n/10};} },
+      { from:'kg',  to:'dag', hint:'1 kg = 100 dag',     gen:function(){var n=randInt(1,9); return{val:n/10,  ans:n*10};} },
+      { from:'g',   to:'kg',  hint:'1000 g = 1 kg',      gen:function(){var n=randInt(1,9); return{val:n*100, ans:n/10};} },
+      { from:'kg',  to:'g',   hint:'1 kg = 1000 g',      gen:function(){var n=randInt(1,9); return{val:n/10,  ans:n*100};} },
+      { from:'kg',  to:'t',   hint:'1000 kg = 1 t',      gen:function(){var n=randInt(1,9); return{val:n*100, ans:n/10};} },
+      { from:'t',   to:'kg',  hint:'1 t = 1000 kg',      gen:function(){var n=randInt(1,9); return{val:n/10,  ans:n*100};} },
+    ]
+  },
+  length: {
+    pairs: [
+      { from:'cm',  to:'mm',  hint:'1 cm = 10 mm',      gen:function(){var n=randInt(2,20); return{val:n,    ans:n*10};} },
+      { from:'mm',  to:'cm',  hint:'10 mm = 1 cm',      gen:function(){var n=randInt(1,20); return{val:n*10, ans:n};} },
+      { from:'dm',  to:'cm',  hint:'1 dm = 10 cm',      gen:function(){var n=randInt(2,20); return{val:n,    ans:n*10};} },
+      { from:'cm',  to:'dm',  hint:'10 cm = 1 dm',      gen:function(){var n=randInt(1,20); return{val:n*10, ans:n};} },
+      { from:'m',   to:'dm',  hint:'1 m = 10 dm',       gen:function(){var n=randInt(2,20); return{val:n,    ans:n*10};} },
+      { from:'dm',  to:'m',   hint:'10 dm = 1 m',       gen:function(){var n=randInt(1,20); return{val:n*10, ans:n};} },
+      { from:'m',   to:'cm',  hint:'1 m = 100 cm',      gen:function(){var n=randInt(2,15); return{val:n,    ans:n*100};} },
+      { from:'cm',  to:'m',   hint:'100 cm = 1 m',      gen:function(){var n=randInt(1,15); return{val:n*100,ans:n};} },
+      { from:'km',  to:'m',   hint:'1 km = 1000 m',     gen:function(){var n=randInt(2,10); return{val:n,    ans:n*1000};} },
+      { from:'m',   to:'km',  hint:'1000 m = 1 km',     gen:function(){var n=randInt(1,10); return{val:n*1000,ans:n};} },
+    ],
+    lv4Pairs: [
+      { from:'mm',  to:'cm',  hint:'10 mm = 1 cm',      gen:function(){var n=randInt(1,9); return{val:n,     ans:n/10};} },
+      { from:'cm',  to:'mm',  hint:'1 cm = 10 mm',      gen:function(){var n=randInt(1,9); return{val:n/10,  ans:n};} },
+      { from:'cm',  to:'dm',  hint:'10 cm = 1 dm',      gen:function(){var n=randInt(1,9); return{val:n,     ans:n/10};} },
+      { from:'dm',  to:'cm',  hint:'1 dm = 10 cm',      gen:function(){var n=randInt(1,9); return{val:n/10,  ans:n};} },
+      { from:'dm',  to:'m',   hint:'10 dm = 1 m',       gen:function(){var n=randInt(1,9); return{val:n,     ans:n/10};} },
+      { from:'m',   to:'dm',  hint:'1 m = 10 dm',       gen:function(){var n=randInt(1,9); return{val:n/10,  ans:n};} },
+      { from:'cm',  to:'m',   hint:'100 cm = 1 m',      gen:function(){var n=randInt(1,9); return{val:n*10,  ans:n/10};} },
+      { from:'m',   to:'cm',  hint:'1 m = 100 cm',      gen:function(){var n=randInt(1,9); return{val:n/10,  ans:n*10};} },
+      { from:'m',   to:'km',  hint:'1000 m = 1 km',     gen:function(){var n=randInt(1,9); return{val:n*100, ans:n/10};} },
+      { from:'km',  to:'m',   hint:'1 km = 1000 m',     gen:function(){var n=randInt(1,9); return{val:n/10,  ans:n*100};} },
+    ]
+  },
+  area: {
+    pairs: [
+      { from:'mm²', to:'cm²', hint:'100 mm² = 1 cm²',   gen:function(){var n=randInt(2,10); return{val:n*100, ans:n};} },
+      { from:'cm²', to:'mm²', hint:'1 cm² = 100 mm²',   gen:function(){var n=randInt(2,10); return{val:n,    ans:n*100};} },
+      { from:'dm²', to:'cm²', hint:'1 dm² = 100 cm²',   gen:function(){var n=randInt(2,10); return{val:n,    ans:n*100};} },
+      { from:'cm²', to:'dm²', hint:'100 cm² = 1 dm²',   gen:function(){var n=randInt(1,10); return{val:n*100,ans:n};} },
+      { from:'m²',  to:'dm²', hint:'1 m² = 100 dm²',    gen:function(){var n=randInt(2,10); return{val:n,    ans:n*100};} },
+      { from:'dm²', to:'m²',  hint:'100 dm² = 1 m²',    gen:function(){var n=randInt(1,10); return{val:n*100,ans:n};} },
+      { from:'a',   to:'m²',  hint:'1 a = 100 m²',      gen:function(){var n=randInt(2,10); return{val:n,    ans:n*100};} },
+      { from:'m²',  to:'a',   hint:'100 m² = 1 a',      gen:function(){var n=randInt(1,10); return{val:n*100,ans:n};} },
+      { from:'ha',  to:'a',   hint:'1 ha = 100 a',      gen:function(){var n=randInt(2,10); return{val:n,    ans:n*100};} },
+      { from:'a',   to:'ha',  hint:'100 a = 1 ha',      gen:function(){var n=randInt(1,10); return{val:n*100,ans:n};} },
+      { from:'km²', to:'ha',  hint:'1 km² = 100 ha',    gen:function(){var n=randInt(2,10); return{val:n,    ans:n*100};} },
+      { from:'ha',  to:'km²', hint:'100 ha = 1 km²',    gen:function(){var n=randInt(1,10); return{val:n*100,ans:n};} },
+      { from:'m²',  to:'cm²', hint:'1 m² = 10 000 cm²', gen:function(){var n=randInt(2,5);  return{val:n,    ans:n*10000};} },
+      { from:'cm²', to:'m²',  hint:'10 000 cm² = 1 m²', gen:function(){var n=randInt(1,5);  return{val:n*10000,ans:n};} },
+    ],
+    lv4Pairs: [
+      { from:'mm²', to:'cm²', hint:'100 mm² = 1 cm²',   gen:function(){var n=randInt(1,9); return{val:n*10,  ans:n/10};} },
+      { from:'cm²', to:'mm²', hint:'1 cm² = 100 mm²',   gen:function(){var n=randInt(1,9); return{val:n/10,  ans:n*10};} },
+      { from:'cm²', to:'dm²', hint:'100 cm² = 1 dm²',   gen:function(){var n=randInt(1,9); return{val:n*10,  ans:n/10};} },
+      { from:'dm²', to:'cm²', hint:'1 dm² = 100 cm²',   gen:function(){var n=randInt(1,9); return{val:n/10,  ans:n*10};} },
+      { from:'dm²', to:'m²',  hint:'100 dm² = 1 m²',    gen:function(){var n=randInt(1,9); return{val:n*10,  ans:n/10};} },
+      { from:'m²',  to:'dm²', hint:'1 m² = 100 dm²',    gen:function(){var n=randInt(1,9); return{val:n/10,  ans:n*10};} },
+      { from:'m²',  to:'a',   hint:'100 m² = 1 a',      gen:function(){var n=randInt(1,9); return{val:n*10,  ans:n/10};} },
+      { from:'a',   to:'m²',  hint:'1 a = 100 m²',      gen:function(){var n=randInt(1,9); return{val:n/10,  ans:n*10};} },
+      { from:'a',   to:'ha',  hint:'100 a = 1 ha',      gen:function(){var n=randInt(1,9); return{val:n*10,  ans:n/10};} },
+      { from:'ha',  to:'a',   hint:'1 ha = 100 a',      gen:function(){var n=randInt(1,9); return{val:n/10,  ans:n*10};} },
+      { from:'ha',  to:'km²', hint:'100 ha = 1 km²',    gen:function(){var n=randInt(1,9); return{val:n*10,  ans:n/10};} },
+      { from:'km²', to:'ha',  hint:'1 km² = 100 ha',    gen:function(){var n=randInt(1,9); return{val:n/10,  ans:n*10};} },
+      { from:'m²',  to:'cm²', hint:'1 m² = 10 000 cm²', gen:function(){var n=randInt(1,9); return{val:n/10,  ans:n*1000};} },
+      { from:'cm²', to:'m²',  hint:'10 000 cm² = 1 m²', gen:function(){var n=randInt(1,9); return{val:n*1000,ans:n/10};} },
+    ]
+  },
+  volume: {
+    pairs: [
+      { from:'l',   to:'ml',  hint:'1 l = 1000 ml',     gen:function(){var n=randInt(2,10); return{val:n,     ans:n*1000};} },
+      { from:'ml',  to:'l',   hint:'1000 ml = 1 l',     gen:function(){var n=randInt(1,10); return{val:n*1000,ans:n};} },
+      { from:'dm³', to:'cm³', hint:'1 dm³ = 1000 cm³',  gen:function(){var n=randInt(2,10); return{val:n,     ans:n*1000};} },
+      { from:'cm³', to:'dm³', hint:'1000 cm³ = 1 dm³',  gen:function(){var n=randInt(1,10); return{val:n*1000,ans:n};} },
+      { from:'l',   to:'dm³', hint:'1 l = 1 dm³',       gen:function(){var n=randInt(2,10); return{val:n,     ans:n};} },
+      { from:'dm³', to:'l',   hint:'1 dm³ = 1 l',       gen:function(){var n=randInt(2,10); return{val:n,     ans:n};} },
+      { from:'m³',  to:'cm³', hint:'1 m³ = 1 000 000 cm³', gen:function(){var n=randInt(2,3);  return{val:n,    ans:n*1000000};} },
+      { from:'cm³', to:'m³',  hint:'1 000 000 cm³ = 1 m³', gen:function(){var n=randInt(1,3);  return{val:n*1000000,ans:n};} },
+    ],
+    rarePairs: [
+      { from:'cm³', to:'mm³', hint:'1 cm³ = 1000 mm³',  gen:function(){var n=randInt(2,10); return{val:n,     ans:n*1000};} },
+      { from:'mm³', to:'cm³', hint:'1000 mm³ = 1 cm³',  gen:function(){var n=randInt(2,10); return{val:n*1000,ans:n};} },
+      { from:'m³',  to:'dm³', hint:'1 m³ = 1000 dm³',   gen:function(){var n=randInt(2,5);  return{val:n,     ans:n*1000};} },
+      { from:'dm³', to:'m³',  hint:'1000 dm³ = 1 m³',   gen:function(){var n=randInt(2,5);  return{val:n*1000,ans:n};} },
+      { from:'m³',  to:'l',   hint:'1 m³ = 1000 l',     gen:function(){var n=randInt(2,5);  return{val:n,     ans:n*1000};} },
+      { from:'l',   to:'m³',  hint:'1000 l = 1 m³',     gen:function(){var n=randInt(2,5);  return{val:n*1000,ans:n};} },
+      { from:'m³',  to:'km³', hint:'1 000 000 000 m³ = 1 km³', gen:function(){var n=randInt(2,3); return{val:n*1000000000,ans:n};} },
+      { from:'km³', to:'m³',  hint:'1 km³ = 1 000 000 000 m³', gen:function(){var n=randInt(2,3); return{val:n,ans:n*1000000000};} },
+    ],
+    lv4Pairs: [
+      { from:'ml',  to:'l',   hint:'1000 ml = 1 l',     gen:function(){var n=randInt(1,9); return{val:n*100, ans:n/10};} },
+      { from:'l',   to:'ml',  hint:'1 l = 1000 ml',     gen:function(){var n=randInt(1,9); return{val:n/10,  ans:n*100};} },
+      { from:'cm³', to:'dm³', hint:'1000 cm³ = 1 dm³',  gen:function(){var n=randInt(1,9); return{val:n*100, ans:n/10};} },
+      { from:'dm³', to:'cm³', hint:'1 dm³ = 1000 cm³',  gen:function(){var n=randInt(1,9); return{val:n/10,  ans:n*100};} },
+      { from:'m³',  to:'cm³', hint:'1 m³ = 1 000 000 cm³', gen:function(){var n=randInt(1,9); return{val:n/10,  ans:n*100000};} },
+      { from:'cm³', to:'m³',  hint:'1 000 000 cm³ = 1 m³', gen:function(){var n=randInt(1,9); return{val:n*100000,ans:n/10};} },
+    ]
+  }
+};
+
+var curMod = 'money', curLevel = 1;
+var cor = 0, tot = 0, locked = false, curQ = null;
+var timerIv = null, t0 = 0;
+
+var MOD_PALETTES = {
+  money: [
+    { dark:'#c2930f', mid:'#e0b23c' },
+    { dark:'#b8860b', mid:'#cf9a24' },
+    { dark:'#96690a', mid:'#b8860b' },
+    { dark:'#7a4e08', mid:'#96690a' },
+    { dark:'#5c3a06', mid:'#7a4e08' }
+  ],
+  mass: [
+    { dark:'#a84a30', mid:'#cf6b4c' },
+    { dark:'#973b22', mid:'#bd5b3d' },
+    { dark:'#822d16', mid:'#a94c30' },
+    { dark:'#6b2410', mid:'#8f3d24' },
+    { dark:'#4f1908', mid:'#733018' }
+  ],
+  length: [
+    { dark:'#5c7d52', mid:'#7a9b6e' },
+    { dark:'#4f7245', mid:'#6b8f5f' },
+    { dark:'#436339', mid:'#5c8050' },
+    { dark:'#37542e', mid:'#4d7042' },
+    { dark:'#2a4322', mid:'#3e5f35' }
+  ],
+  area: [
+    { dark:'#0f7986', mid:'#189bab' },
+    { dark:'#0c6b76', mid:'#128b9a' },
+    { dark:'#095b66', mid:'#0e7b89' },
+    { dark:'#074c55', mid:'#0a6a76' },
+    { dark:'#043d44', mid:'#075a64' }
+  ],
+  volume: [
+    { dark:'#9c2a7e', mid:'#c13f9e' },
+    { dark:'#8c1e6f', mid:'#b02f8d' },
+    { dark:'#7c1660', mid:'#9e2680' },
+    { dark:'#6a0f52', mid:'#8a1d6e' },
+    { dark:'#570a3e', mid:'#751657' }
+  ]
+};
+
+function hexToRgb(hex) {
+  var n = parseInt(hex.replace('#',''), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+function mixWithWhite(hex, amount) {
+  var rgb = hexToRgb(hex);
+  var r = Math.round(rgb[0] + (255 - rgb[0]) * amount);
+  var g = Math.round(rgb[1] + (255 - rgb[1]) * amount);
+  var b = Math.round(rgb[2] + (255 - rgb[2]) * amount);
+  return 'rgb(' + r + ',' + g + ',' + b + ')';
+}
+function hexToRgba(hex, alpha) {
+  var rgb = hexToRgb(hex);
+  return 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',' + alpha + ')';
+}
+
+function applyLevelPalette(lv) {
+  var p = MOD_PALETTES[curMod][lv - 1];
+  var root = document.documentElement.style;
+  root.setProperty('--mod-dark', p.dark);
+  root.setProperty('--mod-mid', p.mid);
+  root.setProperty('--mod-light', mixWithWhite(p.mid, 0.88));
+  root.setProperty('--mod-bg', mixWithWhite(p.mid, 0.78));
+  root.setProperty('--mod-border', mixWithWhite(p.dark, 0.55));
+  root.setProperty('--mod-shadow', hexToRgba(p.dark, 0.25));
+}
+
+function updateLvButtonColors() {
+  var palette = MOD_PALETTES[curMod];
+  document.querySelectorAll('.lv-btn').forEach(function(b, i) {
+    if (i + 1 === curLevel) {
+      b.style.background = palette[i].mid;
+      b.style.borderColor = palette[i].dark;
+    } else {
+      b.style.background = '';
+      b.style.borderColor = '';
+    }
+  });
+}
+
+function setModule(key) {
+  curMod = key;
+  applyLevelPalette(curLevel);
+  updateLvButtonColors();
+  cor = 0; tot = 0;
+  updateScore();
+  stopTimer();
+  document.getElementById('timer').textContent = '0 s';
+  nextQuestion();
+}
+
+function setLevel(lv) {
+  curLevel = lv;
+  applyLevelPalette(lv);
+  document.querySelectorAll('.lv-btn').forEach(function(b, i) {
+    b.classList.toggle('active', i + 1 === lv);
+  });
+  updateLvButtonColors();
+  cor = 0; tot = 0;
+  updateScore();
+  stopTimer();
+  document.getElementById('timer').textContent = '0 s';
+  nextQuestion();
+}
+
+function updateScore() {
+  document.getElementById('score').textContent = cor + ' / ' + tot;
+}
+
+function startTimer() {
+  stopTimer();
+  t0 = Date.now();
+  var el = document.getElementById('timer');
+  el.textContent = '0 s';
+  timerIv = setInterval(function() {
+    el.textContent = Math.floor((Date.now() - t0) / 1000) + ' s';
+  }, 500);
+}
+
+function stopTimer() {
+  clearInterval(timerIv);
+  timerIv = null;
+}
+
+function getLv3Mult() {
+  if (curMod === 'area' || curMod === 'volume') {
+    return pick([10, 100, 1000]);
+  }
+  return pick([100, 1000, 10000]);
+}
+
+function fitEquation() {
+  var line = document.querySelector('.eq-line');
+  var box  = document.getElementById('qbox');
+  var available = box.clientWidth - 28; // padding 14px × 2
+  var fs = parseFloat(window.getComputedStyle(line).fontSize);
+  while (line.scrollWidth > available && fs > 11) {
+    fs -= 1;
+    line.style.fontSize = fs + 'px';
+  }
+}
+
+function nextQuestion() {
+  var eqMid = document.getElementById('eq-mid');
+  var inp = document.getElementById('eq-inp');
+  var inpExp = document.getElementById('eq-inp-exp');
+
+  if (curLevel === 5) {
+    var q = genLv5Question();
+    curQ = q;
+
+    inp.value = '';
+    inpExp.value = '';
+    inp.disabled = false;
+    inpExp.disabled = false;
+    document.getElementById('check-btn').disabled = false;
+    document.getElementById('feedback').className = 'feedback';
+    document.getElementById('next-btn').style.display = 'none';
+    document.getElementById('anim').innerHTML = '';
+    locked = false;
+
+    document.getElementById('eq-left').innerHTML =
+      q.mantissaStr + ' · 10' + fmtExp(q.expFrom) + ' ' + fmtU(q.from);
+    document.getElementById('eq-right').innerHTML = fmtU(q.to);
+    eqMid.style.display = 'inline-flex';
+    document.getElementById('conv-hint').style.display = 'none';
+
+    document.querySelector('.eq-line').style.fontSize = '';
+    startTimer();
+    setTimeout(function() { fitEquation(); inp.focus(); }, 50);
+    return;
+  }
+
+  eqMid.style.display = 'none';
+  inpExp.value = '';
+  inpExp.disabled = false;
+
+  var mod = MODS[curMod];
+  var pair;
+  if (curLevel === 4) {
+    pair = pick(mod.lv4Pairs);
+  } else if (mod.rarePairs && mod.rarePairs.length && Math.random() < 0.25) {
+    pair = pick(mod.rarePairs);
+  } else {
+    pair = pick(mod.pairs);
+  }
+  var gen = pair.gen();
+  if (curLevel === 3) {
+    var m = getLv3Mult();
+    gen = { val: gen.val * m, ans: gen.ans * m };
+  }
+  curQ = { val: gen.val, ans: gen.ans, from: pair.from, to: pair.to, hint: pair.hint };
+
+  inp.value = '';
+  inp.disabled = false;
+  document.getElementById('check-btn').disabled = false;
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('next-btn').style.display = 'none';
+  document.getElementById('anim').innerHTML = '';
+  locked = false;
+
+  document.getElementById('eq-left').innerHTML = fmtN(curQ.val) + ' ' + fmtU(curQ.from);
+  document.getElementById('eq-right').innerHTML = fmtU(curQ.to);
+
+  var hintEl = document.getElementById('conv-hint');
+  if (curLevel === 1) {
+    hintEl.style.display = 'block';
+    hintEl.innerHTML = '💡 ' + fmtU(curQ.hint);
+  } else {
+    hintEl.style.display = 'none';
+  }
+
+  document.querySelector('.eq-line').style.fontSize = '';
+  startTimer();
+  setTimeout(function() { fitEquation(); inp.focus(); }, 50);
+}
+
+function playCorrectAnim() {
+  var L = document.getElementById('anim');
+  L.innerHTML = '';
+  var f = document.createElement('div'); f.className = 'correct-flash'; L.appendChild(f);
+  var n = document.createElement('div'); n.className = 'anim-correct-num'; n.textContent = '✓'; L.appendChild(n);
+  var S = ['⇄','=','★','✦','✧','◆'];
+  for (var i = 0; i < 12; i++) {
+    var p = document.createElement('div'); p.className = 'particle';
+    p.textContent = S[i % S.length];
+    var a = (360 / 12) * i, d = 80 + Math.random() * 70, r = a * Math.PI / 180;
+    p.style.setProperty('--tx', 'translate(' + (Math.cos(r)*d) + 'px,' + (Math.sin(r)*d) + 'px)');
+    p.style.animationDelay = (Math.random() * .12) + 's';
+    L.appendChild(p);
+  }
+  setTimeout(function() { L.innerHTML = ''; }, 1400);
+}
+
+function playWrongAnim() {
+  var L = document.getElementById('anim');
+  L.innerHTML = '';
+  var f = document.createElement('div'); f.className = 'wrong-flash'; L.appendChild(f);
+  var x = document.createElement('div'); x.className = 'anim-big-x'; x.textContent = '✗'; L.appendChild(x);
+  setTimeout(function() { L.innerHTML = ''; }, 1300);
+}
+
+function checkAnswer() {
+  if (locked || !curQ) return;
+  var inp = document.getElementById('eq-inp');
+
+  if (curLevel === 5) {
+    var inpExp = document.getElementById('eq-inp-exp');
+    var rawM = inp.value.trim().replace(/[\s ]/g, '').replace(',', '.');
+    var rawE = inpExp.value.trim().replace(/[\s ]/g, '').replace(',', '.');
+    if (rawM === '') { inp.focus(); return; }
+    if (rawE === '') { inpExp.focus(); return; }
+    var numM = parseFloat(rawM);
+    var numE = parseFloat(rawE);
+    if (isNaN(numM)) { inp.focus(); return; }
+    if (isNaN(numE)) { inpExp.focus(); return; }
+
+    locked = true;
+    tot++;
+    stopTimer();
+    inp.disabled = true;
+    inpExp.disabled = true;
+    document.getElementById('check-btn').disabled = true;
+
+    var fb5 = document.getElementById('feedback');
+    var correct5 = Math.abs(numM - curQ.mantissa) < 0.005 && Math.round(numE) === curQ.expTo;
+    var leftStr = curQ.mantissaStr + ' · 10' + fmtExp(curQ.expFrom) + ' ' + fmtU(curQ.from);
+    var rightStr = curQ.mantissaStr + ' · 10' + fmtExp(curQ.expTo) + ' ' + fmtU(curQ.to);
+
+    if (correct5) {
+      cor++;
+      fb5.className = 'feedback good';
+      fb5.innerHTML = '✓ Dobrze!  ' + leftStr + ' = ' + rightStr;
+      playCorrectAnim();
+    } else {
+      fb5.className = 'feedback bad';
+      fb5.innerHTML = '✗ Źle!  ' + leftStr + ' = <b>' + rightStr + '</b>';
+      playWrongAnim();
+    }
+    updateScore();
+    document.getElementById('next-btn').style.display = 'flex';
+    return;
+  }
+
+  var raw = inp.value.trim().replace(/[\s  ]/g, '').replace(',', '.');
+  if (raw === '') { inp.focus(); return; }
+  var num = parseFloat(raw);
+  if (isNaN(num)) { inp.focus(); return; }
+
+  locked = true;
+  tot++;
+  stopTimer();
+  inp.disabled = true;
+  document.getElementById('check-btn').disabled = true;
+
+  var fb = document.getElementById('feedback');
+  var correct = Math.abs(num - curQ.ans) < 0.0001;
+
+  if (correct) {
+    cor++;
+    fb.className = 'feedback good';
+    fb.innerHTML = '✓ Dobrze!  ' + fmtN(curQ.val) + ' ' + fmtU(curQ.from) + ' = ' + fmtN(curQ.ans) + ' ' + fmtU(curQ.to);
+    playCorrectAnim();
+  } else {
+    fb.className = 'feedback bad';
+    fb.innerHTML = '✗ Źle!  ' + fmtN(curQ.val) + ' ' + fmtU(curQ.from) + ' = <b>' + fmtN(curQ.ans) + ' ' + fmtU(curQ.to) + '</b>';
+    playWrongAnim();
+  }
+
+  updateScore();
+  document.getElementById('next-btn').style.display = 'flex';
+}
+
+document.getElementById('eq-inp').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    if (locked) { nextQuestion(); return; }
+    if (curLevel === 5) {
+      document.getElementById('eq-inp-exp').focus();
+    } else {
+      checkAnswer();
+    }
+  }
+});
+
+document.getElementById('eq-inp-exp').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    if (locked) nextQuestion();
+    else checkAnswer();
+  }
+});
+
+setModule('money');
+</script>
+</body>
+</html>
