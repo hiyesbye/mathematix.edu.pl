@@ -1,0 +1,1006 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f0eefe">
+<title>System rzymski</title>
+<style>
+  :root {
+    --bg: #f0eefe; --card: #ffffff; --primary: #7c4cf7;
+    --good: #1e9e5a; --bad: #d64040; --text: #1e2340;
+    --score-bg: #d6f5e6; --score-text: #1a7a44; --score-bdr: #a8e8c8;
+    --timer-bg: #fff4d6; --timer-text: #b86b00; --timer-bdr: #ffd98a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg);
+    font-family: "Segoe UI", Verdana, Arial, sans-serif; color: var(--text); }
+  body { display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; padding: 16px; }
+  .card {
+    background: var(--card); width: 100%; max-width: 420px;
+    border-radius: 24px; box-shadow: 0 12px 36px rgba(60,30,120,.14);
+    padding: 28px 24px 32px; text-align: center;
+    position: relative; overflow: hidden;
+  }
+  h1 {
+    font-size: 1.55rem; font-weight: 900; letter-spacing: -0.2px;
+    margin: 0 0 16px; padding: 13px 20px;
+    background: linear-gradient(135deg, #b07818, #e0c050);
+    border: 2px solid #c49428; border-radius: 16px; color: #fff;
+  }
+  .mode-row {
+    display: flex; align-items: center; background: #eeeafb;
+    border-radius: 14px; padding: 4px; gap: 4px; margin-bottom: 8px;
+  }
+  .mode-title {
+    flex: 0 0 auto; padding: 4px 9px; border-radius: 9px;
+    background: #c8bfee; color: #3d3470;
+    font-size: .78rem; font-weight: 700; white-space: nowrap;
+    cursor: default; user-select: none;
+  }
+  .tab {
+    flex: 1; border: none; background: transparent; border-radius: 11px;
+    padding: 9px 4px; font-size: .84rem; font-weight: 700; color: #6672a8;
+    cursor: pointer; transition: background .18s, color .18s, box-shadow .18s;
+    line-height: 1.3; box-shadow: none;
+  }
+  .tab:not([class*="active"]):hover { background: #dfe2f5; color: var(--text); }
+  .tab.active-n  { background: linear-gradient(135deg,#8b6fff,#6a3de8); color:#fff; box-shadow:0 3px 10px rgba(107,74,247,.35); }
+  .tab.active-t  { background: linear-gradient(135deg,#e8604a,#f5a623); color:#fff; box-shadow:0 3px 10px rgba(232,96,74,.35); }
+  .tab.active-r  { background: linear-gradient(135deg,#0a9e8a,#15ceb0); color:#fff; box-shadow:0 3px 10px rgba(10,158,138,.35); }
+  .tab.active-lv1 { background: linear-gradient(135deg,#1e9e5a,#38d68a); color:#fff; box-shadow:0 3px 10px rgba(30,158,90,.3); }
+  .tab.active-lv2 { background: linear-gradient(135deg,#c07800,#f5c030); color:#fff; box-shadow:0 3px 10px rgba(192,120,0,.3); }
+  .tab.active-lv3 { background: linear-gradient(135deg,#d64040,#f07070); color:#fff; box-shadow:0 3px 10px rgba(214,64,64,.3); }
+  .tab.active-mix { background: linear-gradient(135deg,#1565c0,#00acc1); color:#fff; box-shadow:0 3px 10px rgba(21,101,192,.35); }
+  .tab-sub { font-size: .67rem; font-weight: 600; opacity: .88; display: block; line-height: 1.1; margin-top: 1px; }
+  button:disabled, button:disabled:hover { opacity:.42; cursor:not-allowed; transform:none !important; box-shadow:none !important; filter:none !important; }
+
+  .stats { display:flex; gap:10px; margin-bottom:20px; }
+  .stat-box { flex:1; border-radius:14px; padding:10px 6px; font-weight:700; }
+  .stat-label { font-size:.7rem; text-transform:uppercase; letter-spacing:.8px; opacity:.7; margin-bottom:2px; }
+  .stat-value { font-size:1.35rem; }
+  .score-box { background:var(--score-bg); color:var(--score-text); border:2px solid var(--score-bdr); }
+  .timer-box { background:var(--timer-bg); color:var(--timer-text); border:2px solid var(--timer-bdr); transition:background .3s,color .3s,border-color .3s; }
+  .timer-box.warn   { background:#ffe0cc; color:#c04000; border-color:#ffb480; }
+  .timer-box.danger { background:#ffd6d6; color:#c00000; border-color:#ff9090; animation:timerPulse .5s ease-in-out infinite alternate; }
+  @keyframes timerPulse { from{transform:scale(1);} to{transform:scale(1.05);} }
+
+  .question-box {
+    background:linear-gradient(145deg,#5a1eb5,#9b4de8); color:#fff;
+    border-radius:18px; padding:22px 16px; margin-bottom:20px;
+    box-shadow:0 6px 22px rgba(90,30,181,.38);
+  }
+  .question-box.teal {
+    background:linear-gradient(145deg,#0a6e7a,#12a0b0);
+    box-shadow:0 6px 22px rgba(10,110,122,.38);
+  }
+  .question-label {
+    font-size:.73rem; font-weight:600; opacity:.78; margin-bottom:6px;
+    letter-spacing:.5px; text-transform:uppercase;
+  }
+  .question {
+    font-family:"Bahnschrift","DIN Alternate","Arial Rounded MT Bold","Trebuchet MS",sans-serif;
+    font-size:clamp(1.9rem,10vw,4.4rem); font-weight:700;
+    letter-spacing:clamp(1px,.4vw,3px); line-height:1.15; word-break:break-word;
+    text-shadow:0 2px 8px rgba(0,0,0,.18);
+  }
+
+  form { display:flex; flex-direction:column; gap:12px; margin-bottom:14px; }
+  input[type="number"], input[type="text"] {
+    touch-action:manipulation; width:100%; font-size:1.6rem; text-align:center;
+    padding:12px 8px; border:2px solid #cdbff7; border-radius:14px; outline:none;
+    transition:border-color .15s; background:#fff; color:var(--text);
+    font-family:inherit;
+  }
+  input[type="text"] { text-transform: uppercase; }
+  input[type="text"]::placeholder { text-transform: none; }
+  input[type="number"] { -moz-appearance:textfield; }
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+  input:focus { border-color:var(--primary); }
+
+  button {
+    width:100%; font-size:1.1rem; font-weight:700; padding:13px 20px;
+    border:none; border-radius:14px;
+    background:linear-gradient(135deg,#8b6fff,#6a3de8); color:white;
+    cursor:pointer; transition:filter .15s,transform .06s;
+    letter-spacing:.3px; box-shadow:0 4px 14px rgba(107,74,247,.35);
+  }
+  button:hover { filter:brightness(1.08); }
+  button:active { transform:scale(.97); }
+  button.secondary {
+    background:transparent; border:2px solid #d0d6f5;
+    color:#6672a8; font-weight:600; box-shadow:none; margin-top:2px;
+  }
+  button.secondary:hover { background:#f2f4fd; filter:none; }
+
+  .feedback {
+    min-height:66px; font-size:1.05rem; font-weight:700;
+    display:flex; align-items:center; justify-content:center;
+    border-radius:14px; padding:10px 14px; margin-bottom:10px; line-height:1.4;
+  }
+  .feedback.good { background:#d6f5e6; color:var(--good); border:2px solid #a8e8c8; }
+  .feedback.bad  { background:#fde8e8; color:var(--bad);  border:2px solid #f4b8b8; }
+  .feedback.empty { visibility:hidden; }
+
+  .diff-screen { padding:4px 0 8px; }
+  .diff-heading { font-size:1.05rem; font-weight:700; margin-bottom:14px; opacity:.85; }
+  .diff-buttons { display:flex; flex-direction:column; gap:10px; }
+  .diff-btn {
+    display:flex; align-items:center; gap:14px; width:100%;
+    padding:14px 18px; border:none; border-radius:16px;
+    cursor:pointer; text-align:left; color:white; font-weight:700;
+    transition:filter .15s,transform .06s; letter-spacing:normal; box-shadow:none;
+  }
+  .diff-btn:hover { filter:brightness(1.08); }
+  .diff-btn:active { transform:scale(.97); }
+  .diff-icon { font-size:1.9rem; line-height:1; }
+  .diff-info { display:flex; flex-direction:column; gap:2px; }
+  .diff-name { font-size:1.05rem; }
+  .diff-desc { font-size:.78rem; opacity:.88; font-weight:600; }
+  .diff-easy   { background:linear-gradient(135deg,#1e9e5a,#38d68a); box-shadow:0 4px 14px rgba(30,158,90,.3); }
+  .diff-medium { background:linear-gradient(135deg,#c07800,#f5c030); box-shadow:0 4px 14px rgba(192,120,0,.3); }
+  .diff-hard   { background:linear-gradient(135deg,#d64040,#f07070); box-shadow:0 4px 14px rgba(214,64,64,.3); }
+
+  .btn-row { display:flex; gap:10px; }
+  .btn-row button { margin-top:0; }
+
+  #animLayer {
+    position:absolute; inset:0; pointer-events:none; z-index:100;
+    border-radius:24px; overflow:hidden;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .anim-correct-num {
+    font-family:"Bahnschrift","DIN Alternate","Arial Rounded MT Bold",sans-serif;
+    font-size:clamp(2rem,13vw,5.5rem); font-weight:900; color:#fff; line-height:1.1;
+    text-shadow:0 0 10px #7fffb0,0 0 25px #50ff80,0 0 55px #20e860,0 0 100px #00c840;
+    animation:correctPop 1.3s cubic-bezier(.22,1,.36,1) forwards;
+    position:relative; z-index:2; word-break:break-word;
+    max-width:88%; text-align:center; padding:0 8px;
+  }
+  @keyframes correctPop {
+    0%   { opacity:0; transform:scale(.2) rotate(-8deg); }
+    28%  { opacity:1; transform:scale(1.18) rotate(2deg); }
+    50%  { transform:scale(.94) rotate(-1deg); }
+    68%  { opacity:1; transform:scale(1.04) rotate(.5deg); }
+    85%  { opacity:1; transform:scale(1); }
+    100% { opacity:0; transform:scale(1.4); }
+  }
+  .particle {
+    position:absolute; z-index:3; font-size:1.8rem; font-weight:900; color:#fff;
+    pointer-events:none; animation:particleFly 1s ease-out forwards;
+    text-shadow:0 0 8px rgba(80,255,140,.9),0 0 18px rgba(80,255,140,.5);
+  }
+  @keyframes particleFly {
+    0%   { opacity:1; transform:translate(0,0) scale(1.1); }
+    100% { opacity:0; transform:var(--tx) scale(.2); }
+  }
+  .correct-flash {
+    position:absolute; inset:0;
+    background:radial-gradient(ellipse at center,rgba(40,220,100,.45) 0%,rgba(40,220,100,0) 70%);
+    animation:flashFade 1.3s ease-out forwards;
+  }
+  @keyframes flashFade { 0%{opacity:0;} 15%{opacity:1;} 100%{opacity:0;} }
+  .anim-wrong-x {
+    font-size:11rem; font-weight:900; color:#ff1a1a; line-height:1;
+    animation:wrongGlow 1.2s ease-out forwards; position:relative; z-index:2;
+  }
+  @keyframes wrongGlow {
+    0%   { opacity:0; transform:scale(.4); text-shadow:0 0 8px #f00,0 0 16px #f00; }
+    18%  { opacity:1; transform:scale(1.12); text-shadow:0 0 8px #f00,0 0 20px #f00,0 0 40px #f22,0 0 80px #f44,0 0 130px #f00,0 0 200px #c00; }
+    40%  { transform:scale(1); text-shadow:0 0 4px #f00,0 0 14px #f00,0 0 30px #f22,0 0 60px #f44,0 0 100px #f00; }
+    65%  { opacity:1; transform:scale(1.06); text-shadow:0 0 12px #f00,0 0 28px #f00,0 0 55px #f22,0 0 110px #f44,0 0 180px #c00,0 0 250px #800; }
+    100% { opacity:0; transform:scale(1.25); text-shadow:0 0 30px #f00,0 0 70px #f22,0 0 140px #f00; }
+  }
+  .wrong-flash {
+    position:absolute; inset:0;
+    background:radial-gradient(ellipse at center,rgba(220,0,0,.4) 0%,rgba(220,0,0,0) 70%);
+    animation:flashFade 1.2s ease-out forwards;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div id="animLayer"></div>
+  <h1>System rzymski</h1>
+
+  <div class="mode-row" style="margin-bottom:8px">
+    <span class="mode-title">Moduł:</span>
+    <button class="tab active-n" id="moduleBtnDR"  onclick="switchModule('dr')"  style="white-space:nowrap">Dzies. → Rzym.</button>
+    <button class="tab"          id="moduleBtnRD"  onclick="switchModule('rd')"  style="white-space:nowrap">Rzym. → Dzies.</button>
+    <button class="tab"          id="moduleBtnMix" onclick="switchModule('mix')" style="white-space:nowrap">Mix</button>
+  </div>
+  <div class="mode-row" id="levelRow" style="margin-bottom:8px">
+    <span class="mode-title">Poziom:</span>
+    <button class="tab active-lv1" id="lvBtn1" onclick="switchLevel(1)">Lv 1<span class="tab-sub">1 – 39</span></button>
+    <button class="tab"            id="lvBtn2" onclick="switchLevel(2)">Lv 2<span class="tab-sub">30 – 399</span></button>
+    <button class="tab"            id="lvBtn3" onclick="switchLevel(3)">Lv 3<span class="tab-sub">300 – 3999</span></button>
+  </div>
+  <div class="mode-row">
+    <span class="mode-title">Tryb:</span>
+    <button class="tab active-n" id="modeBtnNormal" onclick="switchMode('normal')">Normalny</button>
+    <button class="tab"          id="modeBtnTimed"  onclick="switchMode('timed')">&#x23F1; Czasowy</button>
+  </div>
+
+  <!-- D→R Normal -->
+  <div id="panelDRNormal">
+    <div class="stats">
+      <div class="stat-box score-box">
+        <div class="stat-label">Wynik</div>
+        <div class="stat-value" id="drnScore">0 / 0</div>
+      </div>
+      <div class="stat-box timer-box">
+        <div class="stat-label">Czas</div>
+        <div class="stat-value" id="drnTimer">0 s</div>
+      </div>
+    </div>
+    <div class="question-box">
+      <div class="question-label">Zamień na liczby rzymskie:</div>
+      <div class="question" id="drnQuestion">?</div>
+    </div>
+    <form id="drnForm" autocomplete="off">
+      <input type="text" id="drnInput" inputmode="text" placeholder="np. XIV"
+             autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
+      <button type="submit" id="drnSubmitBtn" disabled>Sprawdź</button>
+    </form>
+    <div class="feedback empty" id="drnFeedback"></div>
+    <button type="button" id="drnReset" class="secondary" disabled>Resetuj wynik</button>
+  </div>
+
+  <!-- Difficulty picker (shared) -->
+  <div id="panelDiff" style="display:none">
+    <div class="diff-screen">
+      <div class="diff-heading">Wybierz poziom trudności</div>
+      <div class="diff-buttons">
+        <button class="diff-btn diff-easy" onclick="selectDifficulty(getDiffSecs('easy'))">
+          <span class="diff-icon">🟢</span>
+          <span class="diff-info">
+            <span class="diff-name">Easy</span>
+            <span class="diff-desc" id="diffDescEasy">20 sekund na odpowiedź</span>
+          </span>
+        </button>
+        <button class="diff-btn diff-medium" onclick="selectDifficulty(getDiffSecs('medium'))">
+          <span class="diff-icon">🟡</span>
+          <span class="diff-info">
+            <span class="diff-name">Medium</span>
+            <span class="diff-desc" id="diffDescMedium">12 sekund na odpowiedź</span>
+          </span>
+        </button>
+        <button class="diff-btn diff-hard" onclick="selectDifficulty(getDiffSecs('hard'))">
+          <span class="diff-icon">🔴</span>
+          <span class="diff-info">
+            <span class="diff-name">Hard</span>
+            <span class="diff-desc" id="diffDescHard">6 sekund na odpowiedź</span>
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- D→R Timed -->
+  <div id="panelDRTimed" style="display:none">
+    <div class="stats">
+      <div class="stat-box score-box">
+        <div class="stat-label">Wynik</div>
+        <div class="stat-value" id="drtScore">0 / 0</div>
+      </div>
+      <div class="stat-box timer-box" id="drtTimerBox">
+        <div class="stat-label">Pozostały czas</div>
+        <div class="stat-value" id="drtTimer">&#x2014; s</div>
+      </div>
+    </div>
+    <div class="question-box">
+      <div class="question-label">Zamień na liczby rzymskie:</div>
+      <div class="question" id="drtQuestion">?</div>
+    </div>
+    <form id="drtForm" autocomplete="off">
+      <input type="text" id="drtInput" inputmode="text" placeholder="np. XIV"
+             autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
+      <button type="submit" id="drtSubmitBtn" disabled>Sprawdź</button>
+    </form>
+    <div class="feedback empty" id="drtFeedback"></div>
+    <div class="btn-row">
+      <button type="button" id="drtReset" class="secondary" disabled>Resetuj wynik</button>
+      <button type="button" id="btnDRChangeDiff" class="secondary">Zmień poziom</button>
+    </div>
+  </div>
+
+  <!-- R→D Normal -->
+  <div id="panelRDNormal" style="display:none">
+    <div class="stats">
+      <div class="stat-box score-box">
+        <div class="stat-label">Wynik</div>
+        <div class="stat-value" id="rdnScore">0 / 0</div>
+      </div>
+      <div class="stat-box timer-box">
+        <div class="stat-label">Czas</div>
+        <div class="stat-value" id="rdnTimer">0 s</div>
+      </div>
+    </div>
+    <div class="question-box teal">
+      <div class="question-label">Zamień na liczbę dziesiątkową:</div>
+      <div class="question" id="rdnQuestion">?</div>
+    </div>
+    <form id="rdnForm" autocomplete="off">
+      <input type="number" id="rdnInput" inputmode="numeric" placeholder="np. 14">
+      <button type="submit" id="rdnSubmitBtn" disabled>Sprawdź</button>
+    </form>
+    <div class="feedback empty" id="rdnFeedback"></div>
+    <button type="button" id="rdnReset" class="secondary" disabled>Resetuj wynik</button>
+  </div>
+
+  <!-- Mix Normal -->
+  <div id="panelMixNormal" style="display:none">
+    <div class="stats">
+      <div class="stat-box score-box">
+        <div class="stat-label">Wynik</div>
+        <div class="stat-value" id="mixNScore">0 / 0</div>
+      </div>
+      <div class="stat-box timer-box">
+        <div class="stat-label">Czas</div>
+        <div class="stat-value" id="mixNTimer">0 s</div>
+      </div>
+    </div>
+    <div class="question-box" id="mixNQuestionBox">
+      <div class="question-label" id="mixNLabel">Zamień na liczby rzymskie:</div>
+      <div class="question" id="mixNQuestion">?</div>
+    </div>
+    <form id="mixNForm" autocomplete="off">
+      <input type="text"   id="mixNInputDR" inputmode="text"    placeholder="np. XIV"
+             autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" style="display:none">
+      <input type="number" id="mixNInputRD" inputmode="numeric" placeholder="np. 14" style="display:none">
+      <button type="submit" id="mixNSubmitBtn" disabled>Sprawdź</button>
+    </form>
+    <div class="feedback empty" id="mixNFeedback"></div>
+    <button type="button" id="mixNReset" class="secondary" disabled>Resetuj wynik</button>
+  </div>
+
+  <!-- Mix Timed -->
+  <div id="panelMixTimed" style="display:none">
+    <div class="stats">
+      <div class="stat-box score-box">
+        <div class="stat-label">Wynik</div>
+        <div class="stat-value" id="mixTScore">0 / 0</div>
+      </div>
+      <div class="stat-box timer-box" id="mixTTimerBox">
+        <div class="stat-label">Pozostały czas</div>
+        <div class="stat-value" id="mixTTimer">&#x2014; s</div>
+      </div>
+    </div>
+    <div class="question-box" id="mixTQuestionBox">
+      <div class="question-label" id="mixTLabel">Zamień na liczby rzymskie:</div>
+      <div class="question" id="mixTQuestion">?</div>
+    </div>
+    <form id="mixTForm" autocomplete="off">
+      <input type="text"   id="mixTInputDR" inputmode="text"    placeholder="np. XIV"
+             autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" style="display:none">
+      <input type="number" id="mixTInputRD" inputmode="numeric" placeholder="np. 14" style="display:none">
+      <button type="submit" id="mixTSubmitBtn" disabled>Sprawdź</button>
+    </form>
+    <div class="feedback empty" id="mixTFeedback"></div>
+    <div class="btn-row">
+      <button type="button" id="mixTReset" class="secondary" disabled>Resetuj wynik</button>
+      <button type="button" id="btnMixChangeDiff" class="secondary">Zmień poziom</button>
+    </div>
+  </div>
+
+  <!-- R→D Timed -->
+  <div id="panelRDTimed" style="display:none">
+    <div class="stats">
+      <div class="stat-box score-box">
+        <div class="stat-label">Wynik</div>
+        <div class="stat-value" id="rdtScore">0 / 0</div>
+      </div>
+      <div class="stat-box timer-box" id="rdtTimerBox">
+        <div class="stat-label">Pozostały czas</div>
+        <div class="stat-value" id="rdtTimer">&#x2014; s</div>
+      </div>
+    </div>
+    <div class="question-box teal">
+      <div class="question-label">Zamień na liczbę dziesiątkową:</div>
+      <div class="question" id="rdtQuestion">?</div>
+    </div>
+    <form id="rdtForm" autocomplete="off">
+      <input type="number" id="rdtInput" inputmode="numeric" placeholder="np. 14">
+      <button type="submit" id="rdtSubmitBtn" disabled>Sprawdź</button>
+    </form>
+    <div class="feedback empty" id="rdtFeedback"></div>
+    <div class="btn-row">
+      <button type="button" id="rdtReset" class="secondary" disabled>Resetuj wynik</button>
+      <button type="button" id="btnRDChangeDiff" class="secondary">Zmień poziom</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const ROMAN_VALS = [1000,900,500,400,100,90,50,40,10,9,5,4,1];
+  const ROMAN_SYMS = ['M','CM','D','CD','C','XC','L','XL','X','IX','V','IV','I'];
+
+  function toRoman(n) {
+    let r = '';
+    for (let i = 0; i < ROMAN_VALS.length; i++)
+      while (n >= ROMAN_VALS[i]) { r += ROMAN_SYMS[i]; n -= ROMAN_VALS[i]; }
+    return r;
+  }
+
+  const animLayer = document.getElementById('animLayer');
+  const PANEL_IDS = ['panelDRNormal','panelDiff','panelDRTimed','panelRDNormal','panelRDTimed','panelMixNormal','panelMixTimed'];
+
+  let currentModule = 'dr', currentMode = 'normal', currentLevel = 1;
+  let timedDiff = null, mode = 'ask', autoAdvanceTimeout = null, currentNum = 0;
+  const history = [];
+
+  let drnCorrect=0, drnTotal=0, drnStart=0, drnInterval=null;
+  let drtCorrect=0, drtTotal=0, drtCountdown=0, drtInterval=null;
+  let rdnCorrect=0, rdnTotal=0, rdnStart=0, rdnInterval=null;
+  let rdtCorrect=0, rdtTotal=0, rdtCountdown=0, rdtInterval=null;
+  let mixNCorrect=0, mixNTotal=0, mixNStart=0, mixNInterval=null;
+  let mixTCorrect=0, mixTTotal=0, mixTCountdown=0, mixTInterval=null;
+  const mixDirHistory = [];
+  let mixCurrentDir = 'dr';
+  let mixLastCentury = -1;
+
+  function getRange() {
+    if (currentLevel === 1) return [1, 39];
+    if (currentLevel === 2) return [30, 399];
+    return [300, 3999];
+  }
+
+  function randomNum() {
+    let n, tries = 0;
+    if (currentLevel === 1) {
+      do {
+        n = Math.random() < 0.25
+          ? 1  + Math.floor(Math.random() * 15)   // 1–15  (rzadziej)
+          : 16 + Math.floor(Math.random() * 24);  // 16–39 (częściej)
+        tries++;
+      } while (tries < 300 && history.includes(n));
+    } else {
+      const [min, max] = getRange();
+      do { n = min + Math.floor(Math.random() * (max - min + 1)); tries++; }
+      while (tries < 300 && history.includes(n));
+    }
+    return n;
+  }
+
+  function pushHistory(n) {
+    history.push(n);
+    if (history.length > 15) history.shift();
+  }
+
+  function getSubmitBtn() {
+    if (currentModule === 'dr')
+      return document.getElementById(currentMode === 'normal' ? 'drnSubmitBtn' : 'drtSubmitBtn');
+    if (currentModule === 'rd')
+      return document.getElementById(currentMode === 'normal' ? 'rdnSubmitBtn' : 'rdtSubmitBtn');
+    return document.getElementById(currentMode === 'normal' ? 'mixNSubmitBtn' : 'mixTSubmitBtn');
+  }
+
+  function clearAll() {
+    clearInterval(drnInterval); drnInterval = null;
+    clearInterval(drtInterval); drtInterval = null;
+    clearInterval(rdnInterval); rdnInterval = null;
+    clearInterval(rdtInterval); rdtInterval = null;
+    clearInterval(mixNInterval); mixNInterval = null;
+    clearInterval(mixTInterval); mixTInterval = null;
+    clearTimeout(autoAdvanceTimeout); autoAdvanceTimeout = null;
+    mode = 'ask';
+    animLayer.innerHTML = '';
+  }
+
+  function hideAll() {
+    PANEL_IDS.forEach(id => document.getElementById(id).style.display = 'none');
+  }
+
+  function updateView() {
+    hideAll();
+    if (currentModule === 'dr') {
+      if (currentMode === 'normal') {
+        document.getElementById('panelDRNormal').style.display = '';
+        newQuestion();
+      } else {
+        if (timedDiff === null) showDiffPanel();
+        else { document.getElementById('panelDRTimed').style.display = ''; newQuestion(); }
+      }
+    } else if (currentModule === 'rd') {
+      if (currentMode === 'normal') {
+        document.getElementById('panelRDNormal').style.display = '';
+        newQuestion();
+      } else {
+        if (timedDiff === null) showDiffPanel();
+        else { document.getElementById('panelRDTimed').style.display = ''; newQuestion(); }
+      }
+    } else {
+      if (currentMode === 'normal') {
+        document.getElementById('panelMixNormal').style.display = '';
+        newQuestion();
+      } else {
+        if (timedDiff === null) showDiffPanel();
+        else { document.getElementById('panelMixTimed').style.display = ''; newQuestion(); }
+      }
+    }
+  }
+
+  function switchModule(mod) {
+    currentModule = mod;
+    timedDiff = null;
+    clearAll();
+    history.length = 0;
+    mixDirHistory.length = 0;
+    mixLastCentury = -1;
+    document.getElementById('moduleBtnDR').className  = 'tab' + (mod === 'dr'  ? ' active-n'   : '');
+    document.getElementById('moduleBtnRD').className  = 'tab' + (mod === 'rd'  ? ' active-r'   : '');
+    document.getElementById('moduleBtnMix').className = 'tab' + (mod === 'mix' ? ' active-mix' : '');
+    document.getElementById('levelRow').style.display = mod === 'mix' ? 'none' : '';
+    updateView();
+  }
+
+  function switchLevel(lv) {
+    currentLevel = lv;
+    history.length = 0;
+    clearAll();
+    drnCorrect=0; drnTotal=0; drtCorrect=0; drtTotal=0;
+    rdnCorrect=0; rdnTotal=0; rdtCorrect=0; rdtTotal=0;
+    ['drnScore','drtScore','rdnScore','rdtScore'].forEach(id =>
+      document.getElementById(id).textContent = '0 / 0');
+    document.getElementById('lvBtn1').className = 'tab' + (lv === 1 ? ' active-lv1' : '');
+    document.getElementById('lvBtn2').className = 'tab' + (lv === 2 ? ' active-lv2' : '');
+    document.getElementById('lvBtn3').className = 'tab' + (lv === 3 ? ' active-lv3' : '');
+    syncResetBtns();
+    updateView();
+  }
+
+  function switchMode(m) {
+    currentMode = m;
+    timedDiff = null;
+    clearAll();
+    document.getElementById('modeBtnNormal').className = 'tab' + (m === 'normal' ? ' active-n' : '');
+    document.getElementById('modeBtnTimed').className  = 'tab' + (m === 'timed'  ? ' active-t' : '');
+    updateView();
+  }
+
+  function getDiffSecs(diff) {
+    if (currentModule === 'mix') {
+      if (diff === 'easy') return 15;
+      if (diff === 'medium') return 12;
+      return 8;
+    }
+    if (currentModule === 'rd') {
+      if (diff === 'easy') return 15;
+      if (diff === 'medium') return 10;
+      return [5, 6, 7][currentLevel - 1];
+    }
+    if (diff === 'easy') return 20;
+    if (currentLevel === 1) return diff === 'medium' ? 12 : 6;
+    if (currentLevel === 2) return diff === 'medium' ? 13 : 10;
+    return diff === 'medium' ? 15 : 8;
+  }
+
+  function randomMixNum() {
+    let n, tries = 0;
+    do {
+      n = 1 + Math.floor(Math.random() * 3999);
+      tries++;
+    } while (tries < 300 && Math.floor(n / 100) === mixLastCentury);
+    mixLastCentury = Math.floor(n / 100);
+    return n;
+  }
+
+  function pickMixDir() {
+    const len = mixDirHistory.length;
+    let dir;
+    if (len >= 2 && mixDirHistory[len - 1] !== mixDirHistory[len - 2]) {
+      dir = mixDirHistory[len - 1]; // ostatnie dwa różne — zostań, żeby nie było naprzemiennie
+    } else {
+      dir = Math.random() < 0.5 ? 'dr' : 'rd';
+    }
+    mixDirHistory.push(dir);
+    if (mixDirHistory.length > 6) mixDirHistory.shift();
+    return dir;
+  }
+
+  function showDiffPanel() {
+    document.getElementById('diffDescEasy').textContent   = `${getDiffSecs('easy')} sekund na odpowiedź`;
+    document.getElementById('diffDescMedium').textContent = `${getDiffSecs('medium')} sekund na odpowiedź`;
+    document.getElementById('diffDescHard').textContent   = `${getDiffSecs('hard')} sekund na odpowiedź`;
+    hideAll();
+    document.getElementById('panelDiff').style.display = '';
+  }
+
+  function selectDifficulty(secs) {
+    timedDiff = secs;
+    document.getElementById('panelDiff').style.display = 'none';
+    if (currentModule === 'dr') {
+      drtCorrect=0; drtTotal=0;
+      document.getElementById('drtScore').textContent = '0 / 0';
+      document.getElementById('panelDRTimed').style.display = '';
+    } else if (currentModule === 'rd') {
+      rdtCorrect=0; rdtTotal=0;
+      document.getElementById('rdtScore').textContent = '0 / 0';
+      document.getElementById('panelRDTimed').style.display = '';
+    } else {
+      mixTCorrect=0; mixTTotal=0;
+      document.getElementById('mixTScore').textContent = '0 / 0';
+      document.getElementById('panelMixTimed').style.display = '';
+    }
+    newQuestion();
+  }
+
+  function newQuestion(skipFocus = false) {
+    clearAll();
+    const n = currentModule === 'mix' ? randomMixNum() : randomNum();
+    currentNum = n;
+    if (currentModule !== 'mix') pushHistory(n);
+    const roman = toRoman(n);
+
+    const btn = getSubmitBtn();
+    btn.textContent = 'Sprawdź';
+    btn.disabled = true;
+
+    const isNormal = currentMode === 'normal';
+
+    if (currentModule === 'dr') {
+      const qEl  = document.getElementById(isNormal ? 'drnQuestion' : 'drtQuestion');
+      const inp  = document.getElementById(isNormal ? 'drnInput'    : 'drtInput');
+      const fbEl = document.getElementById(isNormal ? 'drnFeedback' : 'drtFeedback');
+      qEl.textContent = n;
+      inp.value = '';
+      fbEl.textContent = ''; fbEl.className = 'feedback empty';
+      if (!skipFocus) inp.focus();
+      if (isNormal) {
+        drnStart = Date.now();
+        document.getElementById('drnTimer').textContent = '0 s';
+        drnInterval = setInterval(() => {
+          document.getElementById('drnTimer').textContent =
+            `${Math.floor((Date.now() - drnStart) / 1000)} s`;
+        }, 1000);
+      } else startDRTCountdown();
+    } else if (currentModule === 'rd') {
+      const qEl  = document.getElementById(isNormal ? 'rdnQuestion' : 'rdtQuestion');
+      const inp  = document.getElementById(isNormal ? 'rdnInput'    : 'rdtInput');
+      const fbEl = document.getElementById(isNormal ? 'rdnFeedback' : 'rdtFeedback');
+      qEl.textContent = roman;
+      inp.value = '';
+      fbEl.textContent = ''; fbEl.className = 'feedback empty';
+      if (!skipFocus) inp.focus();
+      if (isNormal) {
+        rdnStart = Date.now();
+        document.getElementById('rdnTimer').textContent = '0 s';
+        rdnInterval = setInterval(() => {
+          document.getElementById('rdnTimer').textContent =
+            `${Math.floor((Date.now() - rdnStart) / 1000)} s`;
+        }, 1000);
+      } else startRDTCountdown();
+    } else {
+      const dir = pickMixDir();
+      mixCurrentDir = dir;
+      const box   = document.getElementById(isNormal ? 'mixNQuestionBox' : 'mixTQuestionBox');
+      const label = document.getElementById(isNormal ? 'mixNLabel'       : 'mixTLabel');
+      const qEl   = document.getElementById(isNormal ? 'mixNQuestion'    : 'mixTQuestion');
+      const drInp = document.getElementById(isNormal ? 'mixNInputDR'     : 'mixTInputDR');
+      const rdInp = document.getElementById(isNormal ? 'mixNInputRD'     : 'mixTInputRD');
+      const fbEl  = document.getElementById(isNormal ? 'mixNFeedback'    : 'mixTFeedback');
+      drInp.value = ''; rdInp.value = '';
+      if (dir === 'dr') {
+        box.className = 'question-box';
+        label.textContent = 'Zamień na liczby rzymskie:';
+        qEl.textContent = currentNum;
+        drInp.style.display = ''; rdInp.style.display = 'none';
+        if (!skipFocus) drInp.focus();
+      } else {
+        box.className = 'question-box teal';
+        label.textContent = 'Zamień na liczbę dziesiątkową:';
+        qEl.textContent = roman;
+        drInp.style.display = 'none'; rdInp.style.display = '';
+        if (!skipFocus) rdInp.focus();
+      }
+      fbEl.textContent = ''; fbEl.className = 'feedback empty';
+      if (isNormal) {
+        mixNStart = Date.now();
+        document.getElementById('mixNTimer').textContent = '0 s';
+        mixNInterval = setInterval(() => {
+          document.getElementById('mixNTimer').textContent =
+            `${Math.floor((Date.now() - mixNStart) / 1000)} s`;
+        }, 1000);
+      } else startMixTCountdown();
+    }
+  }
+
+  function startDRTCountdown() {
+    drtCountdown = timedDiff; refreshDRTCountdown();
+    drtInterval = setInterval(() => { drtCountdown--; refreshDRTCountdown(); if (drtCountdown <= 0) timeUpDRT(); }, 1000);
+  }
+  function refreshDRTCountdown() {
+    document.getElementById('drtTimer').textContent = `${drtCountdown} s`;
+    const r = drtCountdown / timedDiff;
+    document.getElementById('drtTimerBox').className = 'stat-box timer-box' + (r <= .2 ? ' danger' : r <= .5 ? ' warn' : '');
+  }
+  function timeUpDRT() {
+    if (mode !== 'ask') return;
+    clearInterval(drtInterval);
+    mode = 'next'; drtTotal++;
+    document.getElementById('drtScore').textContent = `${drtCorrect} / ${drtTotal}`;
+    document.getElementById('drtFeedback').textContent = `⏰ Czas minął! ${currentNum} = ${toRoman(currentNum)}`;
+    document.getElementById('drtFeedback').className = 'feedback bad';
+    document.getElementById('drtInput').blur();
+    playWrongAnim(); syncResetBtns();
+  }
+
+  function startRDTCountdown() {
+    rdtCountdown = timedDiff; refreshRDTCountdown();
+    rdtInterval = setInterval(() => { rdtCountdown--; refreshRDTCountdown(); if (rdtCountdown <= 0) timeUpRDT(); }, 1000);
+  }
+  function refreshRDTCountdown() {
+    document.getElementById('rdtTimer').textContent = `${rdtCountdown} s`;
+    const r = rdtCountdown / timedDiff;
+    document.getElementById('rdtTimerBox').className = 'stat-box timer-box' + (r <= .2 ? ' danger' : r <= .5 ? ' warn' : '');
+  }
+  function timeUpRDT() {
+    if (mode !== 'ask') return;
+    clearInterval(rdtInterval);
+    mode = 'next'; rdtTotal++;
+    document.getElementById('rdtScore').textContent = `${rdtCorrect} / ${rdtTotal}`;
+    document.getElementById('rdtFeedback').textContent = `⏰ Czas minął! ${toRoman(currentNum)} = ${currentNum}`;
+    document.getElementById('rdtFeedback').className = 'feedback bad';
+    document.getElementById('rdtInput').blur();
+    playWrongAnim(); syncResetBtns();
+  }
+
+  function startMixTCountdown() {
+    mixTCountdown = timedDiff; refreshMixTCountdown();
+    mixTInterval = setInterval(() => { mixTCountdown--; refreshMixTCountdown(); if (mixTCountdown <= 0) timeUpMixT(); }, 1000);
+  }
+  function refreshMixTCountdown() {
+    document.getElementById('mixTTimer').textContent = `${mixTCountdown} s`;
+    const r = mixTCountdown / timedDiff;
+    document.getElementById('mixTTimerBox').className = 'stat-box timer-box' + (r <= .2 ? ' danger' : r <= .5 ? ' warn' : '');
+  }
+  function timeUpMixT() {
+    if (mode !== 'ask') return;
+    clearInterval(mixTInterval);
+    mode = 'next'; mixTTotal++;
+    document.getElementById('mixTScore').textContent = `${mixTCorrect} / ${mixTTotal}`;
+    const roman = toRoman(currentNum);
+    document.getElementById('mixTFeedback').textContent = mixCurrentDir === 'dr'
+      ? `⏰ Czas minął! ${currentNum} = ${roman}` : `⏰ Czas minął! ${roman} = ${currentNum}`;
+    document.getElementById('mixTFeedback').className = 'feedback bad';
+    if (mixCurrentDir === 'dr') document.getElementById('mixTInputDR').blur();
+    else document.getElementById('mixTInputRD').blur();
+    playWrongAnim(); syncResetBtns();
+  }
+
+  function checkAnswer() {
+    if (mode !== 'ask') return;
+    mode = 'next';
+    const roman = toRoman(currentNum);
+    const isNormal = currentMode === 'normal';
+
+    if (currentModule === 'dr') {
+      if (isNormal) clearInterval(drnInterval); else clearInterval(drtInterval);
+      const inp    = document.getElementById(isNormal ? 'drnInput'    : 'drtInput');
+      const fbEl   = document.getElementById(isNormal ? 'drnFeedback' : 'drtFeedback');
+      const scoreEl= document.getElementById(isNormal ? 'drnScore'    : 'drtScore');
+      const ans = inp.value.trim().toUpperCase();
+      const ok = ans === roman;
+      if (isNormal) { drnTotal++; if (ok) drnCorrect++; }
+      else           { drtTotal++; if (ok) drtCorrect++; }
+      scoreEl.textContent = isNormal ? `${drnCorrect} / ${drnTotal}` : `${drtCorrect} / ${drtTotal}`;
+      fbEl.textContent = ok ? `✅ Brawo! ${currentNum} = ${roman}` : `❌ Niepoprawnie. ${currentNum} = ${roman}`;
+      fbEl.className = ok ? 'feedback good' : 'feedback bad';
+      inp.blur();
+      ok ? playCorrectAnim(roman) : playWrongAnim();
+    } else if (currentModule === 'rd') {
+      if (isNormal) clearInterval(rdnInterval); else clearInterval(rdtInterval);
+      const inp    = document.getElementById(isNormal ? 'rdnInput'    : 'rdtInput');
+      const fbEl   = document.getElementById(isNormal ? 'rdnFeedback' : 'rdtFeedback');
+      const scoreEl= document.getElementById(isNormal ? 'rdnScore'    : 'rdtScore');
+      const ans = parseInt(inp.value, 10);
+      const ok = ans === currentNum;
+      if (isNormal) { rdnTotal++; if (ok) rdnCorrect++; }
+      else           { rdtTotal++; if (ok) rdtCorrect++; }
+      scoreEl.textContent = isNormal ? `${rdnCorrect} / ${rdnTotal}` : `${rdtCorrect} / ${rdtTotal}`;
+      fbEl.textContent = ok ? `✅ Brawo! ${roman} = ${currentNum}` : `❌ Niepoprawnie. ${roman} = ${currentNum}`;
+      fbEl.className = ok ? 'feedback good' : 'feedback bad';
+      inp.blur();
+      ok ? playCorrectAnim(String(currentNum)) : playWrongAnim();
+    } else {
+      if (isNormal) clearInterval(mixNInterval); else clearInterval(mixTInterval);
+      const drInpId = isNormal ? 'mixNInputDR' : 'mixTInputDR';
+      const rdInpId = isNormal ? 'mixNInputRD' : 'mixTInputRD';
+      const fbEl    = document.getElementById(isNormal ? 'mixNFeedback' : 'mixTFeedback');
+      const scoreEl = document.getElementById(isNormal ? 'mixNScore'    : 'mixTScore');
+      let ok;
+      if (mixCurrentDir === 'dr') {
+        const inp = document.getElementById(drInpId);
+        ok = inp.value.trim().toUpperCase() === roman; inp.blur();
+      } else {
+        const inp = document.getElementById(rdInpId);
+        ok = parseInt(inp.value, 10) === currentNum; inp.blur();
+      }
+      if (isNormal) { mixNTotal++; if (ok) mixNCorrect++; }
+      else           { mixTTotal++; if (ok) mixTCorrect++; }
+      scoreEl.textContent = isNormal ? `${mixNCorrect} / ${mixNTotal}` : `${mixTCorrect} / ${mixTTotal}`;
+      if (ok) {
+        fbEl.textContent = mixCurrentDir === 'dr'
+          ? `✅ Brawo! ${currentNum} = ${roman}` : `✅ Brawo! ${roman} = ${currentNum}`;
+        fbEl.className = 'feedback good';
+        playCorrectAnim(mixCurrentDir === 'dr' ? roman : String(currentNum));
+      } else {
+        fbEl.textContent = mixCurrentDir === 'dr'
+          ? `❌ Niepoprawnie. ${currentNum} = ${roman}` : `❌ Niepoprawnie. ${roman} = ${currentNum}`;
+        fbEl.className = 'feedback bad';
+        playWrongAnim();
+      }
+    }
+    syncResetBtns();
+  }
+
+  function playCorrectAnim(label) {
+    animLayer.innerHTML = '';
+    const flash = document.createElement('div');
+    flash.className = 'correct-flash';
+    animLayer.appendChild(flash);
+    const num = document.createElement('div');
+    num.className = 'anim-correct-num';
+    num.textContent = label;
+    animLayer.appendChild(num);
+    const syms = ['I','V','X','L','C','D','M','★','✶'];
+    for (let i = 0; i < 14; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.textContent = syms[i % syms.length];
+      const angle = (360 / 14) * i;
+      const dist  = 110 + Math.random() * 80;
+      const rad   = angle * Math.PI / 180;
+      p.style.setProperty('--tx', `translate(${Math.cos(rad)*dist}px,${Math.sin(rad)*dist}px)`);
+      p.style.animationDelay = `${Math.random() * .12}s`;
+      p.style.fontSize = `${1.2 + Math.random() * 1.2}rem`;
+      animLayer.appendChild(p);
+    }
+    setTimeout(() => { animLayer.innerHTML = ''; }, 1400);
+    autoAdvanceTimeout = setTimeout(newQuestion, 1900);
+  }
+
+  function playWrongAnim() {
+    const btn = getSubmitBtn();
+    btn.disabled = true;
+    animLayer.innerHTML = '';
+    const flash = document.createElement('div'); flash.className = 'wrong-flash'; animLayer.appendChild(flash);
+    const x = document.createElement('div'); x.className = 'anim-wrong-x'; x.textContent = '✕'; animLayer.appendChild(x);
+    setTimeout(() => {
+      animLayer.innerHTML = '';
+      if (currentMode === 'timed') {
+        autoAdvanceTimeout = setTimeout(newQuestion, 400);
+      } else {
+        btn.disabled = false;
+        btn.textContent = 'Dalej';
+      }
+    }, 1300);
+  }
+
+  function syncResetBtns() {
+    document.getElementById('drnReset').disabled  = drnTotal  === 0;
+    document.getElementById('drtReset').disabled  = drtTotal  === 0;
+    document.getElementById('rdnReset').disabled  = rdnTotal  === 0;
+    document.getElementById('rdtReset').disabled  = rdtTotal  === 0;
+    document.getElementById('mixNReset').disabled = mixNTotal === 0;
+    document.getElementById('mixTReset').disabled = mixTTotal === 0;
+  }
+
+  // Form submit handlers
+  document.getElementById('drnForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const v = document.getElementById('drnInput').value.trim();
+    if (mode === 'ask' && v !== '') checkAnswer();
+    else if (mode === 'next') newQuestion();
+  });
+  document.getElementById('drtForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const v = document.getElementById('drtInput').value.trim();
+    if (mode === 'ask' && v !== '') checkAnswer();
+    else if (mode === 'next') newQuestion();
+  });
+  document.getElementById('rdnForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const v = document.getElementById('rdnInput').value;
+    if (mode === 'ask' && v !== '') checkAnswer();
+    else if (mode === 'next') newQuestion();
+  });
+  document.getElementById('rdtForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const v = document.getElementById('rdtInput').value;
+    if (mode === 'ask' && v !== '') checkAnswer();
+    else if (mode === 'next') newQuestion();
+  });
+
+  // Input enable/disable listeners
+  document.getElementById('drnInput').addEventListener('input', () => {
+    if (mode === 'ask') document.getElementById('drnSubmitBtn').disabled = document.getElementById('drnInput').value.trim() === '';
+  });
+  document.getElementById('drtInput').addEventListener('input', () => {
+    if (mode === 'ask') document.getElementById('drtSubmitBtn').disabled = document.getElementById('drtInput').value.trim() === '';
+  });
+  document.getElementById('rdnInput').addEventListener('input', () => {
+    if (mode === 'ask') document.getElementById('rdnSubmitBtn').disabled = document.getElementById('rdnInput').value === '';
+  });
+  document.getElementById('rdtInput').addEventListener('input', () => {
+    if (mode === 'ask') document.getElementById('rdtSubmitBtn').disabled = document.getElementById('rdtInput').value === '';
+  });
+
+  // Reset buttons
+  document.getElementById('drnReset').addEventListener('click', () => {
+    drnCorrect=0; drnTotal=0; document.getElementById('drnScore').textContent='0 / 0';
+    document.activeElement.blur(); syncResetBtns(); newQuestion(true);
+  });
+  document.getElementById('drtReset').addEventListener('click', () => {
+    drtCorrect=0; drtTotal=0; document.getElementById('drtScore').textContent='0 / 0';
+    document.activeElement.blur(); syncResetBtns(); newQuestion(true);
+  });
+  document.getElementById('rdnReset').addEventListener('click', () => {
+    rdnCorrect=0; rdnTotal=0; document.getElementById('rdnScore').textContent='0 / 0';
+    document.activeElement.blur(); syncResetBtns(); newQuestion(true);
+  });
+  document.getElementById('rdtReset').addEventListener('click', () => {
+    rdtCorrect=0; rdtTotal=0; document.getElementById('rdtScore').textContent='0 / 0';
+    document.activeElement.blur(); syncResetBtns(); newQuestion(true);
+  });
+
+  // Mix form submit handlers
+  document.getElementById('mixNForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const v = mixCurrentDir === 'dr'
+      ? document.getElementById('mixNInputDR').value.trim()
+      : document.getElementById('mixNInputRD').value;
+    if (mode === 'ask' && v !== '') checkAnswer();
+    else if (mode === 'next') newQuestion();
+  });
+  document.getElementById('mixTForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const v = mixCurrentDir === 'dr'
+      ? document.getElementById('mixTInputDR').value.trim()
+      : document.getElementById('mixTInputRD').value;
+    if (mode === 'ask' && v !== '') checkAnswer();
+    else if (mode === 'next') newQuestion();
+  });
+
+  // Mix input enable/disable
+  document.getElementById('mixNInputDR').addEventListener('input', () => {
+    if (mode === 'ask' && mixCurrentDir === 'dr')
+      document.getElementById('mixNSubmitBtn').disabled = document.getElementById('mixNInputDR').value.trim() === '';
+  });
+  document.getElementById('mixNInputRD').addEventListener('input', () => {
+    if (mode === 'ask' && mixCurrentDir === 'rd')
+      document.getElementById('mixNSubmitBtn').disabled = document.getElementById('mixNInputRD').value === '';
+  });
+  document.getElementById('mixTInputDR').addEventListener('input', () => {
+    if (mode === 'ask' && mixCurrentDir === 'dr')
+      document.getElementById('mixTSubmitBtn').disabled = document.getElementById('mixTInputDR').value.trim() === '';
+  });
+  document.getElementById('mixTInputRD').addEventListener('input', () => {
+    if (mode === 'ask' && mixCurrentDir === 'rd')
+      document.getElementById('mixTSubmitBtn').disabled = document.getElementById('mixTInputRD').value === '';
+  });
+
+  // Mix reset buttons
+  document.getElementById('mixNReset').addEventListener('click', () => {
+    mixNCorrect=0; mixNTotal=0; document.getElementById('mixNScore').textContent='0 / 0';
+    document.activeElement.blur(); syncResetBtns(); newQuestion(true);
+  });
+  document.getElementById('mixTReset').addEventListener('click', () => {
+    mixTCorrect=0; mixTTotal=0; document.getElementById('mixTScore').textContent='0 / 0';
+    document.activeElement.blur(); syncResetBtns(); newQuestion(true);
+  });
+
+  // Change difficulty
+  document.getElementById('btnDRChangeDiff').addEventListener('click', () => { clearAll(); showDiffPanel(); });
+  document.getElementById('btnRDChangeDiff').addEventListener('click', () => { clearAll(); showDiffPanel(); });
+  document.getElementById('btnMixChangeDiff').addEventListener('click', () => { clearAll(); showDiffPanel(); });
+
+  syncResetBtns();
+  newQuestion(true);
+</script>
+</body>
+</html>
