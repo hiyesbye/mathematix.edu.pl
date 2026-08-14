@@ -36,22 +36,15 @@
   <!-- divider -->
   <line x1="30" y1="140" x2="367" y2="140" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-dasharray="8,4"/>
 
-  <!-- Mass conversion: 500 kg = 1/2 t -->
-  <text x="105" y="172" font-family="Georgia,'Times New Roman',serif"
+  <!-- Mass conversion: 3 kg = 0,003 t -->
+  <text x="198" y="185" text-anchor="middle" font-family="Georgia,'Times New Roman',serif"
         font-size="30" font-weight="bold" font-style="italic">
-    <tspan fill="white">500 </tspan><tspan fill="#FFE055">kg</tspan><tspan fill="white"> = </tspan>
+    <tspan fill="white">3 </tspan><tspan fill="#FFE055">kg</tspan><tspan fill="white"> = 0,003 </tspan><tspan fill="#FFE055">t</tspan>
   </text>
-  <text x="259" y="160" text-anchor="middle" font-family="Georgia,'Times New Roman',serif"
-        font-size="22" font-weight="bold" font-style="italic" fill="white">1</text>
-  <line x1="248" y1="172" x2="270" y2="172" stroke="white" stroke-width="2.5"/>
-  <text x="259" y="193" text-anchor="middle" font-family="Georgia,'Times New Roman',serif"
-        font-size="22" font-weight="bold" font-style="italic" fill="white">2</text>
-  <text x="278" y="172" font-family="Georgia,'Times New Roman',serif"
-        font-size="30" font-weight="bold" font-style="italic" fill="#FFE055">t</text>
 
   <!-- arrow: :1000 -->
-  <path d="M 130,207 Q 198,223 266,207"
+  <path d="M 130,203 Q 198,227 266,203"
         fill="none" stroke="white" stroke-width="2.5" marker-end="url(#am)"/>
-  <text x="198" y="229" text-anchor="middle" font-family="Georgia,'Times New Roman',serif"
+  <text x="198" y="233" text-anchor="middle" font-family="Georgia,'Times New Roman',serif"
         font-size="16" font-weight="bold" font-style="italic" fill="white">: 1000</text>
 </svg>
