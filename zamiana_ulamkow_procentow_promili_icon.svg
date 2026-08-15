@@ -1,0 +1,40 @@
+<svg viewBox="0 0 397 280" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#b5740c"/>
+      <stop offset="55%" stop-color="#e69c14"/>
+      <stop offset="100%" stop-color="#f0b84d"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="397" height="280" fill="url(#bg)"/>
+
+  <!-- Watermark -->
+  <text x="205" y="200" font-size="210" fill="rgba(255,255,255,0.07)"
+        text-anchor="middle" font-family="Georgia,serif" font-weight="bold">%</text>
+
+  <!-- Row 1: 1/2 = 50% -->
+  <text x="140" y="63" text-anchor="middle" font-family="Georgia,'Times New Roman',serif"
+        font-size="22" font-weight="bold" font-style="italic" fill="#FFE055">1</text>
+  <line x1="127" y1="75" x2="153" y2="75" stroke="#FFE055" stroke-width="2.5"/>
+  <text x="140" y="96" text-anchor="middle" font-family="Georgia,'Times New Roman',serif"
+        font-size="22" font-weight="bold" font-style="italic" fill="#FFE055">2</text>
+  <text x="153" y="75" font-family="Georgia,'Times New Roman',serif"
+        font-size="34" font-weight="bold" font-style="italic">
+    <tspan fill="white"> = </tspan><tspan fill="#FFB877">50%</tspan>
+  </text>
+
+  <!-- divider -->
+  <line x1="30" y1="130" x2="367" y2="130" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-dasharray="8,4"/>
+
+  <!-- Row 2: 3/4 = 750‰ -->
+  <text x="123" y="173" text-anchor="middle" font-family="Georgia,'Times New Roman',serif"
+        font-size="22" font-weight="bold" font-style="italic" fill="#FFE055">3</text>
+  <line x1="110" y1="185" x2="136" y2="185" stroke="#FFE055" stroke-width="2.5"/>
+  <text x="123" y="206" text-anchor="middle" font-family="Georgia,'Times New Roman',serif"
+        font-size="22" font-weight="bold" font-style="italic" fill="#FFE055">4</text>
+  <text x="136" y="185" font-family="Georgia,'Times New Roman',serif"
+        font-size="34" font-weight="bold" font-style="italic">
+    <tspan fill="white"> = </tspan><tspan fill="#D9A6F0">750&#8240;</tspan>
+  </text>
+</svg>

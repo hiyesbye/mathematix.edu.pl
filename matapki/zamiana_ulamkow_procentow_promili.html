@@ -1,0 +1,1362 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#eef1ff">
+<title>Zamiana ułamków, procentów i promili</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #eef1ff; --card: #fff; --text: #262a4a;
+  --score-bg: #e8f5e9; --score-text: #1b5e20; --score-bdr: #a5d6a7;
+  --timer-bg: #f0e8ff; --timer-text: #4527a0; --timer-bdr: #c8aaf5;
+  --mod-dark: #00796b; --mod-mid: #4db6ac; --mod-light: #e6f5f3;
+  --mod-bg: #daf0ec; --mod-shadow: rgba(0,121,107,.25); --mod-border: #b3ded8;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: var(--bg);
+  font-family: "Segoe UI", Verdana, Arial, sans-serif; color: var(--text); }
+body { display: flex; align-items: center; justify-content: center;
+  min-height: 100vh; padding: 12px; }
+.card {
+  background: var(--card); width: 100%; max-width: 480px;
+  border-radius: 24px; padding: 22px 20px 26px;
+  box-shadow: 0 8px 36px rgba(50,60,160,.14), 0 2px 8px rgba(50,60,160,.08);
+}
+.app-title {
+  font-family: 'Nunito', "Segoe UI", sans-serif;
+  font-size: 1.28rem; font-weight: 900; letter-spacing: .5px;
+  text-align: center; margin: 0 0 14px; padding: 13px 16px;
+  background: linear-gradient(135deg, #b5740c 0%, #e69c14 55%, #f0b84d 100%);
+  border-radius: 16px; color: #fff;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 22px rgba(54,42,138,.4), 0 1px 4px rgba(0,0,0,0.15),
+              inset 0 2px 2px rgba(255,255,255,.5),
+              inset 0 -7px 10px rgba(0,0,0,.22);
+  position: relative;
+}
+.app-title::after {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(115deg,
+    transparent 30%,
+    rgba(255,255,255,.55) 46%,
+    rgba(255,255,255,.15) 52%,
+    transparent 62%);
+  background-size: 260% 260%;
+  background-position: -80% -80%;
+  animation: titleShine 4.5s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes titleShine {
+  0%   { background-position: -80% -80%; }
+  45%  { background-position: 180% 180%; }
+  100% { background-position: 180% 180%; }
+}
+.mode-row {
+  display: flex; align-items: center; gap: 5px;
+  background: #eef0fb; border-radius: 15px;
+  padding: 5px 6px; margin-bottom: 8px;
+}
+.mode-title {
+  background: #c6ceed; color: #3d4470;
+  font-size: .68rem; font-weight: 700;
+  border-radius: 9px; padding: 6px 8px;
+  white-space: nowrap; flex-shrink: 0;
+}
+.tab {
+  border: none; background: transparent; border-radius: 11px;
+  padding: 8px 4px; font-size: .82rem; font-weight: 700; color: #6672a8;
+  cursor: pointer; transition: background .18s, color .18s, box-shadow .18s;
+  font-family: inherit;
+}
+.tab:not(.active):hover { background: #dfe2f5; color: var(--text); }
+.module-buttons { display: flex; gap: 3px; flex: 1; min-width: 0; }
+.module-buttons .tab {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  flex: 1; min-width: 0; padding: 6px 0 7px; font-size: .58rem;
+  letter-spacing: -0.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.module-buttons .tab .tab-icon { font-size: 1.05em; line-height: 1; font-weight: 900; }
+.module-buttons .tab .tab-label { line-height: 1.1; }
+.tab-frac-icon { display: inline-flex; flex-direction: column; align-items: center; }
+.tab-frac-icon .tfn, .tab-frac-icon .tfd { display: block; padding: 0 .3em; }
+.tab-frac-icon .tfn { border-bottom: .12em solid currentColor; padding-bottom: .03em; }
+.tab-frac-icon .tfd { padding-top: .03em; }
+.tab.active-frac { background: linear-gradient(135deg,#00796b,#4db6ac); color:#fff; box-shadow:0 3px 10px rgba(0,121,107,.35); }
+.tab.active-dec  { background: linear-gradient(135deg,#1565c0,#42a5f5); color:#fff; box-shadow:0 3px 10px rgba(21,101,192,.35); }
+.tab.active-pct  { background: linear-gradient(135deg,#d84315,#ff8a65); color:#fff; box-shadow:0 3px 10px rgba(216,67,21,.35); }
+.tab.active-perm { background: linear-gradient(135deg,#6a1b9a,#ab47bc); color:#fff; box-shadow:0 3px 10px rgba(106,27,154,.35); }
+
+.section-box {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 5px;
+  background: var(--mod-bg); border-radius: 14px; padding: 5px 6px; margin-bottom: 8px;
+}
+.section-label {
+  flex: 0 0 auto;
+  background: linear-gradient(135deg, var(--mod-dark), var(--mod-mid));
+  color: #fff; font-size: .68rem; font-weight: 700; padding: 5px 9px; border-radius: 8px;
+  white-space: nowrap; cursor: default; user-select: none;
+  box-shadow: 0 2px 6px var(--mod-shadow);
+}
+.tgt-btn, .lv-btn {
+  flex: 1; border: 2px solid var(--mod-border); border-radius: 10px;
+  padding: 7px 4px; font-size: .76rem; font-weight: 700;
+  background: transparent; color: var(--mod-mid);
+  cursor: pointer; font-family: inherit; transition: all .15s;
+}
+.tgt-btn:hover:not(.active), .lv-btn:hover:not(.active) { background: var(--mod-light); }
+
+.stats { display: flex; gap: 10px; margin-bottom: 14px; }
+.stat-box {
+  flex: 1; border-radius: 14px; padding: 10px 6px;
+  font-weight: 700; text-align: center;
+  background: var(--score-bg); color: var(--score-text); border: 2px solid var(--score-bdr);
+}
+.timer-box { background: var(--timer-bg); color: var(--timer-text); border: 2px solid var(--timer-bdr); }
+.stat-label { font-size: .7rem; text-transform: uppercase; letter-spacing: .8px; opacity: .7; margin-bottom: 2px; }
+.stat-value { font-size: 1.35rem; }
+
+.question-box {
+  background: linear-gradient(145deg, var(--mod-dark), var(--mod-mid)); color: #fff;
+  border-radius: 18px; padding: 18px 12px 20px; text-align: center; margin-bottom: 10px;
+  position: relative; overflow: hidden; min-height: 100px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.anim-layer {
+  position: absolute; inset: 0; z-index: 10;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none;
+}
+.q-label { font-size: .76rem; font-weight: 600; opacity: .85; margin-bottom: 12px; }
+.eq-line {
+  display: flex; align-items: center; justify-content: center;
+  gap: 8px; flex-wrap: nowrap; position: relative; z-index: 1;
+  font-family: "Bahnschrift","DIN Alternate","Trebuchet MS",sans-serif;
+  font-size: clamp(1rem, 5vw, 1.7rem); font-weight: 700; color: #fff;
+  width: 100%;
+}
+#eq-left { white-space: nowrap; flex-shrink: 0; display: inline-flex; align-items: center; }
+
+.mixed-whole { margin-right: .06em; }
+.frac-box { display: inline-flex; flex-direction: column; align-items: center;
+  font-size: .55em; line-height: 1.15; vertical-align: middle; margin: 0 .08em; }
+.frac-box .num, .frac-box .den { display: block; padding: 0 .3em; }
+.frac-box .num { border-bottom: .14em solid currentColor; padding-bottom: .08em; }
+.frac-box .den { padding-top: .08em; }
+
+.simple-answer, .frac-answer { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.eq-inp {
+  width: 92px; height: 46px; flex-shrink: 0;
+  background: rgba(255,255,255,.93); color: #0d2137;
+  border: 2.5px solid rgba(255,255,255,.45); border-radius: 10px;
+  font-family: "Bahnschrift","DIN Alternate","Trebuchet MS",sans-serif;
+  font-size: inherit; font-weight: 700; text-align: center;
+  outline: none; transition: border-color .15s, box-shadow .15s;
+}
+.eq-inp:focus { border-color: #fff; box-shadow: 0 0 0 3px rgba(255,255,255,.35); }
+.eq-inp:disabled { opacity: .65; }
+.ans-suffix { font-weight: 700; }
+.frac-io { display: inline-flex; flex-direction: column; align-items: center; gap: 3px; }
+.frac-inp {
+  width: 58px; height: 40px;
+  background: rgba(255,255,255,.93); color: #0d2137;
+  border: 2.5px solid rgba(255,255,255,.45); border-radius: 8px;
+  font-family: inherit; font-size: .82em; font-weight: 700; text-align: center;
+  outline: none; transition: border-color .15s, box-shadow .15s;
+}
+.frac-inp:focus { border-color: #fff; box-shadow: 0 0 0 3px rgba(255,255,255,.35); }
+.frac-inp:disabled { opacity: .65; }
+.frac-inp::placeholder { font-size: .5rem; text-transform: uppercase; letter-spacing: .2px; color: #5a6a7a; }
+.whole-inp { width: 46px; }
+.frac-divider { width: 38px; height: 2px; background: rgba(255,255,255,.75); }
+
+.step-info {
+  font-size: .78rem; font-weight: 700; color: var(--mod-dark);
+  text-align: center; margin: -2px 0 10px; line-height: 1.4;
+}
+
+.btn {
+  border: none; border-radius: 14px; padding: 12px 22px;
+  font-size: .95rem; font-weight: 700; cursor: pointer;
+  font-family: inherit; transition: opacity .18s, transform .1s;
+}
+.btn:active { transform: scale(.97); }
+.btn-primary { background: linear-gradient(135deg, var(--mod-dark), var(--mod-mid)); color: #fff; }
+.btn-primary:hover:not(:disabled) { opacity: .88; }
+.btn-primary:disabled { opacity: .5; cursor: default; }
+.btn-next { background: var(--mod-light); color: var(--mod-dark); border: 2px solid var(--mod-border); }
+.btn-next:hover { background: var(--mod-border); }
+.btn-row { display: flex; gap: 8px; }
+.feedback {
+  border-radius: 14px; padding: 11px 14px; font-weight: 700;
+  text-align: center; margin-bottom: 12px; font-size: .93rem; display: none;
+  line-height: 1.4;
+}
+.feedback.good { display: block; background: #e8f5e9; color: #1b5e20; border: 2px solid #a5d6a7; }
+.feedback.bad  { display: block; background: #ffebee; color: #b71c1c; border: 2px solid #ef9a9a; }
+.feedback .frac-box { color: inherit; }
+.feedback .frac-box .num { border-bottom-color: currentColor; }
+
+.correct-flash {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at center, rgba(40,220,100,.45) 0%, rgba(40,220,100,0) 70%);
+  animation: flashFade 1.3s ease-out forwards;
+}
+.wrong-flash {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at center, rgba(220,0,0,.4) 0%, rgba(220,0,0,0) 70%);
+  animation: flashFade 1.2s ease-out forwards;
+}
+@keyframes flashFade { 0%{opacity:0;} 15%{opacity:1;} 100%{opacity:0;} }
+.anim-correct-num {
+  font-size: 5rem; font-weight: 900; color: #fff; line-height: 1;
+  text-shadow: 0 0 10px #7fffb0, 0 0 25px #50ff80, 0 0 55px #20e860;
+  animation: correctPop 1.3s cubic-bezier(.22,1,.36,1) forwards;
+  position: relative; z-index: 2;
+}
+@keyframes correctPop {
+  0%   { opacity:0; transform:scale(.2) rotate(-8deg); }
+  28%  { opacity:1; transform:scale(1.18) rotate(2deg); }
+  60%  { transform:scale(.95) rotate(0); }
+  100% { opacity:0; transform:scale(1.1); }
+}
+.anim-big-x {
+  font-size: 5rem; font-weight: 900; color: #ff1a1a; line-height: 1;
+  position: absolute; z-index: 3;
+  animation: wrongGlow 1.2s ease-out forwards;
+}
+@keyframes wrongGlow {
+  0%   { opacity:0; transform:scale(.4); }
+  18%  { opacity:1; transform:scale(1.12); }
+  60%  { transform:scale(1.05); }
+  100% { opacity:0; transform:scale(1.2); }
+}
+.particle {
+  position: absolute; z-index: 3; font-size: 1.6rem; font-weight: 900; color: #fff;
+  pointer-events: none; animation: particleFly 1s ease-out forwards;
+}
+@keyframes particleFly {
+  0%   { opacity:1; transform:translate(0,0) scale(1.1); }
+  100% { opacity:0; transform:var(--tx) scale(.2); }
+}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="app-title">Zamiana ułamków, procentów i promili</div>
+
+  <div class="mode-row">
+    <span class="mode-title">Zamień:</span>
+    <div class="module-buttons" id="sourceRow">
+      <button class="tab active-frac" id="src-frac" onclick="setSource('frac')"><span class="tab-icon tab-frac-icon"><span class="tfn">1</span><span class="tfd">2</span></span><span class="tab-label">Ułamek zwykły</span></button>
+      <button class="tab" id="src-dec" onclick="setSource('dec')"><span class="tab-icon">0,5</span><span class="tab-label">Dziesiętny</span></button>
+      <button class="tab" id="src-pct" onclick="setSource('pct')"><span class="tab-icon">%</span><span class="tab-label">Procent</span></button>
+      <button class="tab" id="src-perm" onclick="setSource('perm')"><span class="tab-icon">‰</span><span class="tab-label">Promil</span></button>
+    </div>
+  </div>
+
+  <div class="section-box">
+    <span class="section-label">Na:</span>
+    <div id="targetRow" style="display:flex;gap:5px;flex:1;"></div>
+  </div>
+
+  <div class="section-box">
+    <span class="section-label">Poziom:</span>
+    <button class="lv-btn active" id="lv1-btn" onclick="setLevel(1)">Lv 1</button>
+    <button class="lv-btn" id="lv2-btn" onclick="setLevel(2)">Lv 2</button>
+    <button class="lv-btn" id="lv3-btn" onclick="setLevel(3)">Lv 3</button>
+    <button class="lv-btn" id="lv4-btn" onclick="setLevel(4)" style="display:none">Lv 4</button>
+  </div>
+
+  <div class="stats">
+    <div class="stat-box">
+      <div class="stat-label">Wynik</div>
+      <div class="stat-value" id="score">0 / 0</div>
+    </div>
+    <div class="stat-box timer-box">
+      <div class="stat-label">Czas</div>
+      <div class="stat-value" id="timer">0 s</div>
+    </div>
+  </div>
+
+  <div class="question-box" id="qbox">
+    <div class="anim-layer" id="anim"></div>
+    <div class="q-label" id="qLabel">Zamień na ułamek dziesiętny</div>
+    <div class="eq-line">
+      <span id="eq-left"></span>
+      <span>=</span>
+      <span id="simpleAnswer" class="simple-answer">
+        <input class="eq-inp" id="ans-inp" type="text" inputmode="decimal"
+               autocomplete="off" spellcheck="false" placeholder="?">
+        <span class="ans-suffix" id="ansSuffix"></span>
+      </span>
+      <span id="fracAnswer" class="frac-answer" style="display:none">
+        <input class="frac-inp whole-inp" id="ans-whole" type="text" inputmode="numeric"
+               autocomplete="off" spellcheck="false" placeholder="całość">
+        <span class="frac-io">
+          <input class="frac-inp" id="ans-num" type="text" inputmode="numeric"
+                 autocomplete="off" spellcheck="false" placeholder="licznik">
+          <span class="frac-divider"></span>
+          <input class="frac-inp" id="ans-den" type="text" inputmode="numeric"
+                 autocomplete="off" spellcheck="false" placeholder="mianownik">
+        </span>
+      </span>
+      <span id="expandAnswer" class="frac-answer" style="display:none">
+        <span class="mixed-whole" id="exp-whole-echo"></span>
+        <span class="frac-io">
+          <input class="frac-inp" id="exp-num" type="text" inputmode="numeric"
+                 autocomplete="off" spellcheck="false" placeholder="licznik">
+          <span class="frac-divider"></span>
+          <input class="frac-inp" id="exp-den" type="text" inputmode="numeric"
+                 autocomplete="off" spellcheck="false" placeholder="mianownik">
+        </span>
+      </span>
+    </div>
+  </div>
+
+  <div class="step-info" id="stepInfo" style="display:none"></div>
+
+  <div class="btn-row" style="margin-bottom:12px">
+    <button class="btn btn-primary" style="flex:1" id="check-btn" onclick="checkAnswer()">Sprawdź</button>
+    <button class="btn btn-next" id="guess-btn" style="display:none;flex:0 0 auto" onclick="skipToFinalStep()">Podaj wynik</button>
+  </div>
+
+  <div class="feedback" id="feedback"></div>
+
+  <div class="btn-row">
+    <button class="btn btn-next" id="next-btn" style="display:none;flex:1" onclick="nextQuestion()">Następne →</button>
+  </div>
+</div>
+
+<script>
+const randInt = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
+
+const ALL_TYPES = ['frac', 'dec', 'pct', 'perm'];
+const LABELS = { frac: 'Uł. zwykły', dec: 'Uł. dziesiętny', pct: 'Procent', perm: 'Promil' };
+const LABELS_FULL = { frac: 'ułamek zwykły', dec: 'ułamek dziesiętny', pct: 'procent', perm: 'promil' };
+
+const PALETTES = {
+  frac: [ {dark:'#00796b',mid:'#4db6ac'}, {dark:'#00695c',mid:'#26a69a'}, {dark:'#004d40',mid:'#00897b'}, {dark:'#00251c',mid:'#00695c'} ],
+  dec:  [ {dark:'#1565c0',mid:'#42a5f5'}, {dark:'#0d47a1',mid:'#1e88e5'}, {dark:'#0a3880',mid:'#1565c0'} ],
+  pct:  [ {dark:'#d84315',mid:'#ff8a65'}, {dark:'#bf360c',mid:'#ff7043'}, {dark:'#8d2c0a',mid:'#e64a19'} ],
+  perm: [ {dark:'#6a1b9a',mid:'#ab47bc'}, {dark:'#5c1487',mid:'#8e24aa'}, {dark:'#4a0e70',mid:'#7b1fa2'} ]
+};
+
+var curSource = 'frac', curTarget = 'dec', curLevel = 1;
+var cor = 0, tot = 0, locked = false, curQ = null;
+var timerIv = null, t0 = 0;
+var curStep = 1, stepData = null;
+var lastQKey = null;
+
+function hexToRgb(hex) {
+  var n = parseInt(hex.replace('#',''), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+function mixWithWhite(hex, amount) {
+  var rgb = hexToRgb(hex);
+  var r = Math.round(rgb[0] + (255 - rgb[0]) * amount);
+  var g = Math.round(rgb[1] + (255 - rgb[1]) * amount);
+  var b = Math.round(rgb[2] + (255 - rgb[2]) * amount);
+  return 'rgb(' + r + ',' + g + ',' + b + ')';
+}
+function hexToRgba(hex, alpha) {
+  var rgb = hexToRgb(hex);
+  return 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',' + alpha + ')';
+}
+
+function gcd(a, b) { a = Math.abs(a); b = Math.abs(b); while (b) { var t = b; b = a % b; a = t; } return a || 1; }
+
+function stripTrailingZeros(s) {
+  while (s.length > 1 && s.charAt(s.length - 1) === '0') s = s.slice(0, -1);
+  return s;
+}
+
+function genFracThousandths(level) {
+  if (level === 1) {
+    return randInt(1, 9) * 100;
+  } else if (level === 2) {
+    var d;
+    do { d = randInt(10, 99); } while (d % 10 === 0);
+    return d * 10;
+  } else {
+    var d2;
+    do { d2 = randInt(1, 999); } while (d2 % 10 === 0);
+    return d2;
+  }
+}
+
+function genCanonical(level, mixedScale) {
+  var wholeMax = level === 1 ? 1 : level === 2 ? 2 : 3;
+  var wholeProbBase = level === 1 ? 0.35 : level === 2 ? 0.45 : 0.5;
+  var wholeProb = wholeProbBase * (mixedScale == null ? 1 : mixedScale);
+  var whole = Math.random() < wholeProb ? randInt(1, wholeMax) : 0;
+  var fracThousandths = genFracThousandths(level);
+  var g = gcd(fracThousandths, 1000);
+  var num = fracThousandths / g, den = 1000 / g;
+  var total = whole * 1000 + fracThousandths;
+
+  var decStr = (whole > 0 ? whole : '0') + ',' + stripTrailingZeros(String(fracThousandths).padStart(3, '0'));
+  var tensDigit = total % 10;
+  var wholePercent = Math.floor(total / 10);
+  var percentStr = tensDigit === 0 ? String(wholePercent) : (wholePercent + ',' + tensDigit);
+  var promilStr = String(total);
+
+  return {
+    whole: whole, num: num, den: den,
+    decStr: decStr, decVal: total / 1000,
+    percentStr: percentStr, percentVal: total / 10,
+    promilStr: promilStr, promilVal: total
+  };
+}
+
+// ── Specjalna mechanika poziomów dla pary "Ułamek zwykły → Dziesiętny" ──
+const FRAC_DEC_LV1_POWS = [10, 100, 1000, 10000];
+const FRAC_DEC_LV2_DENS = [2, 5, 4, 20, 25, 8, 125];
+const FRAC_DEC_LV3_DENS = [40, 400, 250, 500];
+const FRAC_DEC_LV4_NICE_DENS = [2, 4, 5, 20, 25, 50];
+
+function computeDecimalPrecision(den) {
+  var d = den, p2 = 0, p5 = 0;
+  while (d % 2 === 0) { d /= 2; p2++; }
+  while (d % 5 === 0) { d /= 5; p5++; }
+  return Math.max(p2, p5, 1);
+}
+
+function fracToDecStrings(whole, num, den) {
+  var precision = computeDecimalPrecision(den);
+  var base = Math.pow(10, precision);
+  var units = num * (base / den);
+  var decStr = (whole > 0 ? whole : '0') + ',' + stripTrailingZeros(String(units).padStart(precision, '0'));
+  return { decStr: decStr, decVal: (whole * base + units) / base };
+}
+
+function pickCoprimeNumerator(den, maxNum) {
+  var upper = maxNum != null ? Math.min(maxNum, den - 1) : den - 1;
+  var num;
+  do { num = randInt(1, upper); } while (gcd(num, den) !== 1);
+  return num;
+}
+
+function genFracToDecLevel1() {
+  var den = FRAC_DEC_LV1_POWS[randInt(0, FRAC_DEC_LV1_POWS.length - 1)];
+  var num = pickCoprimeNumerator(den);
+  var whole = Math.random() < 0.3 ? 1 : 0;
+  var strs = fracToDecStrings(whole, num, den);
+  return { whole: whole, num: num, den: den, decStr: strs.decStr, decVal: strs.decVal };
+}
+
+function genFracToDecLevel2() {
+  var den = FRAC_DEC_LV2_DENS[randInt(0, FRAC_DEC_LV2_DENS.length - 1)];
+  var num = pickCoprimeNumerator(den);
+  var whole = Math.random() < 0.45 ? randInt(1, 2) : 0;
+  var strs = fracToDecStrings(whole, num, den);
+  return { whole: whole, num: num, den: den, decStr: strs.decStr, decVal: strs.decVal };
+}
+
+function genFracToDecLevel3() {
+  var den, num;
+  if (Math.random() < 0.7) {
+    den = FRAC_DEC_LV3_DENS[randInt(0, FRAC_DEC_LV3_DENS.length - 1)];
+    num = pickCoprimeNumerator(den, 11);
+  } else {
+    den = FRAC_DEC_LV2_DENS[randInt(0, FRAC_DEC_LV2_DENS.length - 1)];
+    num = pickCoprimeNumerator(den);
+  }
+  var whole = Math.random() < 0.5 ? randInt(1, 3) : 0;
+  var strs = fracToDecStrings(whole, num, den);
+  return { whole: whole, num: num, den: den, decStr: strs.decStr, decVal: strs.decVal };
+}
+
+function isPowerOfTen(n) {
+  if (n < 10) return false;
+  while (n % 10 === 0) n /= 10;
+  return n === 1;
+}
+
+function genFracToDecLevel4() {
+  var den0 = FRAC_DEC_LV4_NICE_DENS[randInt(0, FRAC_DEC_LV4_NICE_DENS.length - 1)];
+  var num0 = pickCoprimeNumerator(den0);
+  var whole = Math.random() < 0.25 ? randInt(1, 2) : 0;
+  var k, rawDen;
+  do {
+    k = randInt(2, 10);
+    rawDen = den0 * k;
+  } while (isPowerOfTen(rawDen));
+  var rawNum = num0 * k;
+  var strs = fracToDecStrings(whole, num0, den0);
+  return { whole: whole, num: num0, den: den0, rawNum: rawNum, rawDen: rawDen, decStr: strs.decStr, decVal: strs.decVal };
+}
+
+// ── Specjalna mechanika poziomów dla pary "Ułamek zwykły → Procent" ──
+const FRAC_PCT_LV1_DENS = [10, 100];
+const FRAC_PCT_LV2_DENS = [2, 5, 4, 20, 25, 50];
+const FRAC_PCT_LV3_DENS = [8, 125, 250, 500, 1000];
+
+// ── Specjalna mechanika poziomów dla pary "Ułamek zwykły → Promil" ──
+const FRAC_PERM_LV1_DENS = [10, 100, 1000];
+const FRAC_PERM_LV2_DENS = [2, 5, 4, 20, 25, 50];
+
+// Wszystkie mianowniki powyżej dzielą 1000, więc można użyć tego samego
+// podejścia "tysięcznych" co w genCanonical (bez potrzeby generalizacji precyzji).
+function valueStringsFromThousandths(whole, fracThousandths) {
+  var total = whole * 1000 + fracThousandths;
+  var decStr = (whole > 0 ? whole : '0') + ',' + stripTrailingZeros(String(fracThousandths).padStart(3, '0'));
+  var tensDigit = total % 10;
+  var wholePercent = Math.floor(total / 10);
+  var percentStr = tensDigit === 0 ? String(wholePercent) : (wholePercent + ',' + tensDigit);
+  var promilStr = String(total);
+  return {
+    decStr: decStr, decVal: total / 1000,
+    percentStr: percentStr, percentVal: total / 10,
+    promilStr: promilStr, promilVal: total
+  };
+}
+
+function genFracToPctLevel1() {
+  var den = FRAC_PCT_LV1_DENS[randInt(0, FRAC_PCT_LV1_DENS.length - 1)];
+  var num = pickCoprimeNumerator(den);
+  var whole = Math.random() < 0.15 ? 1 : 0;
+  var strs = valueStringsFromThousandths(whole, num * (1000 / den));
+  return { whole: whole, num: num, den: den, percentStr: strs.percentStr, percentVal: strs.percentVal };
+}
+
+function genFracToPctLevel2() {
+  var den = FRAC_PCT_LV2_DENS[randInt(0, FRAC_PCT_LV2_DENS.length - 1)];
+  var num = pickCoprimeNumerator(den);
+  var whole = Math.random() < 0.2 ? randInt(1, 2) : 0;
+  var strs = valueStringsFromThousandths(whole, num * (1000 / den));
+  return { whole: whole, num: num, den: den, percentStr: strs.percentStr, percentVal: strs.percentVal };
+}
+
+function genFracToPctLevel3() {
+  var den, num;
+  if (Math.random() < 0.7) {
+    den = FRAC_PCT_LV3_DENS[randInt(0, FRAC_PCT_LV3_DENS.length - 1)];
+  } else {
+    den = FRAC_PCT_LV2_DENS[randInt(0, FRAC_PCT_LV2_DENS.length - 1)];
+  }
+  num = pickCoprimeNumerator(den);
+  var whole = Math.random() < 0.3 ? randInt(1, 3) : 0;
+  var strs = valueStringsFromThousandths(whole, num * (1000 / den));
+  return { whole: whole, num: num, den: den, percentStr: strs.percentStr, percentVal: strs.percentVal };
+}
+
+function genFracToPermLevel1() {
+  var den = FRAC_PERM_LV1_DENS[randInt(0, FRAC_PERM_LV1_DENS.length - 1)];
+  var num = pickCoprimeNumerator(den);
+  var whole = Math.random() < 0.3 ? 1 : 0;
+  var strs = valueStringsFromThousandths(whole, num * (1000 / den));
+  return { whole: whole, num: num, den: den, promilStr: strs.promilStr, promilVal: strs.promilVal };
+}
+
+function genFracToPermLevel2() {
+  var den = FRAC_PERM_LV2_DENS[randInt(0, FRAC_PERM_LV2_DENS.length - 1)];
+  var num = pickCoprimeNumerator(den);
+  var whole = Math.random() < 0.45 ? randInt(1, 2) : 0;
+  var strs = valueStringsFromThousandths(whole, num * (1000 / den));
+  return { whole: whole, num: num, den: den, promilStr: strs.promilStr, promilVal: strs.promilVal };
+}
+
+// ── Specjalna mechanika poziomów dla pary "Ułamek dziesiętny → Ułamek zwykły" ──
+function genDecToFracLevel1() {
+  // do 4 miejsc po przecinku; ostatnia cyfra ∈ {1,3,7,9} ⇒ licznik zawsze względnie pierwszy z 10^digits (nieskracalny)
+  var digits = randInt(1, 4);
+  var irreducibleLastDigits = [1, 3, 7, 9];
+  var leadingRange = Math.pow(10, digits - 1);
+  var num = randInt(0, leadingRange - 1) * 10 + irreducibleLastDigits[randInt(0, irreducibleLastDigits.length - 1)];
+  var den = Math.pow(10, digits);
+  var whole = Math.random() < 0.3 ? randInt(1, 2) : 0;
+  var decStr = (whole > 0 ? whole : '0') + ',' + stripTrailingZeros(String(num).padStart(digits, '0'));
+  return { whole: whole, num: num, den: den, decStr: decStr };
+}
+
+function genDecToFracLevel2() {
+  // do 3 miejsc po przecinku; ostatnia cyfra ∉ {1,3,7,9} ⇒ licznik zawsze da się skrócić z 10^digits
+  var digits = randInt(1, 3);
+  // bez 0 na ostatniej pozycji — inaczej stripTrailingZeros skróciłby wyświetlaną liczbę miejsc po przecinku
+  // i po skróceniu decStr mógłby przypadkiem wyjść już nieskracalny (łamiąc gwarancję "zawsze da się skrócić")
+  var reducibleLastDigits = [2, 4, 5, 6, 8];
+  var leadingRange = Math.pow(10, digits - 1);
+  var rawNum;
+  do {
+    rawNum = randInt(0, leadingRange - 1) * 10 + reducibleLastDigits[randInt(0, reducibleLastDigits.length - 1)];
+  } while (rawNum === 0);
+  var den0 = Math.pow(10, digits);
+  var whole = Math.random() < 0.35 ? randInt(1, 2) : 0;
+  var decStr = (whole > 0 ? whole : '0') + ',' + stripTrailingZeros(String(rawNum).padStart(digits, '0'));
+  var g = gcd(rawNum, den0);
+  return { whole: whole, num: rawNum / g, den: den0 / g, decStr: decStr };
+}
+
+// ── Specjalna mechanika poziomów dla pary "Ułamek dziesiętny → Procent" ──
+function computeDecAndPercentStrings(whole, numerator, digits) {
+  var base = Math.pow(10, digits);
+  var total = whole * base + numerator;
+  var decStr = (whole > 0 ? whole : '0') + ',' + stripTrailingZeros(String(numerator).padStart(digits, '0'));
+  var decVal = total / base;
+
+  var percentStr, percentVal;
+  if (digits <= 2) {
+    var mult = Math.pow(10, 2 - digits);
+    var totalPercentUnits = total * mult;
+    percentStr = String(totalPercentUnits);
+    percentVal = totalPercentUnits;
+  } else {
+    var percentDigits = digits - 2;
+    var pBase = Math.pow(10, percentDigits);
+    var pWhole = Math.floor(total / pBase);
+    var pFrac = total % pBase;
+    percentStr = pFrac === 0 ? String(pWhole) : (pWhole + ',' + stripTrailingZeros(String(pFrac).padStart(percentDigits, '0')));
+    percentVal = total / pBase;
+  }
+  return { decStr: decStr, decVal: decVal, percentStr: percentStr, percentVal: percentVal };
+}
+
+function natToDecPctFields(whole) {
+  return { whole: whole, decStr: String(whole), decVal: whole, percentStr: String(whole * 100), percentVal: whole * 100 };
+}
+
+function genDecToPctLevel1() {
+  // z przedziału [0;1], do dwóch miejsc po przecinku
+  var digits = randInt(1, 2);
+  var base = Math.pow(10, digits);
+  var numerator = randInt(1, base - 1);
+  var strs = computeDecAndPercentStrings(0, numerator, digits);
+  return { whole: 0, decStr: strs.decStr, decVal: strs.decVal, percentStr: strs.percentStr, percentVal: strs.percentVal };
+}
+
+function genDecToPctLevel2() {
+  // z przedziału [0;20]: (1;20] znacznie częściej niż [0;1]; czasem pełna liczba naturalna
+  var digits = randInt(1, 2);
+  var base = Math.pow(10, digits);
+  if (Math.random() < 0.15) {
+    if (Math.random() < 0.2) return natToDecPctFields(Math.random() < 0.5 ? 0 : 1);
+    var strsSmall = computeDecAndPercentStrings(0, randInt(1, base - 1), digits);
+    return { whole: 0, decStr: strsSmall.decStr, decVal: strsSmall.decVal, percentStr: strsSmall.percentStr, percentVal: strsSmall.percentVal };
+  }
+  if (Math.random() < 0.25) return natToDecPctFields(randInt(2, 20));
+  var whole = randInt(1, 19);
+  var strs = computeDecAndPercentStrings(whole, randInt(1, base - 1), digits);
+  return { whole: whole, decStr: strs.decStr, decVal: strs.decVal, percentStr: strs.percentStr, percentVal: strs.percentVal };
+}
+
+function genDecToPctLevel3() {
+  // z przedziału [0;10): 3-4 miejsca po przecinku wyraźnie częściej niż 1-2; bardzo rzadko liczba naturalna
+  if (Math.random() < 0.05) return natToDecPctFields(randInt(0, 9));
+  var digitsPool = [1, 2, 3, 3, 3, 4, 4, 4];
+  var digits = digitsPool[randInt(0, digitsPool.length - 1)];
+  var base = Math.pow(10, digits);
+  var whole = randInt(0, 9);
+  var strs = computeDecAndPercentStrings(whole, randInt(1, base - 1), digits);
+  return { whole: whole, decStr: strs.decStr, decVal: strs.decVal, percentStr: strs.percentStr, percentVal: strs.percentVal };
+}
+
+// ── Specjalna mechanika poziomów dla pary "Ułamek dziesiętny → Promil" ──
+function computeDecAndPromilStrings(whole, numerator, digits) {
+  var base = Math.pow(10, digits);
+  var total = whole * base + numerator;
+  var decStr = (whole > 0 ? whole : '0') + ',' + stripTrailingZeros(String(numerator).padStart(digits, '0'));
+  var decVal = total / base;
+
+  var promilStr, promilVal;
+  if (digits <= 3) {
+    var mult = Math.pow(10, 3 - digits);
+    var totalPromilUnits = total * mult;
+    promilStr = String(totalPromilUnits);
+    promilVal = totalPromilUnits;
+  } else {
+    var promilDigits = digits - 3;
+    var pBase = Math.pow(10, promilDigits);
+    var pWhole = Math.floor(total / pBase);
+    var pFrac = total % pBase;
+    promilStr = pFrac === 0 ? String(pWhole) : (pWhole + ',' + stripTrailingZeros(String(pFrac).padStart(promilDigits, '0')));
+    promilVal = total / pBase;
+  }
+  return { decStr: decStr, decVal: decVal, promilStr: promilStr, promilVal: promilVal };
+}
+
+function natToDecPermFields(whole) {
+  return { whole: whole, decStr: String(whole), decVal: whole, promilStr: String(whole * 1000), promilVal: whole * 1000 };
+}
+
+function genDecToPermLevel1() {
+  // z przedziału [0;1], do trzech miejsc po przecinku
+  var digits = randInt(1, 3);
+  var base = Math.pow(10, digits);
+  var numerator = randInt(1, base - 1);
+  var strs = computeDecAndPromilStrings(0, numerator, digits);
+  return { whole: 0, decStr: strs.decStr, decVal: strs.decVal, promilStr: strs.promilStr, promilVal: strs.promilVal };
+}
+
+function genDecToPermLevel2() {
+  // z przedziału [0;10]: (1;10] znacznie częściej niż [0;1]; czasem pełna liczba naturalna
+  var digits = randInt(1, 3);
+  var base = Math.pow(10, digits);
+  if (Math.random() < 0.15) {
+    if (Math.random() < 0.2) return natToDecPermFields(Math.random() < 0.5 ? 0 : 1);
+    var strsSmall = computeDecAndPromilStrings(0, randInt(1, base - 1), digits);
+    return { whole: 0, decStr: strsSmall.decStr, decVal: strsSmall.decVal, promilStr: strsSmall.promilStr, promilVal: strsSmall.promilVal };
+  }
+  if (Math.random() < 0.25) return natToDecPermFields(randInt(2, 10));
+  var whole = randInt(1, 9);
+  var strs = computeDecAndPromilStrings(whole, randInt(1, base - 1), digits);
+  return { whole: whole, decStr: strs.decStr, decVal: strs.decVal, promilStr: strs.promilStr, promilVal: strs.promilVal };
+}
+
+function genDecToPermLevel3() {
+  // z przedziału [0;10): 4-5 miejsc po przecinku wyraźnie częściej niż 1-3; bardzo rzadko liczba naturalna
+  if (Math.random() < 0.05) return natToDecPermFields(randInt(0, 9));
+  var digitsPool = [1, 2, 3, 4, 4, 4, 4, 5, 5, 5, 5];
+  var digits = digitsPool[randInt(0, digitsPool.length - 1)];
+  var base = Math.pow(10, digits);
+  var whole = randInt(0, 9);
+  var strs = computeDecAndPromilStrings(whole, randInt(1, base - 1), digits);
+  return { whole: whole, decStr: strs.decStr, decVal: strs.decVal, promilStr: strs.promilStr, promilVal: strs.promilVal };
+}
+
+// ── Specjalna mechanika poziomów dla par "Procent → Dziesiętny" i "Procent → Promil" ──
+// Lv1 = dawne Lv1+Lv2 połączone (procent zawsze liczbą całkowitą, 0 miejsc po przecinku).
+// Lv2 = dawne Lv3, ale z jednym miejscem po przecinku więcej (1 lub 2 zamiast tylko 1).
+function randNumeratorNonzeroLastDigit(digits) {
+  var leadingRange = Math.pow(10, digits - 1);
+  return randInt(0, leadingRange - 1) * 10 + randInt(1, 9);
+}
+
+function genPctToDecLevel1() {
+  var digits = randInt(1, 2);
+  var whole = Math.random() < 0.4 ? randInt(1, 2) : 0;
+  var numerator = randInt(1, Math.pow(10, digits) - 1);
+  var strs = computeDecAndPercentStrings(whole, numerator, digits);
+  return { whole: whole, decStr: strs.decStr, decVal: strs.decVal, percentStr: strs.percentStr, percentVal: strs.percentVal };
+}
+
+function genPctToDecLevel2() {
+  var digits = randInt(3, 4);
+  var whole = Math.random() < 0.5 ? randInt(1, 3) : 0;
+  var numerator = randNumeratorNonzeroLastDigit(digits);
+  var strs = computeDecAndPercentStrings(whole, numerator, digits);
+  return { whole: whole, decStr: strs.decStr, decVal: strs.decVal, percentStr: strs.percentStr, percentVal: strs.percentVal };
+}
+
+function genPctToPermLevel1() {
+  var digits = randInt(1, 2);
+  var whole = Math.random() < 0.4 ? randInt(1, 2) : 0;
+  var numerator = randInt(1, Math.pow(10, digits) - 1);
+  var pctStrs = computeDecAndPercentStrings(whole, numerator, digits);
+  var permStrs = computeDecAndPromilStrings(whole, numerator, digits);
+  return { whole: whole, percentStr: pctStrs.percentStr, percentVal: pctStrs.percentVal, promilStr: permStrs.promilStr, promilVal: permStrs.promilVal };
+}
+
+function genPctToPermLevel2() {
+  var digits = randInt(3, 4);
+  var whole = Math.random() < 0.5 ? randInt(1, 3) : 0;
+  var numerator = randNumeratorNonzeroLastDigit(digits);
+  var pctStrs = computeDecAndPercentStrings(whole, numerator, digits);
+  var permStrs = computeDecAndPromilStrings(whole, numerator, digits);
+  return { whole: whole, percentStr: pctStrs.percentStr, percentVal: pctStrs.percentVal, promilStr: permStrs.promilStr, promilVal: permStrs.promilVal };
+}
+
+// ── Specjalna mechanika poziomów dla pary "Promil → Procent" ──
+// Lv1 = dawne Lv1+Lv2 połączone (losuje losowo z jednego lub drugiego, promil zawsze całkowity).
+// Lv2 = dawne Lv3 bez zmian (promil całkowity, szerszy zakres/precyzja wewnętrzna).
+// Lv3 = NOWY: promil z 1-2 miejscami po przecinku, z przedziału [0‰;3000‰).
+function genPermToPctLevel1() {
+  return genCanonical(Math.random() < 0.5 ? 1 : 2, 1);
+}
+
+function genPermToPctLevel2() {
+  return genCanonical(3, 1);
+}
+
+function genPermToPctLevel3() {
+  var digits = randInt(4, 5);
+  var whole = randInt(0, 2); // wartość < 3, więc promil < 3000
+  var numerator = randNumeratorNonzeroLastDigit(digits);
+  var pctStrs = computeDecAndPercentStrings(whole, numerator, digits);
+  var permStrs = computeDecAndPromilStrings(whole, numerator, digits);
+  return { whole: whole, percentStr: pctStrs.percentStr, percentVal: pctStrs.percentVal, promilStr: permStrs.promilStr, promilVal: permStrs.promilVal };
+}
+
+function generateQuestion(level, mixedScale) {
+  if (curSource === 'frac' && curTarget === 'dec') {
+    if (level === 1) return genFracToDecLevel1();
+    if (level === 2) return genFracToDecLevel2();
+    if (level === 3) return genFracToDecLevel3();
+    return genFracToDecLevel4();
+  }
+  if (curSource === 'frac' && curTarget === 'pct') {
+    if (level === 1) return genFracToPctLevel1();
+    if (level === 2) return genFracToPctLevel2();
+    return genFracToPctLevel3();
+  }
+  if (curSource === 'frac' && curTarget === 'perm') {
+    return level === 1 ? genFracToPermLevel1() : genFracToPermLevel2();
+  }
+  if (curSource === 'dec' && curTarget === 'frac') {
+    return level === 1 ? genDecToFracLevel1() : genDecToFracLevel2();
+  }
+  if (curSource === 'dec' && curTarget === 'pct') {
+    if (level === 1) return genDecToPctLevel1();
+    if (level === 2) return genDecToPctLevel2();
+    return genDecToPctLevel3();
+  }
+  if (curSource === 'dec' && curTarget === 'perm') {
+    if (level === 1) return genDecToPermLevel1();
+    if (level === 2) return genDecToPermLevel2();
+    return genDecToPermLevel3();
+  }
+  if (curSource === 'pct' && curTarget === 'dec') {
+    return level === 1 ? genPctToDecLevel1() : genPctToDecLevel2();
+  }
+  if (curSource === 'pct' && curTarget === 'perm') {
+    return level === 1 ? genPctToPermLevel1() : genPctToPermLevel2();
+  }
+  if (curSource === 'perm' && curTarget === 'pct') {
+    if (level === 1) return genPermToPctLevel1();
+    if (level === 2) return genPermToPctLevel2();
+    return genPermToPctLevel3();
+  }
+  return genCanonical(level, mixedScale);
+}
+
+function computeTargetDen(target, den) {
+  if (target === 'perm') return 1000;
+  if (target === 'pct') {
+    var pp = 100;
+    while (pp % den !== 0) {
+      pp *= 10;
+      if (pp > 100000) return null;
+    }
+    return pp;
+  }
+  if (target === 'dec') {
+    var p = 10;
+    while (p % den !== 0) {
+      p *= 10;
+      if (p > 100000) return null;
+    }
+    return p;
+  }
+  return null;
+}
+
+function fracHTML(whole, num, den) {
+  var s = '';
+  if (whole > 0) s += '<span class="mixed-whole">' + whole + '</span>';
+  s += '<span class="frac-box"><span class="num">' + num + '</span><span class="den">' + den + '</span></span>';
+  return s;
+}
+
+function sourceHTML(v) {
+  if (curSource === 'frac') {
+    if (v.rawNum != null) return fracHTML(v.whole, v.rawNum, v.rawDen);
+    return fracHTML(v.whole, v.num, v.den);
+  }
+  if (curSource === 'dec') return v.decStr;
+  if (curSource === 'pct') return v.percentStr + '%';
+  return v.promilStr + '‰';
+}
+
+function answerHTML(v) {
+  if (curTarget === 'frac') return fracHTML(v.whole, v.num, v.den);
+  if (curTarget === 'dec') return v.decStr;
+  if (curTarget === 'pct') return v.percentStr + '%';
+  return v.promilStr + '‰';
+}
+
+function applyPalette() {
+  var p = PALETTES[curSource][curLevel - 1];
+  var root = document.documentElement.style;
+  root.setProperty('--mod-dark', p.dark);
+  root.setProperty('--mod-mid', p.mid);
+  root.setProperty('--mod-light', mixWithWhite(p.mid, 0.88));
+  root.setProperty('--mod-bg', mixWithWhite(p.mid, 0.78));
+  root.setProperty('--mod-border', mixWithWhite(p.dark, 0.55));
+  root.setProperty('--mod-shadow', hexToRgba(p.dark, 0.25));
+  styleActiveBtns();
+}
+
+function styleActiveBtns() {
+  var p = PALETTES[curSource][curLevel - 1];
+  document.querySelectorAll('.tgt-btn.active, .lv-btn.active').forEach(function(b) {
+    b.style.background = p.mid; b.style.borderColor = p.dark; b.style.color = '#fff';
+  });
+  document.querySelectorAll('.tgt-btn:not(.active), .lv-btn:not(.active)').forEach(function(b) {
+    b.style.background = ''; b.style.borderColor = ''; b.style.color = '';
+  });
+}
+
+function updateLevelAvailability() {
+  var isFracDec = (curSource === 'frac' && curTarget === 'dec');
+  var isFracPerm = (curSource === 'frac' && curTarget === 'perm');
+  var isDecFrac = (curSource === 'dec' && curTarget === 'frac');
+  var isPctDec = (curSource === 'pct' && curTarget === 'dec');
+  var isPctPerm = (curSource === 'pct' && curTarget === 'perm');
+  var isPermFrac = (curSource === 'perm' && curTarget === 'frac');
+  var hideLv3 = isFracPerm || isDecFrac || isPctDec || isPctPerm || isPermFrac;
+
+  document.getElementById('lv4-btn').style.display = isFracDec ? '' : 'none';
+  document.getElementById('lv3-btn').style.display = hideLv3 ? 'none' : '';
+
+  var maxLevel = isFracDec ? 4 : (hideLv3 ? 2 : 3);
+  if (curLevel > maxLevel) {
+    curLevel = maxLevel;
+    document.querySelectorAll('.lv-btn').forEach(function(b, i) { b.classList.toggle('active', i + 1 === curLevel); });
+  }
+}
+
+function renderTargetButtons() {
+  var container = document.getElementById('targetRow');
+  container.innerHTML = '';
+  ALL_TYPES.filter(function(t) { return t !== curSource; }).forEach(function(t) {
+    var b = document.createElement('button');
+    b.className = 'tgt-btn' + (t === curTarget ? ' active' : '');
+    b.textContent = '→ ' + LABELS[t];
+    b.onclick = function() {
+      curTarget = t;
+      updateLevelAvailability();
+      renderTargetButtons();
+      styleActiveBtns();
+      resetAndNext();
+    };
+    container.appendChild(b);
+  });
+  styleActiveBtns();
+}
+
+function setSource(t) {
+  if (t === curSource) return;
+  curSource = t;
+  document.querySelectorAll('#sourceRow .tab').forEach(function(b) { b.classList.remove('active-frac','active-dec','active-pct','active-perm'); });
+  document.getElementById('src-' + t).classList.add('active-' + t);
+  curTarget = ALL_TYPES.filter(function(x) { return x !== t; })[0];
+  updateLevelAvailability();
+  renderTargetButtons();
+  applyPalette();
+  resetAndNext();
+}
+
+function setLevel(lv) {
+  if (lv === 4 && !(curSource === 'frac' && curTarget === 'dec')) return;
+  if (lv === 3 && (
+    (curSource === 'frac' && curTarget === 'perm') ||
+    (curSource === 'dec' && curTarget === 'frac') ||
+    (curSource === 'pct' && (curTarget === 'dec' || curTarget === 'perm')) ||
+    (curSource === 'perm' && curTarget === 'frac')
+  )) return;
+  curLevel = lv;
+  document.querySelectorAll('.lv-btn').forEach(function(b, i) { b.classList.toggle('active', i + 1 === lv); });
+  applyPalette();
+  resetAndNext();
+}
+
+function updateScore() { document.getElementById('score').textContent = cor + ' / ' + tot; }
+
+function startTimer() {
+  stopTimer();
+  t0 = Date.now();
+  var el = document.getElementById('timer');
+  el.textContent = '0 s';
+  timerIv = setInterval(function() {
+    el.textContent = Math.floor((Date.now() - t0) / 1000) + ' s';
+  }, 500);
+}
+function stopTimer() { clearInterval(timerIv); timerIv = null; }
+
+function resetAndNext() {
+  cor = 0; tot = 0;
+  updateScore();
+  stopTimer();
+  document.getElementById('timer').textContent = '0 s';
+  nextQuestion();
+}
+
+function fitEquation() {
+  var line = document.querySelector('.eq-line');
+  var box = document.getElementById('qbox');
+  var available = box.clientWidth - 24;
+  var fs = parseFloat(window.getComputedStyle(line).fontSize);
+  while (line.scrollWidth > available && fs > 11) {
+    fs -= 1;
+    line.style.fontSize = fs + 'px';
+  }
+}
+
+function focusFirstInput() {
+  if (curTarget === 'frac') {
+    if (curQ.whole > 0) document.getElementById('ans-whole').focus();
+    else document.getElementById('ans-num').focus();
+  } else {
+    document.getElementById('ans-inp').focus();
+  }
+}
+
+function isAtFinalStep() {
+  if (stepData && stepData.phase === 'reduce') return false;
+  if (stepData && stepData.phase === 'expand' && curStep === 1) return false;
+  return true;
+}
+
+function updateGuessBtnVisibility() {
+  var eligiblePair = (curSource === 'frac' && (curTarget === 'dec' || curTarget === 'pct' || curTarget === 'perm'));
+  var eligible = (eligiblePair && !isAtFinalStep());
+  document.getElementById('guess-btn').style.display = eligible ? '' : 'none';
+}
+
+function skipToFinalStep() {
+  if (locked || !curQ) return;
+  // zachowaj ułamek, na którym user skończył pracę w kroku, z którego wciśnięto "Podaj wynik"
+  var skipFrac = null;
+  if (stepData && stepData.phase === 'reduce') {
+    skipFrac = { whole: stepData.enteredWhole, num: stepData.enteredNum, den: stepData.enteredDen };
+  } else if (stepData && stepData.phase === 'expand') {
+    skipFrac = { whole: curQ.whole, num: curQ.num, den: curQ.den };
+  }
+
+  curStep = 1;
+  document.getElementById('stepInfo').style.display = 'none';
+  document.getElementById('qLabel').textContent = 'Zamień na ' + LABELS_FULL[curTarget];
+  if (skipFrac) {
+    stepData = { phase: 'skipped', displayWhole: skipFrac.whole, displayNum: skipFrac.num, displayDen: skipFrac.den };
+    document.getElementById('eq-left').innerHTML = fracHTML(skipFrac.whole, skipFrac.num, skipFrac.den);
+  } else {
+    stepData = null;
+    document.getElementById('eq-left').innerHTML = sourceHTML(curQ);
+  }
+  renderAnswerArea();
+  document.getElementById('ans-inp').value = '';
+  document.getElementById('ans-inp').disabled = false;
+  document.getElementById('check-btn').disabled = false;
+  updateGuessBtnVisibility();
+  document.querySelector('.eq-line').style.fontSize = '';
+  setTimeout(function() { fitEquation(); document.getElementById('ans-inp').focus(); }, 30);
+}
+
+function renderAnswerArea() {
+  var simple = document.getElementById('simpleAnswer');
+  var fracArea = document.getElementById('fracAnswer');
+  document.getElementById('expandAnswer').style.display = 'none';
+  if (curTarget === 'frac') {
+    simple.style.display = 'none';
+    fracArea.style.display = 'inline-flex';
+    document.getElementById('ans-whole').style.display = curQ.whole > 0 ? '' : 'none';
+  } else {
+    fracArea.style.display = 'none';
+    simple.style.display = 'inline-flex';
+    document.getElementById('ansSuffix').textContent = curTarget === 'pct' ? '%' : curTarget === 'perm' ? '‰' : '';
+    document.getElementById('ans-inp').placeholder = curTarget === 'dec' ? 'np. 0,25' : '?';
+  }
+}
+
+function clearAllInputValues() {
+  document.getElementById('ans-inp').value = '';
+  document.getElementById('ans-whole').value = '';
+  document.getElementById('ans-num').value = '';
+  document.getElementById('ans-den').value = '';
+  document.getElementById('exp-num').value = '';
+  document.getElementById('exp-den').value = '';
+}
+
+function resetAllInputsEnabled() {
+  ['ans-inp','ans-whole','ans-num','ans-den','exp-num','exp-den'].forEach(function(id) { document.getElementById(id).disabled = false; });
+  document.getElementById('ans-whole').style.display = '';
+}
+
+function renderStandardStep() {
+  document.getElementById('qLabel').textContent = 'Zamień na ' + LABELS_FULL[curTarget];
+  document.getElementById('eq-left').innerHTML = sourceHTML(curQ);
+  renderAnswerArea();
+  updateGuessBtnVisibility();
+}
+
+function renderExpandStep() {
+  var isLv4 = curQ.rawNum != null;
+  document.getElementById('qLabel').textContent = 'Rozszerz ułamek do mianownika będącego potęgą liczby 10';
+  var info = document.getElementById('stepInfo');
+  info.style.display = 'block';
+  info.textContent = (isLv4 ? 'Krok 2 z 3' : 'Krok 1 z 2') + ': uzupełnij licznik i mianownik rozszerzonego ułamka';
+  document.getElementById('eq-left').innerHTML = fracHTML(curQ.whole, curQ.num, curQ.den);
+  document.getElementById('simpleAnswer').style.display = 'none';
+  document.getElementById('fracAnswer').style.display = 'none';
+  document.getElementById('expandAnswer').style.display = 'inline-flex';
+  var echo = document.getElementById('exp-whole-echo');
+  if (curQ.whole > 0) { echo.textContent = curQ.whole; echo.style.display = ''; }
+  else { echo.style.display = 'none'; }
+  updateGuessBtnVisibility();
+}
+
+function proceedToFinalValueStep() {
+  var isLv4 = curQ.rawNum != null;
+  curStep = 2;
+  var expandedNum = curQ.num * (stepData.targetDen / curQ.den);
+  document.getElementById('qLabel').textContent = 'Zamień na ' + LABELS_FULL[curTarget];
+  document.getElementById('stepInfo').textContent = (isLv4 ? 'Krok 3 z 3' : 'Krok 2 z 2') + ': odczytaj wynik';
+  document.getElementById('eq-left').innerHTML = fracHTML(curQ.whole, expandedNum, stepData.targetDen);
+  renderAnswerArea();
+  document.getElementById('ans-inp').value = '';
+  document.getElementById('ans-inp').disabled = false;
+  document.getElementById('check-btn').disabled = false;
+  document.querySelector('.eq-line').style.fontSize = '';
+  updateGuessBtnVisibility();
+  setTimeout(function() { fitEquation(); document.getElementById('ans-inp').focus(); }, 30);
+}
+
+function renderReduceStep() {
+  var firstRound = (curStep === 1);
+  document.getElementById('qLabel').textContent = 'Skróć ułamek';
+  var info = document.getElementById('stepInfo');
+  info.style.display = 'block';
+  info.textContent = 'Krok ' + curStep + ': ' + (firstRound
+    ? 'ten ułamek trzeba skrócić — podaj skróconą postać'
+    : 'ten ułamek da się jeszcze skrócić — podaj skróconą postać');
+  document.getElementById('eq-left').innerHTML = fracHTML(stepData.enteredWhole, stepData.enteredNum, stepData.enteredDen);
+  document.getElementById('simpleAnswer').style.display = 'none';
+  document.getElementById('expandAnswer').style.display = 'none';
+  document.getElementById('fracAnswer').style.display = 'inline-flex';
+
+  var wholeEl = document.getElementById('ans-whole');
+  if (curQ.whole > 0) {
+    wholeEl.style.display = '';
+    if (firstRound) {
+      // pierwsza runda: całość jeszcze nie potwierdzona — user wpisuje ją sam
+      wholeEl.value = '';
+      wholeEl.disabled = false;
+    } else {
+      // kolejne rundy: całość już potwierdzona jako poprawna — przepisujemy ją automatycznie
+      wholeEl.value = curQ.whole;
+      wholeEl.disabled = true;
+    }
+  } else {
+    wholeEl.style.display = 'none';
+    wholeEl.value = '';
+    wholeEl.disabled = false;
+  }
+
+  document.getElementById('ans-num').value = '';
+  document.getElementById('ans-den').value = '';
+  document.getElementById('ans-num').disabled = false;
+  document.getElementById('ans-den').disabled = false;
+  document.getElementById('check-btn').disabled = false;
+  document.querySelector('.eq-line').style.fontSize = '';
+  updateGuessBtnVisibility();
+  setTimeout(function() {
+    fitEquation();
+    document.getElementById(firstRound && curQ.whole > 0 ? 'ans-whole' : 'ans-num').focus();
+  }, 30);
+}
+
+function nextQuestion() {
+  var mixedScale = 1;
+  var newQ, key, attempts = 0;
+  do {
+    newQ = generateQuestion(curLevel, mixedScale);
+    key = sourceHTML(newQ);
+    attempts++;
+  } while (key === lastQKey && attempts < 30);
+  curQ = newQ;
+  lastQKey = key;
+  curStep = 1;
+  stepData = null;
+
+  clearAllInputValues();
+  resetAllInputsEnabled();
+  document.getElementById('check-btn').disabled = false;
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('next-btn').style.display = 'none';
+  document.getElementById('anim').innerHTML = '';
+  document.getElementById('stepInfo').style.display = 'none';
+  locked = false;
+  document.querySelector('.eq-line').style.fontSize = '';
+
+  if (curQ.rawNum != null) {
+    // Lv4 (ułamek zwykły → dziesiętny): najpierw skróć, potem rozszerz, potem zamień
+    stepData = { phase: 'reduce', andThen: 'expand-dec', enteredWhole: curQ.whole, enteredNum: curQ.rawNum, enteredDen: curQ.rawDen };
+    renderReduceStep();
+    startTimer();
+    return;
+  }
+
+  if (curSource === 'frac' && curTarget !== 'frac') {
+    var targetDen = computeTargetDen(curTarget, curQ.den);
+    if (targetDen !== null && targetDen !== curQ.den) {
+      stepData = { phase: 'expand', targetDen: targetDen };
+      renderExpandStep();
+      startTimer();
+      setTimeout(function() { fitEquation(); document.getElementById('exp-num').focus(); }, 50);
+      return;
+    }
+  }
+
+  renderStandardStep();
+  startTimer();
+  setTimeout(function() { fitEquation(); focusFirstInput(); }, 50);
+}
+
+function playCorrectAnim() {
+  var L = document.getElementById('anim');
+  L.innerHTML = '';
+  var f = document.createElement('div'); f.className = 'correct-flash'; L.appendChild(f);
+  var n = document.createElement('div'); n.className = 'anim-correct-num'; n.textContent = '✓'; L.appendChild(n);
+  var S = ['⇄','=','★','✦','✧','◆'];
+  for (var i = 0; i < 12; i++) {
+    var p = document.createElement('div'); p.className = 'particle';
+    p.textContent = S[i % S.length];
+    var a = (360 / 12) * i, d = 80 + Math.random() * 70, r = a * Math.PI / 180;
+    p.style.setProperty('--tx', 'translate(' + (Math.cos(r)*d) + 'px,' + (Math.sin(r)*d) + 'px)');
+    p.style.animationDelay = (Math.random() * .12) + 's';
+    L.appendChild(p);
+  }
+  setTimeout(function() { L.innerHTML = ''; }, 1400);
+}
+function playWrongAnim() {
+  var L = document.getElementById('anim');
+  L.innerHTML = '';
+  var f = document.createElement('div'); f.className = 'wrong-flash'; L.appendChild(f);
+  var x = document.createElement('div'); x.className = 'anim-big-x'; x.textContent = '✗'; L.appendChild(x);
+  setTimeout(function() { L.innerHTML = ''; }, 1300);
+}
+
+function parseNum(raw) {
+  raw = raw.trim().replace(/\s+/g, '').replace(',', '.');
+  if (raw === '') return null;
+  var n = parseFloat(raw);
+  return isNaN(n) ? null : n;
+}
+
+function lockInputs() {
+  ['ans-inp','ans-whole','ans-num','ans-den','exp-num','exp-den'].forEach(function(id) { document.getElementById(id).disabled = true; });
+  document.getElementById('check-btn').disabled = true;
+  document.getElementById('guess-btn').style.display = 'none';
+}
+
+function finishWith(className, html) {
+  var fb = document.getElementById('feedback');
+  fb.className = 'feedback ' + className;
+  fb.innerHTML = html;
+  if (className === 'good') playCorrectAnim(); else playWrongAnim();
+  updateScore();
+  document.getElementById('next-btn').style.display = 'flex';
+}
+
+function checkExpandStep() {
+  var numInp = document.getElementById('exp-num'), denInp = document.getElementById('exp-den');
+  var numRaw = numInp.value.trim(), denRaw = denInp.value.trim();
+  if (numRaw === '') { numInp.focus(); return; }
+  if (denRaw === '') { denInp.focus(); return; }
+  var n = parseInt(numRaw, 10), d = parseInt(denRaw, 10);
+  if (isNaN(n) || isNaN(d)) return;
+
+  var expectedNum = curQ.num * (stepData.targetDen / curQ.den);
+  if (n === expectedNum && d === stepData.targetDen) {
+    proceedToFinalValueStep();
+    return;
+  }
+  locked = true; tot++; stopTimer(); lockInputs();
+  var chain = sourceHTML(curQ) + ' = ' + fracHTML(curQ.whole, expectedNum, stepData.targetDen) + ' = <b>' + answerHTML(curQ) + '</b>';
+  finishWith('bad', '✗ Źle!  ' + chain);
+}
+
+function checkSimpleStep() {
+  var inp = document.getElementById('ans-inp');
+  var num = parseNum(inp.value);
+  if (num === null) { inp.focus(); return; }
+  locked = true; tot++; stopTimer(); lockInputs();
+
+  var target = curTarget === 'dec' ? curQ.decVal : curTarget === 'pct' ? curQ.percentVal : curQ.promilVal;
+  var eps = curTarget === 'dec' ? 0.00005 : 0.05;
+  var correct = Math.abs(num - target) < eps;
+
+  var chain;
+  if (stepData && stepData.phase === 'expand') {
+    var expandedNum = curQ.num * (stepData.targetDen / curQ.den);
+    chain = sourceHTML(curQ) + ' = ' + fracHTML(curQ.whole, expandedNum, stepData.targetDen) + ' = ';
+  } else if (stepData && stepData.phase === 'skipped') {
+    chain = fracHTML(stepData.displayWhole, stepData.displayNum, stepData.displayDen) + ' = ';
+  } else {
+    chain = sourceHTML(curQ) + ' = ';
+  }
+
+  if (correct) {
+    cor++;
+    finishWith('good', '✓ Dobrze!  ' + chain + answerHTML(curQ));
+  } else {
+    finishWith('bad', '✗ Źle!  ' + chain + '<b>' + answerHTML(curQ) + '</b>');
+  }
+}
+
+function checkFracStep() {
+  var wEl = document.getElementById('ans-whole'), nEl = document.getElementById('ans-num'), dEl = document.getElementById('ans-den');
+  var wRaw = wEl.value.trim(), nRaw = nEl.value.trim(), dRaw = dEl.value.trim();
+  if (nRaw === '') { nEl.focus(); return; }
+  if (dRaw === '') { dEl.focus(); return; }
+  var w = wRaw === '' ? 0 : parseInt(wRaw, 10);
+  var n = parseInt(nRaw, 10), d = parseInt(dRaw, 10);
+  if (isNaN(w) || isNaN(n) || isNaN(d) || d === 0) return;
+
+  var chain = sourceHTML(curQ) + ' = ';
+  if (curStep > 1) chain += fracHTML(stepData.enteredWhole, stepData.enteredNum, stepData.enteredDen) + ' = ';
+  var valueMatches = (w === curQ.whole) && (n * curQ.den === d * curQ.num);
+
+  if (!valueMatches) {
+    locked = true; tot++; stopTimer(); lockInputs();
+    finishWith('bad', '✗ Źle!  ' + chain + '<b>' + answerHTML(curQ) + '</b>');
+    return;
+  }
+  if (n === curQ.num && d === curQ.den) {
+    if (stepData && stepData.andThen === 'expand-dec') {
+      // Lv4: ułamek w pełni skrócony — przechodzimy do rozszerzania
+      curStep = 1;
+      stepData = { phase: 'expand', targetDen: computeTargetDen(curTarget, curQ.den) };
+      renderExpandStep();
+      return;
+    }
+    locked = true; tot++; cor++; stopTimer(); lockInputs();
+    finishWith('good', '✓ Dobrze!  ' + chain + answerHTML(curQ));
+    return;
+  }
+
+  // wartość poprawna, ale ułamek nadal skracalny — kolejna runda skracania
+  var prevAndThen = stepData ? stepData.andThen : undefined;
+  stepData = { phase: 'reduce', andThen: prevAndThen, enteredWhole: w, enteredNum: n, enteredDen: d };
+  curStep++;
+  renderReduceStep();
+}
+
+function checkAnswer() {
+  if (locked || !curQ) return;
+  if (stepData && stepData.phase === 'expand' && curStep === 1) { checkExpandStep(); return; }
+  if (curTarget === 'frac' || (stepData && stepData.phase === 'reduce')) { checkFracStep(); return; }
+  checkSimpleStep();
+}
+
+document.getElementById('ans-inp').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') { if (locked) nextQuestion(); else checkAnswer(); }
+});
+document.getElementById('ans-whole').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') { if (locked) nextQuestion(); else document.getElementById('ans-num').focus(); }
+});
+document.getElementById('ans-num').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') { if (locked) nextQuestion(); else document.getElementById('ans-den').focus(); }
+});
+document.getElementById('ans-den').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') { if (locked) nextQuestion(); else checkAnswer(); }
+});
+document.getElementById('exp-num').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') { if (locked) nextQuestion(); else document.getElementById('exp-den').focus(); }
+});
+document.getElementById('exp-den').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') { if (locked) nextQuestion(); else checkAnswer(); }
+});
+
+updateLevelAvailability();
+renderTargetButtons();
+applyPalette();
+nextQuestion();
+</script>
+</body>
+</html>
