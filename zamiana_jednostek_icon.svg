@@ -22,29 +22,29 @@
         text-anchor="middle" font-family="Georgia,serif" font-weight="bold">=</text>
 
   <!-- Length conversion: 5 km = 5000 m -->
-  <text x="198" y="70" text-anchor="middle" font-family="Georgia,'Times New Roman',serif"
+  <text x="198" y="56" text-anchor="middle" font-family="Georgia,'Times New Roman',serif"
         font-size="30" font-weight="bold" font-style="italic">
     <tspan fill="white">5 </tspan><tspan fill="#FFE055">km</tspan><tspan fill="white"> = 5000 </tspan><tspan fill="#FFE055">m</tspan>
   </text>
 
   <!-- arrow: x1000 -->
-  <path d="M 130,88 Q 198,112 266,88"
+  <path d="M 130,74 Q 198,98 266,74"
         fill="none" stroke="white" stroke-width="2.5" marker-end="url(#am)"/>
-  <text x="198" y="118" text-anchor="middle" font-family="Georgia,'Times New Roman',serif"
+  <text x="198" y="104" text-anchor="middle" font-family="Georgia,'Times New Roman',serif"
         font-size="16" font-weight="bold" font-style="italic" fill="white">&#215;1000</text>
 
   <!-- divider -->
-  <line x1="30" y1="140" x2="367" y2="140" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-dasharray="8,4"/>
+  <line x1="30" y1="126" x2="367" y2="126" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-dasharray="8,4"/>
 
   <!-- Mass conversion: 3 kg = 0,003 t -->
-  <text x="198" y="185" text-anchor="middle" font-family="Georgia,'Times New Roman',serif"
+  <text x="198" y="171" text-anchor="middle" font-family="Georgia,'Times New Roman',serif"
         font-size="30" font-weight="bold" font-style="italic">
     <tspan fill="white">3 </tspan><tspan fill="#FFE055">kg</tspan><tspan fill="white"> = 0,003 </tspan><tspan fill="#FFE055">t</tspan>
   </text>
 
   <!-- arrow: :1000 -->
-  <path d="M 130,203 Q 198,227 266,203"
+  <path d="M 130,189 Q 198,213 266,189"
         fill="none" stroke="white" stroke-width="2.5" marker-end="url(#am)"/>
-  <text x="198" y="233" text-anchor="middle" font-family="Georgia,'Times New Roman',serif"
+  <text x="198" y="219" text-anchor="middle" font-family="Georgia,'Times New Roman',serif"
         font-size="16" font-weight="bold" font-style="italic" fill="white">: 1000</text>
 </svg>
