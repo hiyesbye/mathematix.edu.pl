@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html>
+<meta charset="utf-8">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sklepik Punktów Aktywności</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <style>
+        * { margin: 0; box-sizing: border-box; }
+        body { font-family: 'Courier New', Courier, monospace; background: #eef2f5; }
+
+        .topbar {
+            position: sticky; top: 0; z-index: 100;
+            background: #1c1c1c; color: white;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 20px; height: 52px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+        .topbar-title { font-size: 17px; font-weight: bold; letter-spacing: 0.5px; }
+        .btn-powrot {
+            padding: 7px 16px; background: transparent; color: #ccc;
+            border: 1px solid #555; border-radius: 5px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px; cursor: pointer;
+        }
+        .btn-powrot:hover { background: #444; color: white; }
+
+        .content { max-width: 620px; margin: 0 auto; padding: 0 18px 48px; }
+
+        /* Sklepowy szyld */
+        .szyld {
+            margin: 22px 0 24px;
+            padding: 26px 22px 22px;
+            border-radius: 12px;
+            text-align: center;
+            color: #3a2400;
+            background:
+                repeating-linear-gradient(135deg, rgba(255,255,255,0.10) 0 14px, rgba(0,0,0,0.04) 14px 28px),
+                linear-gradient(160deg, #ffd479 0%, #f0b84d 45%, #d99a2b 100%);
+            border: 3px solid #b5740c;
+            box-shadow: 0 6px 0 #8a5a08, 0 8px 16px rgba(0,0,0,0.25), inset 0 2px 0 rgba(255,255,255,0.5);
+            position: relative;
+        }
+        .szyld-ikona { font-size: 34px; line-height: 1; margin-bottom: 6px; }
+        .szyld-tytul { font-size: 22px; font-weight: bold; letter-spacing: 0.5px; text-shadow: 0 1px 0 rgba(255,255,255,0.4); }
+        .szyld-podpis { font-size: 13px; margin-top: 6px; color: #5a3d00; }
+
+        /* Kasa / stan konta */
+        .kasa {
+            display: flex; align-items: center; justify-content: space-between;
+            background: #1c1c1c; color: white;
+            border-radius: 10px; padding: 14px 20px; margin-bottom: 26px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.25);
+        }
+        .kasa-label { font-size: 14px; color: #bbb; letter-spacing: 0.3px; }
+        .kasa-wartosc {
+            font-size: 26px; font-weight: bold; color: #ffd479;
+            text-shadow: 0 0 10px rgba(255,212,121,0.5);
+        }
+        .kasa-wartosc .jedn { font-size: 14px; color: #f0c060; font-weight: normal; }
+
+        /* Dział sklepu */
+        .dzial { margin-bottom: 24px; }
+        .dzial-naglowek {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 13px; font-weight: bold; text-transform: uppercase;
+            letter-spacing: 1.2px; color: #6a4b00;
+            padding: 8px 14px; margin-bottom: 8px;
+            background: linear-gradient(180deg, #fff3d6, #ffe6a8);
+            border: 1px solid #e6c470; border-radius: 6px;
+        }
+
+        .polka { display: flex; flex-direction: column; gap: 10px; }
+
+        /* Karta produktu */
+        .produkt {
+            display: flex; align-items: center; gap: 14px;
+            background: white; border-radius: 9px;
+            border: 1px solid #ddd; border-left: 5px solid #ccc;
+            padding: 12px 14px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .produkt:hover { transform: translateY(-1px); box-shadow: 0 3px 8px rgba(0,0,0,0.1); }
+        .produkt.zielony   { border-left-color: #2a9d3f; }
+        .produkt.niebieski { border-left-color: rgb(11,105,148); }
+        .produkt.czerwony  { border-left-color: #c0392b; }
+        .produkt.fioletowy { border-left-color: #5a47a0; }
+        .produkt.szary     { border-left-color: #555; }
+
+        .produkt-ikona {
+            font-size: 24px; flex-shrink: 0; width: 34px; text-align: center;
+        }
+        .produkt-tekst { flex: 1; min-width: 0; }
+        .produkt-nazwa { font-size: 15px; font-weight: bold; color: #222; }
+        .produkt-opis { font-size: 12.5px; color: #777; margin-top: 2px; line-height: 1.35; }
+
+        /* Metka z ceną */
+        .metka {
+            position: relative; flex-shrink: 0;
+            background: #fef3e2; color: #9a6200;
+            border: 1.5px dashed #d99a2b; border-radius: 5px;
+            padding: 6px 12px 6px 16px;
+            font-size: 14px; font-weight: bold; white-space: nowrap;
+        }
+        .metka::before {
+            content: ''; position: absolute; left: -5px; top: 50%;
+            transform: translateY(-50%);
+            width: 8px; height: 8px; border-radius: 50%;
+            background: #eef2f5; border: 1.5px solid #d99a2b;
+        }
+        .metka.ok   { background: #e9f7ee; color: #1a7a2e; border-color: #2a9d3f; }
+        .metka.brak { background: #fdeceb; color: #a5301f; border-color: #c0392b; }
+
+        .zmienna-cena {
+            display: flex; align-items: center; gap: 6px;
+            background: #f3f0ff; color: #5a47a0;
+            border: 1.5px dashed #a898e0; border-radius: 5px;
+            padding: 6px 12px; font-size: 13px; font-weight: bold; white-space: nowrap;
+        }
+
+        .info-dop {
+            font-size: 12px; color: #888; text-align: center;
+            padding: 6px 10px 0;
+        }
+
+        #ladowanie { text-align: center; padding: 50px; color: #888; font-size: 17px; }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <button class="btn-powrot" onclick="window.opener && !window.opener.closed ? window.close() : window.location.href='profil.html'">&#8592; Powrót</button>
+        <span class="topbar-title">Sklepik Punktów Aktywności</span>
+        <span style="width:90px;"></span>
+    </div>
+
+    <div class="content">
+        <div class="szyld">
+            <div class="szyld-ikona">🏪</div>
+            <div class="szyld-tytul">Sklepik Matematyczny</div>
+            <div class="szyld-podpis">Wymień zdobyte Punkty Aktywności (PA) na nagrody</div>
+        </div>
+
+        <div class="kasa">
+            <span class="kasa-label">💰 Twój stan konta:</span>
+            <span class="kasa-wartosc" id="kasa-pa">— <span class="jedn">PA</span></span>
+        </div>
+
+        <div id="ladowanie" style="display:none;">Wczytywanie...</div>
+
+        <div class="dzial">
+            <div class="dzial-naglowek">🏆 Oceny z aktywności</div>
+            <div class="polka">
+                <div class="produkt zielony" data-koszt="5">
+                    <div class="produkt-ikona">⭐</div>
+                    <div class="produkt-tekst">
+                        <div class="produkt-nazwa">Ocena bardzo dobry (5)</div>
+                        <div class="produkt-opis">Nowa ocena z aktywności</div>
+                    </div>
+                    <div class="metka">5 PA</div>
+                </div>
+                <div class="produkt zielony" data-koszt="10">
+                    <div class="produkt-ikona">🌟</div>
+                    <div class="produkt-tekst">
+                        <div class="produkt-nazwa">Ocena celujący (6)</div>
+                        <div class="produkt-opis">Nowa ocena z aktywności</div>
+                    </div>
+                    <div class="metka">10 PA</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dzial">
+            <div class="dzial-naglowek">🔄 Poprawy</div>
+            <div class="polka">
+                <div class="produkt niebieski" data-koszt="2">
+                    <div class="produkt-ikona">📝</div>
+                    <div class="produkt-tekst">
+                        <div class="produkt-nazwa">Poprawa dowolnej kartkówki</div>
+                        <div class="produkt-opis">Podejście do wybranej kartkówki jeszcze raz</div>
+                    </div>
+                    <div class="metka">2 PA</div>
+                </div>
+                <div class="produkt czerwony" data-koszt="4">
+                    <div class="produkt-ikona">📄</div>
+                    <div class="produkt-tekst">
+                        <div class="produkt-nazwa">Poprawa dowolnej pracy kontrolnej</div>
+                        <div class="produkt-opis">Podejście do wybranej pracy kontrolnej jeszcze raz</div>
+                    </div>
+                    <div class="metka">4 PA</div>
+                </div>
+                <div class="produkt fioletowy" data-koszt="5">
+                    <div class="produkt-ikona">🗣️</div>
+                    <div class="produkt-tekst">
+                        <div class="produkt-nazwa">Poprawa odpowiedzi ustnej</div>
+                        <div class="produkt-opis">Kolejna szansa na odpowiedź ustną</div>
+                    </div>
+                    <div class="metka">5 PA</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dzial">
+            <div class="dzial-naglowek">😴 Nieprzygotowania</div>
+            <div class="polka">
+                <div class="produkt szary" data-koszt="10">
+                    <div class="produkt-ikona">🎒</div>
+                    <div class="produkt-tekst">
+                        <div class="produkt-nazwa">Dodatkowe nieprzygotowanie do zajęć</div>
+                        <div class="produkt-opis">Jedno dodatkowe "np." ponad limit</div>
+                    </div>
+                    <div class="metka">10 PA</div>
+                </div>
+                <div class="produkt szary" data-koszt="30">
+                    <div class="produkt-ikona">🛌</div>
+                    <div class="produkt-tekst">
+                        <div class="produkt-nazwa">Tydzień nieprzygotowań do zajęć</div>
+                        <div class="produkt-opis">Brak przygotowania przez cały tydzień, bez konsekwencji</div>
+                    </div>
+                    <div class="metka">30 PA</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dzial">
+            <div class="dzial-naglowek">📈 Podniesienie wyniku</div>
+            <div class="polka">
+                <div class="produkt fioletowy">
+                    <div class="produkt-ikona">🎯</div>
+                    <div class="produkt-tekst">
+                        <div class="produkt-nazwa">Podniesienie wyniku pracy pisemnej</div>
+                        <div class="produkt-opis">Tylko przy ocenie oznaczonej "(+)". Podniesienie o X punktów procentowych kosztuje X PA</div>
+                    </div>
+                    <div class="zmienna-cena">X PA</div>
+                </div>
+            </div>
+            <div class="info-dop">np. podniesienie wyniku o 7 punktów procentowych kosztuje 7 PA</div>
+        </div>
+    </div>
+
+    <script src="supabase-config.js"></script>
+    <script>
+        function oznaczCeny(saldo) {
+            document.querySelectorAll('.produkt[data-koszt]').forEach(el => {
+                const koszt = parseInt(el.dataset.koszt, 10);
+                const metka = el.querySelector('.metka');
+                if (!metka) return;
+                metka.classList.add(saldo >= koszt ? 'ok' : 'brak');
+            });
+        }
+
+        async function init() {
+            const { data: { session } } = await sb.auth.getSession();
+            if (!session) return;
+
+            const { data: sem1 } = await sb.from('semestr1')
+                .select('punkty_aktywnosci')
+                .eq('profil_id', session.user.id)
+                .single();
+
+            const pkt = sem1?.punkty_aktywnosci;
+            if (pkt !== null && pkt !== undefined) {
+                document.getElementById('kasa-pa').innerHTML = `${pkt} <span class="jedn">PA</span>`;
+                oznaczCeny(pkt);
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
