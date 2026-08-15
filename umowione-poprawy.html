@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html>
+<meta charset="utf-8">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Umówione poprawy</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <style>
+        * { margin: 0; box-sizing: border-box; }
+        body { font-family: 'Courier New', Courier, monospace; background: #eef2f5; }
+
+        .topbar {
+            position: sticky; top: 0; z-index: 100;
+            background: #1c1c1c; color: white;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 20px; height: 52px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+        .topbar-title { font-size: 17px; font-weight: bold; letter-spacing: 0.5px; }
+        .btn-powrot {
+            padding: 7px 16px; background: transparent; color: #ccc;
+            border: 1px solid #555; border-radius: 5px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px; cursor: pointer;
+        }
+        .btn-powrot:hover { background: #444; color: white; }
+
+        .content { max-width: 920px; margin: 24px auto; padding: 0 18px 60px; }
+
+        .sekcja { margin-bottom: 36px; }
+        .sekcja-naglowek {
+            font-size: 14px; font-weight: bold; text-transform: uppercase;
+            letter-spacing: 1.2px; color: white; padding: 10px 18px;
+            border-radius: 6px 6px 0 0;
+        }
+        .sekcja-naglowek.niebieski { background: rgb(11, 105, 148); }
+        .sekcja-naglowek.zielony   { background: #1a7a2e; }
+
+        .sekcja-toolbar {
+            display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+            background: white; border: 2px solid #ddd; border-top: none;
+            padding: 10px 14px;
+        }
+        .btn-akcja {
+            padding: 8px 20px; background: #2a9d3f; color: white;
+            border: none; border-radius: 6px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px; font-weight: bold; cursor: pointer;
+        }
+        .btn-akcja:disabled { background: #aaa; cursor: not-allowed; }
+        .btn-akcja:not(:disabled):hover { background: #1e7a30; }
+        .btn-akcja.czerwony { background: #c0392b; }
+        .btn-akcja.czerwony:not(:disabled):hover { background: #a5301f; }
+        .kom { font-size: 13px; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 14px; background: white; }
+        th {
+            background: #2d2d2d; color: white; padding: 9px 10px;
+            text-align: left; cursor: pointer; user-select: none; white-space: nowrap;
+        }
+        th:hover { background: rgb(11, 105, 148); }
+        th.nosort { cursor: default; }
+        th.nosort:hover { background: #2d2d2d; }
+        td { padding: 8px 10px; border-bottom: 1px solid #eee; }
+        tr:hover td { background: #eef7fb; }
+
+        input[type="date"] {
+            padding: 5px 6px; font-family: 'Courier New', Courier, monospace;
+            font-size: 13px; border: 2px solid #ccc; border-radius: 4px;
+        }
+
+        .brak {
+            text-align: center; color: #888; font-style: italic; padding: 30px;
+            background: white; border: 2px solid #ddd; border-top: none;
+        }
+        #ladowanie { text-align: center; padding: 50px; color: #888; font-size: 17px; }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <button class="btn-powrot" onclick="window.opener && !window.opener.closed ? window.close() : window.location.href='admin.html'">&#8592; Powrót</button>
+        <span class="topbar-title">Umówione poprawy</span>
+        <span style="width:90px;"></span>
+    </div>
+
+    <div class="content">
+        <div id="ladowanie">Wczytywanie...</div>
+        <div id="tresc" style="display:none;">
+
+            <div class="sekcja">
+                <div class="sekcja-naglowek niebieski">1. Poprawa wybrana przez ucznia</div>
+                <div class="sekcja-toolbar">
+                    <button class="btn-akcja" id="btn-zatwierdz-wybrane" disabled onclick="zatwierdzWybrane()">Zatwierdź wybrane (0)</button>
+                    <span class="kom" id="kom-pending"></span>
+                </div>
+                <table id="tabela-pending" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th class="nosort"><input type="checkbox" id="chk-all" onchange="toggleAll(this)"></th>
+                            <th onclick="sortujPending('klasa')">Klasa ↕</th>
+                            <th onclick="sortujPending('uczen')">Uczeń ↕</th>
+                            <th onclick="sortujPending('praca')">Praca ↕</th>
+                            <th onclick="sortujPending('ocena')">Ocena ↕</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-pending"></tbody>
+                </table>
+                <div class="brak" id="brak-pending" style="display:none;">Brak zgłoszonych poprawek.</div>
+            </div>
+
+            <div class="sekcja">
+                <div class="sekcja-naglowek zielony">2. Zatwierdzone poprawy</div>
+                <div class="sekcja-toolbar">
+                    <button class="btn-akcja" onclick="zapiszTerminy()">Zapisz terminy</button>
+                    <button class="btn-akcja czerwony" id="btn-usun-wybrane" disabled onclick="usunWybrane()">Usuń wybrane (0)</button>
+                    <span class="kom" id="kom-zatw"></span>
+                </div>
+                <table id="tabela-zatw" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th class="nosort"><input type="checkbox" id="chk-all-zatw" onchange="toggleAllZatw(this)"></th>
+                            <th onclick="sortujZatw('klasa')">Klasa ↕</th>
+                            <th onclick="sortujZatw('uczen')">Uczeń ↕</th>
+                            <th onclick="sortujZatw('praca')">Praca ↕</th>
+                            <th onclick="sortujZatw('ocena')">Ocena ↕</th>
+                            <th onclick="sortujZatw('termin')">Termin ↕</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-zatw"></tbody>
+                </table>
+                <div class="brak" id="brak-zatw" style="display:none;">Brak zatwierdzonych poprawek.</div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="supabase-config.js"></script>
+    <script>
+        const LABELE = { kartkowka: 'Kartkówka', praca_kontrolna: 'Praca kontrolna' };
+
+        let pendingList = [];
+        let zatwList = [];
+        let pendingSort = { col: 'klasa', dir: 1 };
+        let zatwSort = { col: 'klasa', dir: 1 };
+
+        function sortLista(lista, sort) {
+            return [...lista].sort((a, b) => {
+                const va = a[sort.col], vb = b[sort.col];
+                if (typeof va === 'number' || typeof vb === 'number') {
+                    return ((va ?? -Infinity) - (vb ?? -Infinity)) * sort.dir;
+                }
+                const sa = (va || '').toString().toLowerCase();
+                const sb2 = (vb || '').toString().toLowerCase();
+                return sa < sb2 ? -sort.dir : sa > sb2 ? sort.dir : 0;
+            });
+        }
+
+        async function init() {
+            const { data: { session } } = await sb.auth.getSession();
+            if (!session) { window.location.href = 'login.html'; return; }
+
+            const { data: adminRow } = await sb.from('admins').select('id').eq('id', session.user.id).single();
+            if (!adminRow) {
+                document.getElementById('ladowanie').textContent = 'Brak uprawnień admina.';
+                return;
+            }
+
+            const [{ data: profile }, { data: sem1Data }, { data: poprawkiData }] = await Promise.all([
+                sb.from('profiles').select('*'),
+                sb.from('semestr1').select('*'),
+                sb.from('poprawki').select('*'),
+            ]);
+
+            const profMap = {};
+            (profile || []).forEach(p => profMap[p.id] = p);
+            const poprawkiMap = {};
+            (poprawkiData || []).forEach(p => poprawkiMap[`${p.profil_id}|${p.typ}|${p.numer}`] = p);
+
+            pendingList = [];
+            zatwList = [];
+            (sem1Data || []).forEach(s => {
+                const prof = profMap[s.profil_id];
+                if (!prof) return;
+                for (let i = 1; i <= 8; i++) {
+                    if (s[`popk${i}`]) dodajPozycje(s, prof, poprawkiMap, 'kartkowka', i);
+                }
+                for (let i = 1; i <= 4; i++) {
+                    if (s[`popkl${i}`]) dodajPozycje(s, prof, poprawkiMap, 'praca_kontrolna', i);
+                }
+            });
+
+            document.getElementById('ladowanie').style.display = 'none';
+            document.getElementById('tresc').style.display = 'block';
+            renderujPending();
+            renderujZatw();
+        }
+
+        function dodajPozycje(s, prof, poprawkiMap, typ, numer) {
+            const pop = poprawkiMap[`${prof.id}|${typ}|${numer}`];
+            const ocena = typ === 'kartkowka' ? s[`kartkowka_${numer}`] : s[`praca_kontrolna_${numer}`];
+            const item = {
+                profilId: prof.id,
+                typ, numer,
+                id: pop?.id,
+                klasa: prof.klasa || '—',
+                nr: prof.nr,
+                uczen: `${prof.imie || ''} ${prof.nazwisko || ''}`.trim() || '—',
+                praca: `${LABELE[typ]} ${numer}`,
+                ocena: (ocena !== null && ocena !== undefined) ? ocena : '—',
+                termin: pop?.termin || '',
+            };
+            if (pop?.zatwierdzone) zatwList.push(item); else pendingList.push(item);
+        }
+
+        function renderujPending() {
+            const lista = sortLista(pendingList, pendingSort);
+            const tbody = document.getElementById('tbody-pending');
+            tbody.innerHTML = lista.map(item => `
+                <tr>
+                    <td><input type="checkbox" class="chk-pending" data-key="${item.profilId}|${item.typ}|${item.numer}"></td>
+                    <td>${item.klasa}</td>
+                    <td>${item.nr ?? '—'} — ${item.uczen}</td>
+                    <td>${item.praca}</td>
+                    <td>${item.ocena}</td>
+                </tr>`).join('');
+
+            document.getElementById('tabela-pending').style.display = lista.length ? 'table' : 'none';
+            document.getElementById('brak-pending').style.display = lista.length ? 'none' : 'block';
+            document.getElementById('chk-all').checked = false;
+            document.querySelectorAll('.chk-pending').forEach(cb => cb.onchange = updateZatwButton);
+            updateZatwButton();
+        }
+
+        function renderujZatw() {
+            const lista = sortLista(zatwList, zatwSort);
+            const tbody = document.getElementById('tbody-zatw');
+            tbody.innerHTML = lista.map(item => `
+                <tr>
+                    <td><input type="checkbox" class="chk-zatw" data-key="${item.profilId}|${item.typ}|${item.numer}" data-id="${item.id}"></td>
+                    <td>${item.klasa}</td>
+                    <td>${item.nr ?? '—'} — ${item.uczen}</td>
+                    <td>${item.praca}</td>
+                    <td>${item.ocena}</td>
+                    <td><input type="date" class="termin-input" data-key="${item.profilId}|${item.typ}|${item.numer}" value="${item.termin || ''}"></td>
+                </tr>`).join('');
+
+            document.getElementById('tabela-zatw').style.display = lista.length ? 'table' : 'none';
+            document.getElementById('brak-zatw').style.display = lista.length ? 'none' : 'block';
+            document.getElementById('chk-all-zatw').checked = false;
+            document.querySelectorAll('.chk-zatw').forEach(cb => cb.onchange = updateUsunButton);
+            updateUsunButton();
+        }
+
+        function toggleAllZatw(master) {
+            document.querySelectorAll('.chk-zatw').forEach(cb => cb.checked = master.checked);
+            updateUsunButton();
+        }
+
+        function updateUsunButton() {
+            const n = document.querySelectorAll('.chk-zatw:checked').length;
+            const btn = document.getElementById('btn-usun-wybrane');
+            btn.textContent = `Usuń wybrane (${n})`;
+            btn.disabled = n === 0;
+        }
+
+        function sortujPending(col) {
+            if (pendingSort.col === col) pendingSort.dir *= -1; else { pendingSort.col = col; pendingSort.dir = 1; }
+            renderujPending();
+        }
+        function sortujZatw(col) {
+            if (zatwSort.col === col) zatwSort.dir *= -1; else { zatwSort.col = col; zatwSort.dir = 1; }
+            renderujZatw();
+        }
+
+        function toggleAll(master) {
+            document.querySelectorAll('.chk-pending').forEach(cb => cb.checked = master.checked);
+            updateZatwButton();
+        }
+
+        function updateZatwButton() {
+            const n = document.querySelectorAll('.chk-pending:checked').length;
+            const btn = document.getElementById('btn-zatwierdz-wybrane');
+            btn.textContent = `Zatwierdź wybrane (${n})`;
+            btn.disabled = n === 0;
+        }
+
+        async function zatwierdzWybrane() {
+            const checked = Array.from(document.querySelectorAll('.chk-pending:checked'));
+            if (checked.length === 0) return;
+            const kom = document.getElementById('kom-pending');
+            kom.style.color = '#888';
+            kom.textContent = 'Zapisywanie...';
+
+            const rows = checked.map(cb => {
+                const [profilId, typ, numerStr] = cb.dataset.key.split('|');
+                return { profil_id: profilId, typ, numer: parseInt(numerStr), zatwierdzone: true };
+            });
+
+            const { error } = await sb.from('poprawki').upsert(rows, { onConflict: 'profil_id,typ,numer' });
+            if (error) {
+                kom.style.color = '#c0392b';
+                kom.textContent = 'Błąd: ' + error.message;
+                return;
+            }
+
+            const keys = new Set(rows.map(r => `${r.profil_id}|${r.typ}|${r.numer}`));
+            const moved = pendingList.filter(it => keys.has(`${it.profilId}|${it.typ}|${it.numer}`));
+            pendingList = pendingList.filter(it => !keys.has(`${it.profilId}|${it.typ}|${it.numer}`));
+            zatwList = zatwList.concat(moved);
+
+            kom.style.color = '#1a7a2e';
+            kom.textContent = `Zatwierdzono (${rows.length}) ✓`;
+            setTimeout(() => { kom.textContent = ''; }, 3000);
+
+            renderujPending();
+            renderujZatw();
+        }
+
+        async function zapiszTerminy() {
+            const kom = document.getElementById('kom-zatw');
+            const inputs = Array.from(document.querySelectorAll('.termin-input'));
+            if (inputs.length === 0) return;
+            kom.style.color = '#888';
+            kom.textContent = 'Zapisywanie...';
+
+            const rows = inputs.map(inp => {
+                const [profilId, typ, numerStr] = inp.dataset.key.split('|');
+                return { profil_id: profilId, typ, numer: parseInt(numerStr), zatwierdzone: true, termin: inp.value || null };
+            });
+
+            const { error } = await sb.from('poprawki').upsert(rows, { onConflict: 'profil_id,typ,numer' });
+            if (error) {
+                kom.style.color = '#c0392b';
+                kom.textContent = 'Błąd: ' + error.message;
+                return;
+            }
+
+            kom.style.color = '#1a7a2e';
+            kom.textContent = 'Zapisano ✓';
+            setTimeout(() => { kom.textContent = ''; }, 3000);
+        }
+
+        async function usunWybrane() {
+            const checked = Array.from(document.querySelectorAll('.chk-zatw:checked'));
+            if (checked.length === 0) return;
+
+            const kom = document.getElementById('kom-zatw');
+            kom.style.color = '#888';
+            kom.textContent = 'Usuwanie...';
+
+            const items = checked.map(cb => {
+                const [profilId, typ, numerStr] = cb.dataset.key.split('|');
+                return { profilId, typ, numer: parseInt(numerStr), id: parseInt(cb.dataset.id) };
+            });
+
+            const { error: delError } = await sb.from('poprawki').delete().in('id', items.map(it => it.id));
+            if (delError) {
+                kom.style.color = '#c0392b';
+                kom.textContent = 'Błąd: ' + delError.message;
+                return;
+            }
+
+            const perProfil = {};
+            items.forEach(it => {
+                if (!perProfil[it.profilId]) perProfil[it.profilId] = { profil_id: it.profilId };
+                const key = it.typ === 'kartkowka' ? `popk${it.numer}` : `popkl${it.numer}`;
+                perProfil[it.profilId][key] = false;
+            });
+
+            const { error: semError } = await sb.from('semestr1').upsert(Object.values(perProfil), { onConflict: 'profil_id' });
+            if (semError) {
+                kom.style.color = '#c0392b';
+                kom.textContent = 'Usunięto zgłoszenie, ale błąd resetu zaznaczenia: ' + semError.message;
+                return;
+            }
+
+            const keys = new Set(items.map(it => `${it.profilId}|${it.typ}|${it.numer}`));
+            zatwList = zatwList.filter(it => !keys.has(`${it.profilId}|${it.typ}|${it.numer}`));
+
+            kom.style.color = '#1a7a2e';
+            kom.textContent = `Usunięto (${items.length}) ✓`;
+            setTimeout(() => { kom.textContent = ''; }, 3000);
+
+            renderujZatw();
+        }
+
+        init();
+    </script>
+</body>
+</html>

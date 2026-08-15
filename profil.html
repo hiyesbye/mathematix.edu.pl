@@ -133,6 +133,20 @@
                 cursor: pointer;
             }
             .btn-umow-poprawe:hover { background: #0a6a96; }
+            .poprawa-row {
+                display: flex; align-items: center; justify-content: space-between; gap: 10px;
+                flex-wrap: wrap;
+                background: white; border: 2px solid #ccc; border-radius: 6px;
+                padding: 10px 14px; margin-bottom: 8px;
+            }
+            .poprawa-nazwa { font-weight: bold; font-size: 15px; color: #222; }
+            .poprawa-status {
+                font-size: 12px; font-weight: bold; padding: 3px 10px;
+                border-radius: 20px; white-space: nowrap;
+            }
+            .poprawa-status.tak { background: #e9f7ee; color: #1a7a2e; }
+            .poprawa-status.nie { background: #fdeceb; color: #a5301f; }
+            .poprawa-termin { font-size: 13px; color: #555; white-space: nowrap; }
             #ladowanie { text-align:center; font-size:20px; padding:40px; font-family:monospace; }
             #newsy { background-color: rgba(255, 246, 235, 0.88); }
 
@@ -342,6 +356,11 @@
                             </div>
                         </div>
 
+                        <div class="oceny-sekcja" style="margin-top: 16px; display:none;" id="sekcja-biezace-poprawy">
+                            <h3>Bieżące poprawy</h3>
+                            <div id="lista-biezace-poprawy"></div>
+                        </div>
+
                         <div class="oceny-sekcja" style="margin-top: 22px;">
                             <h3>Podsumowanie</h3>
                             <div class="punkty-row">
@@ -396,10 +415,11 @@
                 document.getElementById('p-plec').textContent =
                     profil.plec === 'K' ? 'Kobieta' : profil.plec === 'M' ? 'Mężczyzna' : '—';
 
-                // Pobierz dane Semestr 1 i punkty ucznia równolegle
-                const [{ data: sem1 }, { data: pkt1 }] = await Promise.all([
+                // Pobierz dane Semestr 1, punkty ucznia i umówione poprawy równolegle
+                const [{ data: sem1 }, { data: pkt1 }, { data: poprawkiData }] = await Promise.all([
                     sb.from('semestr1').select('*').eq('profil_id', session.user.id).single(),
-                    sb.from('Punktysem1').select('*').eq('profil_id', session.user.id).single()
+                    sb.from('Punktysem1').select('*').eq('profil_id', session.user.id).single(),
+                    sb.from('poprawki').select('*').eq('profil_id', session.user.id)
                 ]);
 
                 // Pobierz punkty całej klasy (do średnich)
@@ -592,6 +612,36 @@
 
                 budujKarty('lista-kartkowki', 8, 'Kartkówka',  'niebieski', 'kartp', 'kartmax', 'kartkowka_',       'kart');
                 budujKarty('lista-prace',     4, 'Praca kont.', 'czerwony',  'klasp', 'klasmax', 'praca_kontrolna_', 'klas');
+
+                function formatujDate(iso) {
+                    const [y, m, d] = iso.split('-');
+                    return `${d}.${m}.${y}`;
+                }
+
+                function poprawaRowHtml(nazwa, pop) {
+                    const zatw = !!pop?.zatwierdzone;
+                    const terminTekst = zatw
+                        ? (pop?.termin ? 'Masz czas do: ' + formatujDate(pop.termin) : 'Masz czas do: — (jeszcze nie ustalono)')
+                        : '';
+                    return `<div class="poprawa-row">
+                        <span class="poprawa-nazwa">${nazwa}</span>
+                        <span class="poprawa-status ${zatw ? 'tak' : 'nie'}">${zatw ? 'Zatwierdzona przez nauczyciela' : 'Oczekuje na zatwierdzenie'}</span>
+                        <span class="poprawa-termin">${terminTekst}</span>
+                    </div>`;
+                }
+
+                const poprawkiMap = {};
+                (poprawkiData || []).forEach(p => { poprawkiMap[`${p.typ}|${p.numer}`] = p; });
+
+                let poprawyHtml = '';
+                for (let i = 1; i <= 8; i++) {
+                    if (sem1?.[`popk${i}`]) poprawyHtml += poprawaRowHtml(`Kartkówka ${i}`, poprawkiMap[`kartkowka|${i}`]);
+                }
+                for (let i = 1; i <= 4; i++) {
+                    if (sem1?.[`popkl${i}`]) poprawyHtml += poprawaRowHtml(`Praca kontrolna ${i}`, poprawkiMap[`praca_kontrolna|${i}`]);
+                }
+                document.getElementById('lista-biezace-poprawy').innerHTML = poprawyHtml;
+                document.getElementById('sekcja-biezace-poprawy').style.display = poprawyHtml ? 'block' : 'none';
 
                 function liczSrednie(s) {
                     if (!s) return { aryt: null, waz: null };
