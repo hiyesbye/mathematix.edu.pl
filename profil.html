@@ -234,6 +234,28 @@
             .srednia-box { flex: 1; border-radius: 6px; padding: 7px 4px; text-align: center; }
             .srednia-box-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; opacity: 0.75; }
             .srednia-box-val { font-size: 16px; font-weight: bold; }
+
+            /* ── Responsywność ── */
+            .profil-row, .punkty-row {
+                flex-wrap: wrap;
+                row-gap: 4px;
+            }
+            .profil-value {
+                word-break: break-word;
+                text-align: right;
+            }
+            .karta-lewa { min-width: 0; }
+            .karta-nazwa { overflow-wrap: break-word; }
+            @media (max-width: 480px) {
+                .profil-wrap { padding: 0 6px 32px; }
+                .profil-box, .semestr-box { padding: 16px 14px; }
+                .profil-box h2 { font-size: 20px; }
+                .semestr-box h2 { font-size: 19px; }
+                .punkty-row { font-size: 16px; padding: 8px 12px; }
+                .punkty-row span:last-child { font-size: 19px; }
+                .wynik-boxes, .srednia-boxes { flex-wrap: wrap; }
+                .wynik-box, .srednia-box { min-width: 80px; }
+            }
         </style>
     </head>
     <body>

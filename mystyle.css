@@ -259,3 +259,17 @@ li.dropdown{
         font-size: clamp(14px, 4.5vw, 20px);
     }
 }
+
+/* Kolumna boczna (.pusty) + treść (#newsy) to układ na szerokie ekrany.
+   Na wąskich telefonach ten podział ściska treść do 70% szerokości,
+   przez co teksty w wierszach flex (np. profil.html, admin.html)
+   wychodzą poza swoje ramki — poniżej rozwijamy treść na 100%. */
+@media (max-width: 768px) {
+    .pusty {
+        display: none;
+    }
+    #newsy {
+        float: none;
+        width: 100%;
+    }
+}

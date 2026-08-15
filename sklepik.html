@@ -24,8 +24,18 @@
             font-size: 14px; cursor: pointer;
         }
         .btn-powrot:hover { background: #444; color: white; }
+        .topbar-spacer { width: 90px; flex-shrink: 0; }
 
         .content { max-width: 620px; margin: 0 auto; padding: 0 18px 48px; }
+
+        @media (max-width: 480px) {
+            .topbar { padding: 0 10px; }
+            .topbar-title { font-size: 13px; }
+            .btn-powrot { padding: 6px 10px; font-size: 12px; }
+            .topbar-spacer { display: none; }
+            .content { padding: 0 10px 40px; }
+            .produkt { flex-wrap: wrap; }
+        }
 
         /* Sklepowy szyld */
         .szyld {
@@ -131,7 +141,7 @@
     <div class="topbar">
         <button class="btn-powrot" onclick="window.opener && !window.opener.closed ? window.close() : window.location.href='profil.html'">&#8592; Powrót</button>
         <span class="topbar-title">Sklepik Punktów Aktywności</span>
-        <span style="width:90px;"></span>
+        <span class="topbar-spacer"></span>
     </div>
 
     <div class="content">

@@ -74,13 +74,25 @@
             background: white; border: 2px solid #ddd; border-top: none;
         }
         #ladowanie { text-align: center; padding: 50px; color: #888; font-size: 17px; }
+        .topbar-spacer { width: 90px; flex-shrink: 0; }
+        .tabela-scroll { overflow-x: auto; }
+        .tabela-scroll table { min-width: 520px; }
+
+        @media (max-width: 480px) {
+            .topbar { padding: 0 10px; }
+            .topbar-title { font-size: 14px; }
+            .btn-powrot { padding: 6px 10px; font-size: 12px; }
+            .topbar-spacer { display: none; }
+            .content { padding: 0 10px 40px; }
+            .sekcja-toolbar { padding: 10px; }
+        }
     </style>
 </head>
 <body>
     <div class="topbar">
         <button class="btn-powrot" onclick="window.opener && !window.opener.closed ? window.close() : window.location.href='admin.html'">&#8592; Powrót</button>
         <span class="topbar-title">Umówione poprawy</span>
-        <span style="width:90px;"></span>
+        <span class="topbar-spacer"></span>
     </div>
 
     <div class="content">
@@ -93,18 +105,20 @@
                     <button class="btn-akcja" id="btn-zatwierdz-wybrane" disabled onclick="zatwierdzWybrane()">Zatwierdź wybrane (0)</button>
                     <span class="kom" id="kom-pending"></span>
                 </div>
-                <table id="tabela-pending" style="display:none;">
-                    <thead>
-                        <tr>
-                            <th class="nosort"><input type="checkbox" id="chk-all" onchange="toggleAll(this)"></th>
-                            <th onclick="sortujPending('klasa')">Klasa ↕</th>
-                            <th onclick="sortujPending('uczen')">Uczeń ↕</th>
-                            <th onclick="sortujPending('praca')">Praca ↕</th>
-                            <th onclick="sortujPending('ocena')">Ocena ↕</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tbody-pending"></tbody>
-                </table>
+                <div class="tabela-scroll">
+                    <table id="tabela-pending" style="display:none;">
+                        <thead>
+                            <tr>
+                                <th class="nosort"><input type="checkbox" id="chk-all" onchange="toggleAll(this)"></th>
+                                <th onclick="sortujPending('klasa')">Klasa ↕</th>
+                                <th onclick="sortujPending('uczen')">Uczeń ↕</th>
+                                <th onclick="sortujPending('praca')">Praca ↕</th>
+                                <th onclick="sortujPending('ocena')">Ocena ↕</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-pending"></tbody>
+                    </table>
+                </div>
                 <div class="brak" id="brak-pending" style="display:none;">Brak zgłoszonych poprawek.</div>
             </div>
 
@@ -115,19 +129,21 @@
                     <button class="btn-akcja czerwony" id="btn-usun-wybrane" disabled onclick="usunWybrane()">Usuń wybrane (0)</button>
                     <span class="kom" id="kom-zatw"></span>
                 </div>
-                <table id="tabela-zatw" style="display:none;">
-                    <thead>
-                        <tr>
-                            <th class="nosort"><input type="checkbox" id="chk-all-zatw" onchange="toggleAllZatw(this)"></th>
-                            <th onclick="sortujZatw('klasa')">Klasa ↕</th>
-                            <th onclick="sortujZatw('uczen')">Uczeń ↕</th>
-                            <th onclick="sortujZatw('praca')">Praca ↕</th>
-                            <th onclick="sortujZatw('ocena')">Ocena ↕</th>
-                            <th onclick="sortujZatw('termin')">Termin ↕</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tbody-zatw"></tbody>
-                </table>
+                <div class="tabela-scroll">
+                    <table id="tabela-zatw" style="display:none;">
+                        <thead>
+                            <tr>
+                                <th class="nosort"><input type="checkbox" id="chk-all-zatw" onchange="toggleAllZatw(this)"></th>
+                                <th onclick="sortujZatw('klasa')">Klasa ↕</th>
+                                <th onclick="sortujZatw('uczen')">Uczeń ↕</th>
+                                <th onclick="sortujZatw('praca')">Praca ↕</th>
+                                <th onclick="sortujZatw('ocena')">Ocena ↕</th>
+                                <th onclick="sortujZatw('termin')">Termin ↕</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-zatw"></tbody>
+                    </table>
+                </div>
                 <div class="brak" id="brak-zatw" style="display:none;">Brak zatwierdzonych poprawek.</div>
             </div>
 
@@ -201,7 +217,6 @@
             const item = {
                 profilId: prof.id,
                 typ, numer,
-                id: pop?.id,
                 klasa: prof.klasa || '—',
                 nr: prof.nr,
                 uczen: `${prof.imie || ''} ${prof.nazwisko || ''}`.trim() || '—',
@@ -236,7 +251,7 @@
             const tbody = document.getElementById('tbody-zatw');
             tbody.innerHTML = lista.map(item => `
                 <tr>
-                    <td><input type="checkbox" class="chk-zatw" data-key="${item.profilId}|${item.typ}|${item.numer}" data-id="${item.id}"></td>
+                    <td><input type="checkbox" class="chk-zatw" data-key="${item.profilId}|${item.typ}|${item.numer}"></td>
                     <td>${item.klasa}</td>
                     <td>${item.nr ?? '—'} — ${item.uczen}</td>
                     <td>${item.praca}</td>
@@ -350,10 +365,13 @@
 
             const items = checked.map(cb => {
                 const [profilId, typ, numerStr] = cb.dataset.key.split('|');
-                return { profilId, typ, numer: parseInt(numerStr), id: parseInt(cb.dataset.id) };
+                return { profilId, typ, numer: parseInt(numerStr) };
             });
 
-            const { error: delError } = await sb.from('poprawki').delete().in('id', items.map(it => it.id));
+            const delResults = await Promise.all(items.map(it =>
+                sb.from('poprawki').delete().match({ profil_id: it.profilId, typ: it.typ, numer: it.numer })
+            ));
+            const delError = delResults.find(r => r.error)?.error;
             if (delError) {
                 kom.style.color = '#c0392b';
                 kom.textContent = 'Błąd: ' + delError.message;
