@@ -137,6 +137,8 @@
             .kolor-zielony .edit-pole input { border-color: #2a9d3f; background: #f0fff3; }
             .kolor-niebieski .edit-pole input { border-color: rgb(11, 105, 148); background: #f0f7fb; }
             .kolor-czerwony .edit-pole input { border-color: #c0392b; background: #fff4f3; }
+            .kolor-fioletowy .edit-pole input { border-color: #5a47a0; background: #f3f0ff; }
+            .kolor-zloty .edit-pole input { border-color: #d99a2b; background: #fff8e8; }
             .edit-punkty {
                 display: flex;
                 align-items: center;
@@ -237,6 +239,8 @@
             #dz-tabela th.th-zielony   { background: #1a7a2e; }
             #dz-tabela th.th-niebieski { background: rgb(11, 105, 148); }
             #dz-tabela th.th-czerwony  { background: #b52a1e; }
+            #dz-tabela th.th-fioletowy { background: #5a47a0; }
+            #dz-tabela th.th-zloty     { background: #9a6200; }
             #dz-tabela td {
                 padding: 5px 8px;
                 border-bottom: 1px solid #ddd;
@@ -258,6 +262,8 @@
             .dz-input.kolor-zielony   { border-color: #2a9d3f; background: #f0fff3; }
             .dz-input.kolor-niebieski { border-color: rgb(11, 105, 148); background: #f0f7fb; }
             .dz-input.kolor-czerwony  { border-color: #c0392b; background: #fff4f3; }
+            .dz-input.kolor-fioletowy { border-color: #5a47a0; background: #f3f0ff; }
+            .dz-input.kolor-zloty     { border-color: #d99a2b; background: #fff8e8; }
             #dz-komunikat  { font-size: 15px; min-height: 20px; }
             #pkt-komunikat { font-size: 15px; min-height: 20px; }
 
@@ -367,6 +373,17 @@
                             <div class="edit-grid kolor-zielony" id="eg-aktywnosc"></div>
                         </div>
                         <div class="edit-sekcja">
+                            <h4>Odpowiedzi</h4>
+                            <div class="edit-grid kolor-fioletowy" id="eg-odpowiedzi"></div>
+                        </div>
+                        <div class="edit-sekcja">
+                            <h4>Konkursy</h4>
+                            <div class="edit-grid kolor-zloty">
+                                <div class="edit-pole"><label>WKP</label><input type="number" id="e-wkp" step="1" placeholder="—"></div>
+                                <div class="edit-pole"><label>Alfik matematyczny</label><input type="number" id="e-alfik" step="1" placeholder="—"></div>
+                            </div>
+                        </div>
+                        <div class="edit-sekcja">
                             <h4>Kartkówki — punkty</h4>
                             <div class="pkt-grid pkt-kart" id="eg-kart-pkt"></div>
                             <div class="pkt-wynik" id="wynik-kart">—</div>
@@ -393,6 +410,9 @@
                             <select id="dz-typ" onchange="odswiezDziennik()">
                                 <option value="">Wybierz formę sprawdzenia...</option>
                                 <option value="aktywnosc">Aktywność</option>
+                                <option value="odpowiedz">Odpowiedzi</option>
+                                <option value="wkp">WKP</option>
+                                <option value="alfik">Alfik matematyczny</option>
                                 <option value="punkty">Punkty aktywności</option>
                                 <option value="kartkowka">Kartkówki</option>
                                 <option value="praca_kontrolna">Prace kontrolne</option>
@@ -454,13 +474,16 @@
                 if (!s) return { srAryt: null, srWaz: null };
                 const KATEGORIE = [
                     { prefix: 'aktywnosc_',       count: 5, waga: 1 },
+                    { prefix: 'odp',               count: 4, waga: 1 },
+                    { prefix: 'wkp',               count: 1, waga: 1 },
+                    { prefix: 'alfik',             count: 1, waga: 1 },
                     { prefix: 'kartkowka_',        count: 8, waga: 2 },
                     { prefix: 'praca_kontrolna_', count: 4, waga: 3 },
                 ];
                 let sumAryt = 0, cntAryt = 0, sumWaz = 0, sumWag = 0;
                 for (const kat of KATEGORIE) {
                     for (let i = 1; i <= kat.count; i++) {
-                        const v = s[`${kat.prefix}${i}`];
+                        const v = s[kat.count === 1 ? kat.prefix : `${kat.prefix}${i}`];
                         if (v !== null && v !== undefined) {
                             sumAryt += v; cntAryt++;
                             sumWaz  += v * kat.waga;
@@ -826,6 +849,7 @@
                     }
                 }
                 polaBuduj('eg-aktywnosc', 'akt', 5, 'Aktywność');
+                polaBuduj('eg-odpowiedzi', 'odp', 4, 'Odpowiedź');
 
                 // Pobierz istniejące oceny
                 const { data: sem1 } = await sb.from('semestr1')
@@ -839,6 +863,9 @@
                 if (sem1) {
                     ustaw('e-punkty', sem1.punkty_aktywnosci);
                     for (let i = 1; i <= 5; i++) ustaw(`e-akt-${i}`, sem1[`aktywnosc_${i}`]);
+                    for (let i = 1; i <= 4; i++) ustaw(`e-odp-${i}`, sem1[`odp${i}`]);
+                    ustaw('e-wkp', sem1.wkp);
+                    ustaw('e-alfik', sem1.alfik);
                 }
 
                 // Buduj siatki punktów i załaduj dane z Punktysem1
@@ -881,6 +908,9 @@
                     punkty_aktywnosci: pobierz('e-punkty'),
                 };
                 for (let i = 1; i <= 5; i++) dane[`aktywnosc_${i}`] = pobierz(`e-akt-${i}`);
+                for (let i = 1; i <= 4; i++) dane[`odp${i}`] = pobierz(`e-odp-${i}`);
+                dane.wkp = pobierz('e-wkp');
+                dane.alfik = pobierz('e-alfik');
                 for (let i = 1; i <= 8; i++) {
                     const oc = punktyNaOcene(pobierz(`e-kp-${i}`), pobierz(`e-km-${i}`));
                     dane[`kartkowka_${i}`] = typeof oc === 'number' ? oc : null;
@@ -922,14 +952,20 @@
             // ── Dziennik ocen ──
             const TYPY_DZ = {
                 aktywnosc:       { prefix: 'aktywnosc_',       count: 5, label: 'Aktywność',   kolor: 'zielony',   thKolor: 'th-zielony'   },
+                odpowiedz:       { prefix: 'odp',               count: 4, label: 'Odpowiedź',   kolor: 'fioletowy', thKolor: 'th-fioletowy' },
+                wkp:             { prefix: 'wkp',               count: 1, label: 'WKP',         kolor: 'zloty',     thKolor: 'th-zloty'     },
+                alfik:           { prefix: 'alfik',             count: 1, label: 'Alfik',       kolor: 'zloty',     thKolor: 'th-zloty'     },
                 punkty:          { prefix: 'punkty_aktywnosci', count: 1, label: 'Pkt. akt.',   kolor: '',          thKolor: ''             },
                 kartkowka:       { prefix: 'kartkowka_',        count: 8, label: 'Kartkówka',   kolor: 'niebieski', thKolor: 'th-niebieski' },
                 praca_kontrolna: { prefix: 'praca_kontrolna_', count: 4, label: 'Praca kont.', kolor: 'czerwony',  thKolor: 'th-czerwony'  },
             };
             const SEKCJE_W = [
-                { prefix: 'aktywnosc_',       count: 5, label: 'Akt.',  kolor: 'zielony',   thKolor: 'th-zielony'   },
-                { prefix: 'kartkowka_',        count: 8, label: 'Kart.', kolor: 'niebieski', thKolor: 'th-niebieski' },
-                { prefix: 'praca_kontrolna_', count: 4, label: 'PK',    kolor: 'czerwony',  thKolor: 'th-czerwony'  },
+                { prefix: 'aktywnosc_',       count: 5, label: 'Akt.',   kolor: 'zielony',   thKolor: 'th-zielony'   },
+                { prefix: 'odp',               count: 4, label: 'Odp.',   kolor: 'fioletowy', thKolor: 'th-fioletowy' },
+                { prefix: 'wkp',               count: 1, label: 'WKP',    kolor: 'zloty',     thKolor: 'th-zloty'     },
+                { prefix: 'alfik',             count: 1, label: 'Alfik',  kolor: 'zloty',     thKolor: 'th-zloty'     },
+                { prefix: 'kartkowka_',        count: 8, label: 'Kart.',  kolor: 'niebieski', thKolor: 'th-niebieski' },
+                { prefix: 'praca_kontrolna_', count: 4, label: 'PK',     kolor: 'czerwony',  thKolor: 'th-czerwony'  },
             ];
             let dzDane = [];
             let dzTyp = '';
@@ -1009,7 +1045,8 @@
                 let thRow = `<tr><th>Nr</th><th>Uczeń</th>${showKlasa ? '<th>Klasa</th>' : ''}`;
                 for (const sek of SEKCJE_W) {
                     for (let i = 1; i <= sek.count; i++) {
-                        thRow += `<th class="${sek.thKolor}">${sek.label} ${i}</th>`;
+                        const etykieta = sek.count > 1 ? `${sek.label} ${i}` : sek.label;
+                        thRow += `<th class="${sek.thKolor}">${etykieta}</th>`;
                     }
                 }
                 thead.innerHTML = thRow + '</tr>';
@@ -1019,7 +1056,7 @@
                     if (showKlasa) tds += `<td>${profil.klasa || '—'}</td>`;
                     for (const sek of SEKCJE_W) {
                         for (let i = 1; i <= sek.count; i++) {
-                            const field = `${sek.prefix}${i}`;
+                            const field = sek.count === 1 ? sek.prefix : `${sek.prefix}${i}`;
                             const val = sem1?.[field];
                             const displayed = (val !== null && val !== undefined) ? val : '';
                             tds += `<td><input class="dz-input kolor-${sek.kolor}" type="number" id="dz-${profil.id}-${field}" step="1" value="${displayed}" placeholder="—"></td>`;
@@ -1048,7 +1085,7 @@
                         const row = { profil_id: profil.id };
                         for (const sek of SEKCJE_W) {
                             for (let i = 1; i <= sek.count; i++) {
-                                const field = `${sek.prefix}${i}`;
+                                const field = sek.count === 1 ? sek.prefix : `${sek.prefix}${i}`;
                                 const val = document.getElementById(`dz-${profil.id}-${field}`)?.value;
                                 row[field] = (val !== '' && val !== undefined) ? parseInt(val) : null;
                             }

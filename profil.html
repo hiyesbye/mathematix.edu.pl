@@ -90,6 +90,8 @@
             .ocena-wartosc-box.zielony { color: #1a7a2e; border-color: #2a9d3f; text-shadow: 0 0 6px rgba(42,157,63,0.4); }
             .ocena-wartosc-box.czerwony { color: #b52a1e; border-color: #c0392b; text-shadow: 0 0 6px rgba(192,57,43,0.4); }
             .ocena-wartosc-box.niebieski { color: #0a6a96; border-color: rgb(11,105,148); text-shadow: 0 0 6px rgba(11,105,148,0.4); }
+            .ocena-wartosc-box.fioletowy { color: #5a47a0; border-color: #5a47a0; text-shadow: 0 0 6px rgba(90,71,160,0.4); }
+            .ocena-wartosc-box.zloty { color: #9a6200; border-color: #d99a2b; text-shadow: 0 0 6px rgba(217,154,43,0.4); }
             .punkty-row {
                 display: flex;
                 justify-content: space-between;
@@ -310,6 +312,16 @@
                             <div class="oceny-grid" id="grid-aktywnosc"></div>
                         </div>
 
+                        <div class="oceny-sekcja" style="margin-top: 16px; display:none;" id="sekcja-odpowiedzi">
+                            <h3>Odpowiedzi</h3>
+                            <div class="oceny-grid" id="grid-odpowiedzi"></div>
+                        </div>
+
+                        <div class="oceny-sekcja" style="margin-top: 16px; display:none;" id="sekcja-konkursy">
+                            <h3>Konkursy</h3>
+                            <div class="oceny-grid" id="grid-konkursy"></div>
+                        </div>
+
                         <div class="oceny-sekcja" style="margin-top: 16px;">
                             <h3>Kartkówki</h3>
                             <div id="lista-kartkowki"></div>
@@ -414,6 +426,17 @@
                 let aktHtml = '';
                 for (let i = 1; i <= 5; i++) aktHtml += kafelek(`Aktywność ${i}`, sem1?.[`aktywnosc_${i}`], 'zielony');
                 document.getElementById('grid-aktywnosc').innerHTML = aktHtml;
+
+                let odpHtml = '';
+                for (let i = 1; i <= 4; i++) odpHtml += kafelek(`Odpowiedź ${i}`, sem1?.[`odp${i}`], 'fioletowy');
+                document.getElementById('grid-odpowiedzi').innerHTML = odpHtml;
+                document.getElementById('sekcja-odpowiedzi').style.display = odpHtml ? 'block' : 'none';
+
+                let konkursyHtml = '';
+                konkursyHtml += kafelek('WKP', sem1?.wkp, 'zloty');
+                konkursyHtml += kafelek('Alfik matematyczny', sem1?.alfik, 'zloty');
+                document.getElementById('grid-konkursy').innerHTML = konkursyHtml;
+                document.getElementById('sekcja-konkursy').style.display = konkursyHtml ? 'block' : 'none';
 
                 function punktyNaOcene(pkt, max) {
                     if (max == null || max <= 0 || pkt == null) return null;
@@ -574,13 +597,16 @@
                     if (!s) return { aryt: null, waz: null };
                     const KATEGORIE = [
                         { prefix: 'aktywnosc_',       count: 5, waga: 1 },
+                        { prefix: 'odp',               count: 4, waga: 1 },
+                        { prefix: 'wkp',               count: 1, waga: 1 },
+                        { prefix: 'alfik',             count: 1, waga: 1 },
                         { prefix: 'kartkowka_',        count: 8, waga: 2 },
                         { prefix: 'praca_kontrolna_', count: 4, waga: 3 },
                     ];
                     let sumAryt = 0, cntAryt = 0, sumWaz = 0, sumWag = 0;
                     for (const kat of KATEGORIE) {
                         for (let i = 1; i <= kat.count; i++) {
-                            const v = s[`${kat.prefix}${i}`];
+                            const v = s[kat.count === 1 ? kat.prefix : `${kat.prefix}${i}`];
                             if (v !== null && v !== undefined) {
                                 sumAryt += v; cntAryt++;
                                 sumWaz  += v * kat.waga;

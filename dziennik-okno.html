@@ -97,6 +97,8 @@
         th.th-zielony   { background: #1a7a2e; }
         th.th-niebieski { background: rgb(11, 105, 148); }
         th.th-czerwony  { background: #b52a1e; }
+        th.th-fioletowy { background: #5a47a0; }
+        th.th-zloty     { background: #9a6200; }
 
         /* Sticky lewe kolumny — nagłówki (róg = sticky top + left) */
         th.th-nr {
@@ -170,9 +172,13 @@
         .dz-input.kolor-zielony   { border-color: #2a9d3f; background: #f0fff3; }
         .dz-input.kolor-niebieski { border-color: rgb(11,105,148); background: #f0f7fb; }
         .dz-input.kolor-czerwony  { border-color: #c0392b; background: #fff4f3; }
+        .dz-input.kolor-fioletowy { border-color: #5a47a0; background: #f3f0ff; }
+        .dz-input.kolor-zloty     { border-color: #d99a2b; background: #fff8e8; }
         .dz-input:focus.kolor-zielony   { border-color: #1a6e2a; box-shadow: 0 0 0 2px rgba(42,157,63,0.25); }
         .dz-input:focus.kolor-niebieski { border-color: rgb(8,80,115); box-shadow: 0 0 0 2px rgba(11,105,148,0.25); }
         .dz-input:focus.kolor-czerwony  { border-color: #8e1e15; box-shadow: 0 0 0 2px rgba(192,57,43,0.25); }
+        .dz-input:focus.kolor-fioletowy { border-color: #453580; box-shadow: 0 0 0 2px rgba(90,71,160,0.25); }
+        .dz-input:focus.kolor-zloty     { border-color: #7a4e00; box-shadow: 0 0 0 2px rgba(217,154,43,0.25); }
 
         #ladowanie {
             text-align: center;
@@ -206,14 +212,20 @@
     <script>
         const TYPY = {
             aktywnosc:       { prefix: 'aktywnosc_',       count: 5, label: 'Aktywność',   kolor: 'zielony',   thKolor: 'th-zielony'   },
+            odpowiedz:       { prefix: 'odp',               count: 4, label: 'Odpowiedź',   kolor: 'fioletowy', thKolor: 'th-fioletowy' },
+            wkp:             { prefix: 'wkp',               count: 1, label: 'WKP',         kolor: 'zloty',     thKolor: 'th-zloty'     },
+            alfik:           { prefix: 'alfik',             count: 1, label: 'Alfik',       kolor: 'zloty',     thKolor: 'th-zloty'     },
             punkty:          { prefix: 'punkty_aktywnosci', count: 1, label: 'Pkt. akt.',   kolor: '',          thKolor: ''             },
             kartkowka:       { prefix: 'kartkowka_',        count: 8, label: 'Kartkówka',   kolor: 'niebieski', thKolor: 'th-niebieski' },
             praca_kontrolna: { prefix: 'praca_kontrolna_', count: 4, label: 'Praca kont.', kolor: 'czerwony',  thKolor: 'th-czerwony'  },
         };
         const SEKCJE_W = [
-            { prefix: 'aktywnosc_',       count: 5, label: 'Akt.',  kolor: 'zielony',   thKolor: 'th-zielony'   },
-            { prefix: 'kartkowka_',        count: 8, label: 'Kart.', kolor: 'niebieski', thKolor: 'th-niebieski' },
-            { prefix: 'praca_kontrolna_', count: 4, label: 'PK',    kolor: 'czerwony',  thKolor: 'th-czerwony'  },
+            { prefix: 'aktywnosc_',       count: 5, label: 'Akt.',   kolor: 'zielony',   thKolor: 'th-zielony'   },
+            { prefix: 'odp',               count: 4, label: 'Odp.',   kolor: 'fioletowy', thKolor: 'th-fioletowy' },
+            { prefix: 'wkp',               count: 1, label: 'WKP',    kolor: 'zloty',     thKolor: 'th-zloty'     },
+            { prefix: 'alfik',             count: 1, label: 'Alfik',  kolor: 'zloty',     thKolor: 'th-zloty'     },
+            { prefix: 'kartkowka_',        count: 8, label: 'Kart.',  kolor: 'niebieski', thKolor: 'th-niebieski' },
+            { prefix: 'praca_kontrolna_', count: 4, label: 'PK',     kolor: 'czerwony',  thKolor: 'th-czerwony'  },
         ];
 
         const params = new URLSearchParams(window.location.search);
@@ -271,7 +283,8 @@
             let thRow = `<tr><th class="th-nr">Nr</th><th class="th-uczen">Uczeń</th>${czyWszystkieKlasy ? '<th>Klasa</th>' : ''}`;
             for (const sek of SEKCJE_W) {
                 for (let i = 1; i <= sek.count; i++) {
-                    thRow += `<th class="${sek.thKolor}">${sek.label} ${i}</th>`;
+                    const etykieta = sek.count > 1 ? `${sek.label} ${i}` : sek.label;
+                    thRow += `<th class="${sek.thKolor}">${etykieta}</th>`;
                 }
             }
             thead.innerHTML = thRow + '</tr>';
@@ -282,7 +295,7 @@
                 if (czyWszystkieKlasy) tds += `<td>${profil.klasa || '—'}</td>`;
                 for (const sek of SEKCJE_W) {
                     for (let i = 1; i <= sek.count; i++) {
-                        const field = `${sek.prefix}${i}`;
+                        const field = sek.count === 1 ? sek.prefix : `${sek.prefix}${i}`;
                         const val = sem1?.[field];
                         const displayed = (val !== null && val !== undefined) ? val : '';
                         tds += `<td><input class="dz-input kolor-${sek.kolor}" type="number" id="dz-${profil.id}-${field}" step="1" value="${displayed}" placeholder="—"></td>`;
@@ -329,7 +342,7 @@
                     const row = { profil_id: profil.id };
                     for (const sek of SEKCJE_W) {
                         for (let i = 1; i <= sek.count; i++) {
-                            const field = `${sek.prefix}${i}`;
+                            const field = sek.count === 1 ? sek.prefix : `${sek.prefix}${i}`;
                             const val = document.getElementById(`dz-${profil.id}-${field}`)?.value;
                             row[field] = (val !== '' && val !== undefined) ? parseInt(val) : null;
                         }

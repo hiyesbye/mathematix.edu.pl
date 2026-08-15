@@ -83,6 +83,8 @@
         .sim-karta.niebieski { border-left-color: rgb(11,105,148); }
         .sim-karta.czerwony  { border-left-color: #c0392b; }
         .sim-karta.zielony   { border-left-color: #2a9d3f; }
+        .sim-karta.fioletowy { border-left-color: #5a47a0; }
+        .sim-karta.zloty     { border-left-color: #d99a2b; }
         .sim-karta.zmieniona { box-shadow: 0 0 0 2px rgba(230,126,34,0.4), 0 1px 4px rgba(0,0,0,0.08); }
 
         .sim-info { flex: 1; min-width: 0; }
@@ -263,6 +265,9 @@
 
         const KATEGORIE = [
             { prefix: 'aktywnosc_',       count: 5, waga: 1, nazwa: 'Aktywność',      kolor: 'zielony',   minOcena: 5, maxOcena: 6 },
+            { prefix: 'odp',               count: 4, waga: 1, nazwa: 'Odpowiedź',       kolor: 'fioletowy', minOcena: 1, maxOcena: 6 },
+            { prefix: 'wkp',               count: 1, waga: 1, nazwa: 'WKP',              kolor: 'zloty',     minOcena: 1, maxOcena: 6 },
+            { prefix: 'alfik',             count: 1, waga: 1, nazwa: 'Alfik',            kolor: 'zloty',     minOcena: 1, maxOcena: 6 },
             { prefix: 'kartkowka_',        count: 8, waga: 2, nazwa: 'Kartkówka',       kolor: 'niebieski', minOcena: 1, maxOcena: 6 },
             { prefix: 'praca_kontrolna_', count: 4, waga: 3, nazwa: 'Praca kontrolna', kolor: 'czerwony',  minOcena: 1, maxOcena: 6 },
         ];
@@ -443,9 +448,9 @@
             simState = {};
             for (const kat of KATEGORIE) {
                 for (let i = 1; i <= kat.count; i++) {
-                    const v = sem1?.[`${kat.prefix}${i}`];
+                    const key = kat.count === 1 ? kat.prefix : `${kat.prefix}${i}`;
+                    const v = sem1?.[key];
                     if (v != null) {
-                        const key = `${kat.prefix}${i}`;
                         simState[key] = { val: v, orig: v, waga: kat.waga, minOcena: kat.minOcena, maxOcena: kat.maxOcena, kolor: kat.kolor };
                     }
                 }
@@ -463,12 +468,12 @@
 
                 const items = [];
                 for (let i = 1; i <= kat.count; i++) {
-                    const key = `${kat.prefix}${i}`;
+                    const key = kat.count === 1 ? kat.prefix : `${kat.prefix}${i}`;
                     if (simState[key]) items.push({ key, i });
                 }
                 if (items.length === 0 && !isAkt && !isKart && !isPK) continue;
 
-                const gridId = isAkt ? 'grid-akt' : isKart ? 'grid-kart' : 'grid-pk';
+                const gridId = isAkt ? 'grid-akt' : isKart ? 'grid-kart' : isPK ? 'grid-pk' : 'grid-' + kat.prefix.replace(/_$/, '');
                 html += `<div class="sekcja-tytul">${kat.nazwa} <span class="sekcja-waga">waga ${kat.waga}</span></div>`;
                 html += `<div class="sim-grid" id="${gridId}">`;
                 for (const { key, i } of items) {
@@ -477,7 +482,7 @@
                     const atMax = item.val >= item.maxOcena;
                     html += `<div class="sim-karta ${kat.kolor}" id="sk-${key}">
                         <div class="sim-info">
-                            <div class="sim-nazwa">${isAkt ? kat.nazwa : kat.nazwa + ' ' + i}</div>
+                            <div class="sim-nazwa">${isAkt || kat.count === 1 ? kat.nazwa : kat.nazwa + ' ' + i}</div>
                             <div class="sim-oryg" id="so-${key}">Oryginalna: ${item.orig}</div>
                         </div>
                         <div class="sim-controls">

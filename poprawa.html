@@ -186,6 +186,9 @@
 
         const KAT = [
             { prefix: 'aktywnosc_',       count: 5, waga: 1 },
+            { prefix: 'odp',               count: 4, waga: 1 },
+            { prefix: 'wkp',               count: 1, waga: 1 },
+            { prefix: 'alfik',             count: 1, waga: 1 },
             { prefix: 'kartkowka_',        count: 8, waga: 2 },
             { prefix: 'praca_kontrolna_', count: 4, waga: 3 },
         ];
@@ -194,7 +197,7 @@
             let sw = 0, sg = 0;
             for (const k of KAT)
                 for (let i = 1; i <= k.count; i++) {
-                    const v = sem1?.[`${k.prefix}${i}`];
+                    const v = sem1?.[k.count === 1 ? k.prefix : `${k.prefix}${i}`];
                     if (v != null) { sw += v * k.waga; sg += k.waga; }
                 }
             return { waz: sg ? sw / sg : null, sw, sg };
