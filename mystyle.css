@@ -41,6 +41,15 @@ body{
     font-size: clamp(15px, 2.2vw, 26px);
     }
 
+/* Etykieta "Zamiana ułamków, procentów i promili" jest dłuższa niż pozostałe
+   i normalnie zawija się na kilka linii — wymuszamy jedną linię, a właściwy
+   rozmiar czcionki dobiera JS w matapki.html (fitOneLine), bo dopasowanie
+   samym CSS/clamp nie jest wystarczająco precyzyjne dla tak długiego tekstu. */
+.centered-oneline{
+    white-space: nowrap;
+    overflow: hidden;
+    }
+
 .contbtn {
     float:left;
     max-width: 397px;

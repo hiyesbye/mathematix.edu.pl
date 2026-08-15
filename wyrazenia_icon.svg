@@ -19,9 +19,6 @@
   <text x="205" y="200" font-size="220" fill="rgba(255,255,255,0.05)"
         text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-weight="bold">x</text>
 
-  <text x="198" y="21" font-family="'Courier New',monospace" font-size="12"
-        fill="rgba(255,255,255,0.55)" text-anchor="middle" font-style="italic">wyrażenia algebraiczne</text>
-
   <!-- TOP EXPRESSION -->
   <text y="73" font-family="Georgia,'Times New Roman',serif"
         font-size="28" font-weight="bold" font-style="italic">

@@ -146,7 +146,7 @@
             <div class="container">
                 <a href="matapki/zamiana_ulamkow_procentow_promili.html" title="Zamiana ułamków, procentów i promili">
                     <div class="obrazek" style="background-image: url('zamiana_ulamkow_procentow_promili_icon.svg');">
-                        <div class="centered">Zamiana ułamków, procentów i promili</div>
+                        <div class="centered centered-oneline" id="centered-zupp">Zamiana ułamków, procentów i promili</div>
                     </div>
                 </a>
             </div>
@@ -157,5 +157,23 @@
             <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
         <script src="supabase-config.js"></script>
         <script src="navbar-auth.js"></script>
+        <script>
+        (function() {
+            function fitOneLine(el) {
+                if (!el) return;
+                el.style.fontSize = '';
+                var fs = parseFloat(window.getComputedStyle(el).fontSize);
+                while (el.scrollWidth > el.clientWidth && fs > 8) {
+                    fs -= 0.5;
+                    el.style.fontSize = fs + 'px';
+                }
+            }
+            function fitAll() {
+                fitOneLine(document.getElementById('centered-zupp'));
+            }
+            window.addEventListener('load', fitAll);
+            window.addEventListener('resize', fitAll);
+        })();
+        </script>
     </body>
 </html>
