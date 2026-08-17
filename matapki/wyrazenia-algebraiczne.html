@@ -34,13 +34,6 @@
     position: relative; overflow: hidden;
   }
 
-  .nav-app-btn {
-    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
-    font-size: 0.6rem; font-weight: 700; color: rgba(255,255,255,0.75);
-    text-decoration: none; text-align: right; line-height: 1.2;
-    transition: color .15s;
-  }
-  .nav-app-btn:hover { color: #fff; }
   .app-title {
     font-family: 'Nunito', "Segoe UI", sans-serif;
     font-size: 1.4rem; font-weight: 900; letter-spacing: -0.2px;
@@ -48,6 +41,25 @@
     position: relative;
     background: linear-gradient(135deg, #1b5e20, #43a047);
     border: 2px solid #2e7d32; border-radius: 16px; color: #fff;
+  }
+  .app-title::after {
+    content: '';
+    position: absolute; inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(115deg,
+      transparent 30%,
+      rgba(255,255,255,.55) 46%,
+      rgba(255,255,255,.15) 52%,
+      transparent 62%);
+    background-size: 260% 260%;
+    background-position: -80% -80%;
+    animation: titleShine 4.5s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes titleShine {
+    0%   { background-position: -80% -80%; }
+    45%  { background-position: 180% 180%; }
+    100% { background-position: 180% 180%; }
   }
 
   /* ── Tabs ─────────────────────────────────────── */
@@ -495,12 +507,21 @@
     animation: fade 1.2s ease-out forwards;
   }
   @keyframes fade { 0%{opacity:0;} 15%{opacity:1;} 100%{opacity:0;} }
+  .btn-powrot-app {
+    display: block; width: 100%; margin-top: 18px;
+    padding: 12px; background: #333; color: #fff;
+    text-align: center; text-decoration: none;
+    border-radius: 10px; font-family: inherit;
+    font-weight: 700; font-size: .95rem;
+    transition: background .15s;
+  }
+  .btn-powrot-app:hover { background: rgb(11,105,148); }
 </style>
 </head>
 <body>
 <div class="card">
   <div id="animLayer"></div>
-  <div class="app-title"><a class="nav-app-btn" href="../matapki.html">← MatApki</a>Wyrażenia algebraiczne</div>
+  <div class="app-title">Wyrażenia algebraiczne</div>
 
   <div class="mod-row">
     <span class="mode-title">Moduł:</span>
@@ -557,6 +578,7 @@
     <button type="button" class="secondary" id="resetBtn" onclick="fullReset()" disabled>Resetuj wynik</button>
     <button type="button" class="secondary" id="nextBtn" onclick="newQuestion()" style="display:none">Następne →</button>
   </div>
+  <a class="btn-powrot-app" href="../matapki.html">&#8592; Powrót</a>
 </div>
 
 <script>

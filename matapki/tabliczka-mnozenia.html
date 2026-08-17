@@ -46,6 +46,19 @@
     text-align: center;
     position: relative;
   }
+  h1::after {
+    content: '';
+    position: absolute; inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(ellipse at 28% 20%, rgba(255,255,255,.6), transparent 62%);
+    opacity: 0;
+    animation: titleGlow 5s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes titleGlow {
+    0%, 100% { opacity: 0; }
+    50%      { opacity: .5; }
+  }
   .title-text {
     color: #ffffff;
     text-shadow: 0 1px 4px rgba(5, 30, 100, 0.4);
@@ -96,6 +109,7 @@
   }
   .tab .ti { flex-shrink: 0; }
   .tab .tl { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #modeBtnExt { font-size: .68rem; }
   .tab:not(.active-n):not(.active-t):not(.active-e):hover { background: #dfe2f5; color: var(--text); }
   @media (max-width: 430px) {
     .mode-title { display: none; }
@@ -247,6 +261,15 @@
     background: radial-gradient(ellipse at center,rgba(220,0,0,.4) 0%,rgba(220,0,0,0) 70%);
     animation: flashFade 1.2s ease-out forwards;
   }
+  .btn-powrot-app {
+    display: block; width: 100%; margin-top: 18px;
+    padding: 12px; background: #333; color: #fff;
+    text-align: center; text-decoration: none;
+    border-radius: 10px; font-family: inherit;
+    font-weight: 700; font-size: .95rem;
+    transition: background .15s;
+  }
+  .btn-powrot-app:hover { background: rgb(11,105,148); }
 </style>
 </head>
 <body>
@@ -258,7 +281,7 @@
     <span class="mode-title">Tryb:</span>
     <button class="tab active-n" onclick="switchTab('normal')">Normalny</button>
     <button class="tab"         onclick="switchTab('timed')"><span class="ti">⏱</span><span class="tl">Czasowy</span></button>
-    <button class="tab"         onclick="switchTab('extended')"><span class="ti">🔢</span><span class="tl">Extended</span></button>
+    <button class="tab" id="modeBtnExt" onclick="switchTab('extended')"><span class="ti">🔢</span><span class="tl">Rozszerzony</span></button>
   </div>
 
   <!-- ══ PANEL: tryb normalny ══════════════════════════ -->
@@ -354,6 +377,7 @@
       <button type="button" id="btnChangeDiff" class="secondary">Zmień poziom</button>
     </div>
   </div>
+  <a class="btn-powrot-app" href="../matapki.html">&#8592; Powrót</a>
 </div>
 
 <script>

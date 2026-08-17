@@ -30,6 +30,26 @@
     margin: 0 0 16px; padding: 13px 20px;
     background: linear-gradient(135deg, #b07818, #e0c050);
     border: 2px solid #c49428; border-radius: 16px; color: #fff;
+    position: relative;
+  }
+  h1::after {
+    content: '';
+    position: absolute; inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(115deg,
+      transparent 30%,
+      rgba(255,255,255,.55) 46%,
+      rgba(255,255,255,.15) 52%,
+      transparent 62%);
+    background-size: 260% 260%;
+    background-position: -80% -80%;
+    animation: titleShine 4.5s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes titleShine {
+    0%   { background-position: -80% -80%; }
+    45%  { background-position: 180% 180%; }
+    100% { background-position: 180% 180%; }
   }
   .mode-row {
     display: flex; align-items: center; background: #eeeafb;
@@ -200,6 +220,15 @@
     background:radial-gradient(ellipse at center,rgba(220,0,0,.4) 0%,rgba(220,0,0,0) 70%);
     animation:flashFade 1.2s ease-out forwards;
   }
+  .btn-powrot-app {
+    display: block; width: 100%; margin-top: 18px;
+    padding: 12px; background: #333; color: #fff;
+    text-align: center; text-decoration: none;
+    border-radius: 10px; font-family: inherit;
+    font-weight: 700; font-size: .95rem;
+    transition: background .15s;
+  }
+  .btn-powrot-app:hover { background: rgb(11,105,148); }
 </style>
 </head>
 <body>
@@ -413,6 +442,7 @@
       <button type="button" id="btnRDChangeDiff" class="secondary">Zmień poziom</button>
     </div>
   </div>
+  <a class="btn-powrot-app" href="../matapki.html">&#8592; Powrót</a>
 </div>
 
 <script>

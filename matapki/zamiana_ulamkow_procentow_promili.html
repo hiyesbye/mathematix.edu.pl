@@ -244,6 +244,15 @@ body { display: flex; align-items: center; justify-content: center;
   0%   { opacity:1; transform:translate(0,0) scale(1.1); }
   100% { opacity:0; transform:var(--tx) scale(.2); }
 }
+.btn-powrot-app {
+  display: block; width: 100%; margin-top: 18px;
+  padding: 12px; background: #333; color: #fff;
+  text-align: center; text-decoration: none;
+  border-radius: 10px; font-family: inherit;
+  font-weight: 700; font-size: .95rem;
+  transition: background .15s;
+}
+.btn-powrot-app:hover { background: rgb(11,105,148); }
 </style>
 </head>
 <body>
@@ -331,6 +340,7 @@ body { display: flex; align-items: center; justify-content: center;
   <div class="btn-row">
     <button class="btn btn-next" id="next-btn" style="display:none;flex:1" onclick="nextQuestion()">Następne →</button>
   </div>
+  <a class="btn-powrot-app" href="../matapki.html">&#8592; Powrót</a>
 </div>
 
 <script>

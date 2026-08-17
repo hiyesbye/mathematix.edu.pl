@@ -46,6 +46,20 @@
     border: 2px solid #00695c;
     border-radius: 16px;
     color: #fff;
+    position: relative;
+  }
+  .app-title::after {
+    content: '';
+    position: absolute; inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(ellipse at 28% 20%, rgba(255,255,255,.6), transparent 62%);
+    opacity: 0;
+    animation: titleGlow 5s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes titleGlow {
+    0%, 100% { opacity: 0; }
+    50%      { opacity: .5; }
   }
 
   /* ── Control rows ─────────────────────────────── */
@@ -295,6 +309,15 @@
     background: radial-gradient(ellipse at center,rgba(220,0,0,.4) 0%,rgba(220,0,0,0) 70%);
     animation: flashFade 1.2s ease-out forwards;
   }
+  .btn-powrot-app {
+    display: block; width: 100%; margin-top: 18px;
+    padding: 12px; background: #333; color: #fff;
+    text-align: center; text-decoration: none;
+    border-radius: 10px; font-family: inherit;
+    font-weight: 700; font-size: .95rem;
+    transition: background .15s;
+  }
+  .btn-powrot-app:hover { background: rgb(11,105,148); }
 </style>
 </head>
 <body>
@@ -402,6 +425,7 @@
     <button type="button" id="resetBtn" class="secondary" disabled>Resetuj wynik</button>
     <button type="button" id="forfeitBtn" class="secondary forfeit-btn" style="display:none">Poddaję się</button>
   </div>
+  <a class="btn-powrot-app" href="../matapki.html">&#8592; Powrót</a>
 </div>
 
 <script>

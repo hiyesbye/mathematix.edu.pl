@@ -49,6 +49,21 @@
     padding: 13px 20px;
     margin-bottom: 14px;
     box-shadow: 0 2px 10px rgba(74,20,140,.35);
+    position: relative;
+    overflow: hidden;
+  }
+  .title-box::after {
+    content: '';
+    position: absolute; inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(ellipse at 28% 20%, rgba(255,255,255,.6), transparent 62%);
+    opacity: 0;
+    animation: titleGlow 5s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes titleGlow {
+    0%, 100% { opacity: 0; }
+    50%      { opacity: .5; }
   }
   h1 {
     font-family: "Cambria","Georgia","Palatino Linotype","Book Antiqua","Times New Roman",serif;
@@ -269,6 +284,15 @@
     .feedback  { min-height: 56px; font-size: 1rem; }
     .diff-btn  { padding: 12px 14px; gap: 10px; }
   }
+  .btn-powrot-app {
+    display: block; width: 100%; margin-top: 18px;
+    padding: 12px; background: #333; color: #fff;
+    text-align: center; text-decoration: none;
+    border-radius: 10px; font-family: inherit;
+    font-weight: 700; font-size: .95rem;
+    transition: background .15s;
+  }
+  .btn-powrot-app:hover { background: rgb(11,105,148); }
 </style>
 </head>
 <body>
@@ -354,6 +378,7 @@
       </div>
     </div>
   </div>
+  <a class="btn-powrot-app" href="../matapki.html">&#8592; Powrót</a>
 </div>
 
 <script>
