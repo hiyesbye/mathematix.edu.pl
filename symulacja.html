@@ -255,7 +255,10 @@
     </div>
 
     <script src="supabase-config.js"></script>
+    <script src="nazwy-prac.js"></script>
     <script>
+        let nazwyMap = {};
+
         const PROGI = [
             { min: 1.0,  max: 1.5,  ocena: 1, nazwa: 'niedostateczny' },
             { min: 1.5,  max: 2.6,  ocena: 2, nazwa: 'dopuszczający'  },
@@ -282,8 +285,8 @@
             { prefix: 'odp',               count: 4, waga: 1, nazwa: 'Odpowiedź',       kolor: 'fioletowy', minOcena: 1, maxOcena: 6 },
             { prefix: 'wkp',               count: 1, waga: 1, nazwa: 'WKP',              kolor: 'zloty',     minOcena: 1, maxOcena: 6 },
             { prefix: 'alfik',             count: 1, waga: 1, nazwa: 'Alfik',            kolor: 'zloty',     minOcena: 1, maxOcena: 6 },
-            { prefix: 'kartkowka_',        count: 8, waga: 2, nazwa: 'Kartkówka',       kolor: 'niebieski', minOcena: 1, maxOcena: 6 },
-            { prefix: 'praca_kontrolna_', count: 4, waga: 3, nazwa: 'Praca kontrolna', kolor: 'czerwony',  minOcena: 1, maxOcena: 6 },
+            { prefix: 'kartkowka_',        count: 8, waga: 2, nazwa: 'Kartkówka',       kolor: 'niebieski', minOcena: 1, maxOcena: 6, typ: 'kartkowka' },
+            { prefix: 'praca_kontrolna_', count: 4, waga: 3, nazwa: 'Praca kontrolna', kolor: 'czerwony',  minOcena: 1, maxOcena: 6, typ: 'praca_kontrolna' },
         ];
 
         let simState   = {};
@@ -453,7 +456,11 @@
             const { data: { session } } = await sb.auth.getSession();
             if (!session) { window.location.href = 'index.html'; return; }
 
-            const { data: sem1 } = await sb.from('semestr1').select('*').eq('profil_id', session.user.id).single();
+            const [{ data: sem1 }, { data: profil }] = await Promise.all([
+                sb.from('semestr1').select('*').eq('profil_id', session.user.id).single(),
+                sb.from('profiles').select('klasa').eq('id', session.user.id).single(),
+            ]);
+            nazwyMap = await pobierzNazwyPrac(profil?.klasa);
 
             document.getElementById('ladowanie').style.display   = 'none';
             document.getElementById('avg-panel').style.display   = 'flex';
@@ -496,7 +503,7 @@
                     const atMax = item.val >= item.maxOcena;
                     html += `<div class="sim-karta ${kat.kolor}" id="sk-${key}">
                         <div class="sim-info">
-                            <div class="sim-nazwa">${isAkt || kat.count === 1 ? kat.nazwa : kat.nazwa + ' ' + i}</div>
+                            <div class="sim-nazwa">${isAkt || kat.count === 1 ? kat.nazwa : (kat.typ ? nazwaPracy(nazwyMap, kat.typ, i, kat.nazwa) : kat.nazwa + ' ' + i)}</div>
                             <div class="sim-oryg" id="so-${key}">Oryginalna: ${item.orig}</div>
                         </div>
                         <div class="sim-controls">

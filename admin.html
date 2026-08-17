@@ -305,6 +305,16 @@
                 background: #eee; font-size: 14px; font-weight: bold; color: #333;
                 display: inline-block;
             }
+
+            /* ── Nazwy sprawdzianów ── */
+            .nazwa-row { display: flex; align-items: center; gap: 8px; }
+            .nazwa-row label { width: 130px; font-size: 13px; color: #555; flex-shrink: 0; }
+            .nazwa-row input {
+                flex: 1; padding: 6px 10px; font-family: 'Courier New', Courier, monospace;
+                font-size: 14px; border: 2px solid #ccc; border-radius: 4px; box-sizing: border-box;
+            }
+            .nazwy-kart .nazwa-row input { border-color: rgb(11, 105, 148); background: #f0f7fb; }
+            .nazwy-klas .nazwa-row input { border-color: #c0392b; background: #fff4f3; }
         </style>
     </head>
     <body>
@@ -455,6 +465,28 @@
                     </div>
 
                     <div style="margin-top: 28px; border-top: 2px solid #ccc; padding-top: 20px;">
+                        <h3 style="font-size: 20px; margin-bottom: 16px;">Nazwy sprawdzianów</h3>
+                        <p style="color: #111; font-size: 15px; margin-bottom: 14px; font-weight: bold;">Nadaj własne nazwy kartkówkom i pracom kontrolnym — osobno dla każdej klasy. Uczniowie zobaczą je w swoim profilu (bez możliwości edycji).</p>
+                        <div class="dziennik-filtry">
+                            <select id="nazwy-klasa" onchange="odswiezNazwy()">
+                                <option value="">Wybierz klasę...</option>
+                            </select>
+                        </div>
+                        <div id="nazwy-komunikat" style="margin: 8px 0; font-size: 15px;"></div>
+                        <div id="nazwy-formularz" style="display:none;">
+                            <div class="edit-sekcja">
+                                <h4>Kartkówki</h4>
+                                <div class="pkt-grid nazwy-kart" id="nazwy-kart"></div>
+                            </div>
+                            <div class="edit-sekcja">
+                                <h4>Prace kontrolne</h4>
+                                <div class="pkt-grid nazwy-klas" id="nazwy-klas"></div>
+                            </div>
+                            <button class="btn-zapisz" onclick="zapiszNazwy()">Zapisz nazwy</button>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 28px; border-top: 2px solid #ccc; padding-top: 20px;">
                         <h3 style="font-size: 20px; margin-bottom: 10px;">Umówione poprawy</h3>
                         <p style="color: #111; font-size: 15px; margin-bottom: 14px; font-weight: bold;">Zarządzaj poprawami zgłoszonymi przez uczniów i ustalaj terminy.</p>
                         <button class="btn-nowe-okno" onclick="window.open('umowione-poprawy.html', '_blank', 'width=1000,height=720,resizable=yes,scrollbars=yes')">&#x2197; Otwórz panel poprawek</button>
@@ -471,6 +503,7 @@
             </div>
         </div>
         <script src="supabase-config.js"></script>
+        <script src="nazwy-prac.js"></script>
         <script>
             let wszyscyUczniowie = [];
             let sortKolumna = 'klasa';
@@ -537,7 +570,7 @@
 
                 const klasy = [...new Set(wszyscyUczniowie.map(u => u.klasa).filter(Boolean))].sort();
                 klasy.forEach(k => {
-                    ['filterKlasa', 'dz-klasa', 'pkt-klasa'].forEach(id => {
+                    ['filterKlasa', 'dz-klasa', 'pkt-klasa', 'nazwy-klasa'].forEach(id => {
                         const opt = document.createElement('option');
                         opt.value = k; opt.textContent = k;
                         document.getElementById(id).appendChild(opt);
@@ -594,7 +627,7 @@
                         <td>${u.plec === 'K' ? 'Kobieta' : u.plec === 'M' ? 'Mężczyzna' : '—'}</td>
                         <td>${u.srAryt !== null && u.srAryt !== undefined ? u.srAryt.toFixed(2) : '—'}</td>
                         <td>${u.srWaz  !== null && u.srWaz  !== undefined ? u.srWaz.toFixed(2)  : '—'}</td>
-                        <td><button class="btn-edytuj" onclick="edytuj('${u.id}','${u.imie || ''} ${u.nazwisko || ''}','${u.nr ?? ''}')">Edytuj</button></td>
+                        <td><button class="btn-edytuj" onclick="edytuj('${u.id}','${u.imie || ''} ${u.nazwisko || ''}','${u.nr ?? ''}','${u.klasa || ''}')">Edytuj</button></td>
                     </tr>`).join('');
             }
 
@@ -613,6 +646,7 @@
                 praca_kontrolna: { count: 4, prefix: 'klasp',  prefixMax: 'klasmax',  label: 'PK',     kolor: 'czerwony',  thKolor: 'th-czerwony'  },
             };
             let pktDane = [], pktTyp = '', pktKlasa = '';
+            let pktNazwyMap = {};
 
             async function odswiezDziennikPkt() {
                 pktKlasa = document.getElementById('pkt-klasa').value;
@@ -629,6 +663,8 @@
 
                 kom.style.color = 'gray';
                 kom.textContent = 'Wczytywanie...';
+
+                pktNazwyMap = (pktKlasa !== 'wszystkie_klasy') ? await pobierzNazwyPrac(pktKlasa) : {};
 
                 let q = sb.from('profiles').select('*');
                 if (pktKlasa !== 'wszystkie_klasy') q = q.eq('klasa', pktKlasa);
@@ -657,7 +693,8 @@
 
                 let thRow = `<tr><th>Nr</th><th>Uczeń</th>${showKlasa ? '<th>Klasa</th>' : ''}`;
                 for (let i = 1; i <= typ.count; i++) {
-                    thRow += `<th class="${typ.thKolor}">${typ.label} ${i}</th>`;
+                    const pelna = nazwaPracy(pktNazwyMap, pktTyp, i, typ.label);
+                    thRow += `<th class="${typ.thKolor}" title="${pelna}" style="cursor:help;">${nazwaSkrocona(pktTyp, i)}</th>`;
                 }
                 thead.innerHTML = thRow + '</tr>';
 
@@ -760,14 +797,15 @@
                 return '#27ae60';
             }
 
-            function budujPktGrid(containerId, idP, idMax, count, etykieta, wynikId) {
+            function budujPktGrid(containerId, idP, idMax, count, etykieta, wynikId, nazwyMap, typ) {
                 const el = document.getElementById(containerId);
                 el.innerHTML = '';
                 for (let i = 1; i <= count; i++) {
                     const row = document.createElement('div');
                     row.className = 'pkt-row';
+                    const label = (nazwyMap && typ) ? nazwaPracy(nazwyMap, typ, i, etykieta) : `${etykieta} ${i}`;
                     row.innerHTML = `
-                        <label>${etykieta} ${i}:</label>
+                        <label>${label}:</label>
                         <input type="number" id="${idP}${i}" min="0" step="1" placeholder="pkt"
                             oninput="przeliczPkt('${idP}','${idMax}',${count},'${wynikId}')">
                         <span class="pkt-sep">/</span>
@@ -837,11 +875,13 @@
                 }
             }
 
-            async function edytuj(profilId, nazwa, nr) {
+            async function edytuj(profilId, nazwa, nr, klasa) {
                 edytowanyProfilId = profilId;
                 document.getElementById('editTytuł').textContent =
                     `Edytujesz: ${nazwa.trim()}${nr ? ' (nr: ' + nr + ')' : ''}`;
                 document.getElementById('editKomunikat').textContent = '';
+
+                const editNazwyMap = await pobierzNazwyPrac(klasa);
 
                 // Generuj pola wejściowe
                 function polaBuduj(containerId, prefix, count, etykieta) {
@@ -875,8 +915,8 @@
                 }
 
                 // Buduj siatki punktów i załaduj dane z Punktysem1
-                budujPktGrid('eg-kart-pkt', 'e-kp-', 'e-km-', 8, 'Kart.', 'wynik-kart');
-                budujPktGrid('eg-klas-pkt', 'e-lp-', 'e-lm-', 4, 'Praca kont.', 'wynik-klas');
+                budujPktGrid('eg-kart-pkt', 'e-kp-', 'e-km-', 8, 'Kart.', 'wynik-kart', editNazwyMap, 'kartkowka');
+                budujPktGrid('eg-klas-pkt', 'e-lp-', 'e-lm-', 4, 'Praca kont.', 'wynik-klas', editNazwyMap, 'praca_kontrolna');
                 document.getElementById('wynik-kart').textContent = '—';
                 document.getElementById('wynik-klas').textContent = '—';
 
@@ -976,6 +1016,7 @@
             let dzDane = [];
             let dzTyp = '';
             let dzKlasa = '';
+            let dzNazwyMap = {};
 
             async function odswiezDziennik() {
                 dzKlasa = document.getElementById('dz-klasa').value;
@@ -992,6 +1033,8 @@
 
                 kom.style.color = 'gray';
                 kom.textContent = 'Wczytywanie...';
+
+                dzNazwyMap = (dzKlasa !== 'wszystkie_klasy') ? await pobierzNazwyPrac(dzKlasa) : {};
 
                 let q = sb.from('profiles').select('*');
                 if (dzKlasa !== 'wszystkie_klasy') q = q.eq('klasa', dzKlasa);
@@ -1022,10 +1065,17 @@
                 const tbody = document.getElementById('dz-tbody');
                 const showKlasa = dzKlasa === 'wszystkie_klasy';
 
+                const jestNazywalny = dzTyp === 'kartkowka' || dzTyp === 'praca_kontrolna';
+
                 let thRow = `<tr><th>Nr</th><th>Uczeń</th>${showKlasa ? '<th>Klasa</th>' : ''}`;
                 for (let i = 1; i <= typ.count; i++) {
-                    const etykieta = typ.count > 1 ? `${typ.label} ${i}` : typ.label;
-                    thRow += `<th class="${typ.thKolor}">${etykieta}</th>`;
+                    if (jestNazywalny && typ.count > 1) {
+                        const pelna = nazwaPracy(dzNazwyMap, dzTyp, i, typ.label);
+                        thRow += `<th class="${typ.thKolor}" title="${pelna}" style="cursor:help;">${nazwaSkrocona(dzTyp, i)}</th>`;
+                    } else {
+                        const etykieta = typ.count > 1 ? `${typ.label} ${i}` : typ.label;
+                        thRow += `<th class="${typ.thKolor}">${etykieta}</th>`;
+                    }
                 }
                 thead.innerHTML = thRow + '</tr>';
 
@@ -1050,9 +1100,15 @@
 
                 let thRow = `<tr><th>Nr</th><th>Uczeń</th>${showKlasa ? '<th>Klasa</th>' : ''}`;
                 for (const sek of SEKCJE_W) {
+                    const typKey = sek.prefix === 'kartkowka_' ? 'kartkowka' : sek.prefix === 'praca_kontrolna_' ? 'praca_kontrolna' : null;
                     for (let i = 1; i <= sek.count; i++) {
-                        const etykieta = sek.count > 1 ? `${sek.label} ${i}` : sek.label;
-                        thRow += `<th class="${sek.thKolor}">${etykieta}</th>`;
+                        if (typKey && sek.count > 1) {
+                            const pelna = nazwaPracy(dzNazwyMap, typKey, i, sek.label);
+                            thRow += `<th class="${sek.thKolor}" title="${pelna}" style="cursor:help;">${nazwaSkrocona(typKey, i)}</th>`;
+                        } else {
+                            const etykieta = sek.count > 1 ? `${sek.label} ${i}` : sek.label;
+                            thRow += `<th class="${sek.thKolor}">${etykieta}</th>`;
+                        }
                     }
                 }
                 thead.innerHTML = thRow + '</tr>';
@@ -1119,6 +1175,69 @@
                     kom.style.color = 'green';
                     kom.textContent = `Zapisano pomyślnie (${toUpsert.length} uczniów).`;
                 }
+            }
+
+            // ── Nazwy sprawdzianów ──
+            async function odswiezNazwy() {
+                const klasa = document.getElementById('nazwy-klasa').value;
+                const formularz = document.getElementById('nazwy-formularz');
+                const kom = document.getElementById('nazwy-komunikat');
+                kom.textContent = '';
+                if (!klasa) { formularz.style.display = 'none'; return; }
+
+                kom.style.color = 'gray';
+                kom.textContent = 'Wczytywanie...';
+                const mapa = await pobierzNazwyPrac(klasa);
+                kom.textContent = '';
+
+                const kartEl = document.getElementById('nazwy-kart');
+                kartEl.innerHTML = '';
+                for (let i = 1; i <= 8; i++) {
+                    const row = document.createElement('div');
+                    row.className = 'nazwa-row';
+                    row.innerHTML = `<label>Kartkówka ${i}</label><input type="text" id="nazwa-kart-${i}" maxlength="60" placeholder="np. Ułamki" value="${mapa[`kartkowka|${i}`] || ''}">`;
+                    kartEl.appendChild(row);
+                }
+
+                const klasEl = document.getElementById('nazwy-klas');
+                klasEl.innerHTML = '';
+                for (let i = 1; i <= 4; i++) {
+                    const row = document.createElement('div');
+                    row.className = 'nazwa-row';
+                    row.innerHTML = `<label>Praca kontrolna ${i}</label><input type="text" id="nazwa-klas-${i}" maxlength="60" placeholder="np. Równania" value="${mapa[`praca_kontrolna|${i}`] || ''}">`;
+                    klasEl.appendChild(row);
+                }
+
+                formularz.style.display = 'block';
+            }
+
+            async function zapiszNazwy() {
+                const klasa = document.getElementById('nazwy-klasa').value;
+                if (!klasa) return;
+                const kom = document.getElementById('nazwy-komunikat');
+                kom.style.color = 'gray';
+                kom.textContent = 'Zapisywanie...';
+
+                const rows = [];
+                for (let i = 1; i <= 8; i++) {
+                    const val = document.getElementById(`nazwa-kart-${i}`).value.trim();
+                    rows.push({ klasa, typ: 'kartkowka', numer: i, nazwa: val || null });
+                }
+                for (let i = 1; i <= 4; i++) {
+                    const val = document.getElementById(`nazwa-klas-${i}`).value.trim();
+                    rows.push({ klasa, typ: 'praca_kontrolna', numer: i, nazwa: val || null });
+                }
+
+                const { error } = await sb.from('nazwy_prac').upsert(rows, { onConflict: 'klasa,typ,numer' });
+                if (error) {
+                    kom.style.color = 'red';
+                    kom.textContent = 'Błąd zapisu: ' + error.message;
+                    return;
+                }
+
+                kom.style.color = 'green';
+                kom.textContent = 'Zapisano ✓';
+                setTimeout(() => { kom.textContent = ''; }, 3000);
             }
 
             init();

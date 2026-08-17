@@ -184,6 +184,7 @@
     </div>
 
     <script src="supabase-config.js"></script>
+    <script src="nazwy-prac.js"></script>
     <script>
         const PROGI = [
             { min: 1.0,  max: 1.5,  ocena: 1, nazwa: 'niedostateczny' },
@@ -238,13 +239,13 @@
             return '#2a9d3f';
         }
 
-        function budujKandydatow(sem1, pkt1) {
+        function budujKandydatow(sem1, pkt1, nazwyMap) {
             const c = [];
             for (let i = 1; i <= 8; i++) {
                 const v = sem1?.[`kartkowka_${i}`];
                 if (v != null && v < 6)
                     c.push({
-                        label: `Kartkówka ${i}`, sub: `Obecna ocena: ${v}`,
+                        label: nazwaPracy(nazwyMap, 'kartkowka', i, 'Kartkówka'), sub: `Obecna ocena: ${v}`,
                         obecna: v, waga: 2, isNew: false, kolor: 'niebieski', minStart: v + 1,
                         pkt: pkt1?.[`kartp${i}`] ?? null,
                         max: pkt1?.[`kartmax${i}`] ?? null,
@@ -254,7 +255,7 @@
                 const v = sem1?.[`praca_kontrolna_${i}`];
                 if (v != null && v < 6)
                     c.push({
-                        label: `Praca kontrolna ${i}`, sub: `Obecna ocena: ${v}`,
+                        label: nazwaPracy(nazwyMap, 'praca_kontrolna', i, 'Praca kontrolna'), sub: `Obecna ocena: ${v}`,
                         obecna: v, waga: 3, isNew: false, kolor: 'czerwony', minStart: v + 1,
                         pkt: pkt1?.[`klasp${i}`] ?? null,
                         max: pkt1?.[`klasmax${i}`] ?? null,
@@ -442,6 +443,7 @@
                 sb.from('Punktysem1').select('*').eq('profil_id', session.user.id).single(),
                 sb.from('profiles').select('imie, nazwisko, klasa').eq('id', session.user.id).single(),
             ]);
+            const nazwyMap = await pobierzNazwyPrac(profil?.klasa);
 
             document.getElementById('ladowanie').style.display = 'none';
             const wynik = document.getElementById('wynik');
@@ -488,7 +490,7 @@
                 </div>
             </div>`;
 
-            const kandydaci = budujKandydatow(sem1, pkt1);
+            const kandydaci = budujKandydatow(sem1, pkt1, nazwyMap);
             if (kandydaci.length === 0) {
                 html += '<div class="brak">Wszystkie oceny są już na poziomie 6 — brak możliwości poprawy.</div>';
                 wynik.innerHTML = html;

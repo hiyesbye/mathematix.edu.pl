@@ -151,11 +151,13 @@
     </div>
 
     <script src="supabase-config.js"></script>
+    <script src="nazwy-prac.js"></script>
     <script>
         const LABELE = { kartkowka: 'Kartkówka', praca_kontrolna: 'Praca kontrolna' };
 
         let pendingList = [];
         let zatwList = [];
+        let nazwyWszystkich = {};
         let pendingSort = { col: 'klasa', dir: 1 };
         let zatwSort = { col: 'klasa', dir: 1 };
 
@@ -181,11 +183,15 @@
                 return;
             }
 
-            const [{ data: profile }, { data: sem1Data }, { data: poprawkiData }] = await Promise.all([
+            const [{ data: profile }, { data: sem1Data }, { data: poprawkiData }, { data: nazwyData }] = await Promise.all([
                 sb.from('profiles').select('*'),
                 sb.from('semestr1').select('*'),
                 sb.from('poprawki').select('*'),
+                sb.from('nazwy_prac').select('klasa, typ, numer, nazwa'),
             ]);
+
+            nazwyWszystkich = {};
+            (nazwyData || []).forEach(n => { if (n.nazwa) nazwyWszystkich[`${n.klasa}|${n.typ}|${n.numer}`] = n.nazwa; });
 
             const profMap = {};
             (profile || []).forEach(p => profMap[p.id] = p);
@@ -220,7 +226,7 @@
                 klasa: prof.klasa || '—',
                 nr: prof.nr,
                 uczen: `${prof.imie || ''} ${prof.nazwisko || ''}`.trim() || '—',
-                praca: `${LABELE[typ]} ${numer}`,
+                praca: nazwyWszystkich[`${prof.klasa}|${typ}|${numer}`] || `${LABELE[typ]} ${numer}`,
                 ocena: (ocena !== null && ocena !== undefined) ? ocena : '—',
                 termin: pop?.termin || '',
             };

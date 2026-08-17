@@ -115,6 +115,7 @@
     </div>
 
     <script src="supabase-config.js"></script>
+    <script src="nazwy-prac.js"></script>
     <script>
         let profilId = null;
         let poprawyObecne = {};
@@ -135,7 +136,11 @@
             if (!session) { window.location.href = 'login.html'; return; }
             profilId = session.user.id;
 
-            const { data: sem1 } = await sb.from('semestr1').select('*').eq('profil_id', profilId).single();
+            const [{ data: sem1 }, { data: profil }] = await Promise.all([
+                sb.from('semestr1').select('*').eq('profil_id', profilId).single(),
+                sb.from('profiles').select('klasa').eq('id', profilId).single(),
+            ]);
+            const nazwyMap = await pobierzNazwyPrac(profil?.klasa);
 
             KLUCZE_POPRAWY.forEach(k => { poprawyObecne[k] = !!sem1?.[k]; });
 
@@ -143,14 +148,14 @@
             for (let i = 1; i <= 8; i++) {
                 const ocena = sem1?.[`kartkowka_${i}`];
                 if (ocena == null) continue;
-                kartRows += rowHtml(`popk${i}`, `Kartkówka ${i}`, ocena, !!sem1?.[`popk${i}`], 'niebieski');
+                kartRows += rowHtml(`popk${i}`, nazwaPracy(nazwyMap, 'kartkowka', i, 'Kartkówka'), ocena, !!sem1?.[`popk${i}`], 'niebieski');
             }
 
             let klasRows = '';
             for (let i = 1; i <= 4; i++) {
                 const ocena = sem1?.[`praca_kontrolna_${i}`];
                 if (ocena == null) continue;
-                klasRows += rowHtml(`popkl${i}`, `Praca kontrolna ${i}`, ocena, !!sem1?.[`popkl${i}`], 'czerwony');
+                klasRows += rowHtml(`popkl${i}`, nazwaPracy(nazwyMap, 'praca_kontrolna', i, 'Praca kontrolna'), ocena, !!sem1?.[`popkl${i}`], 'czerwony');
             }
 
             document.getElementById('ladowanie').style.display = 'none';

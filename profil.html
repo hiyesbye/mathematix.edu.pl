@@ -403,7 +403,10 @@
             </div>
         </div>
         <script src="supabase-config.js"></script>
+        <script src="nazwy-prac.js"></script>
         <script>
+            let nazwyMap = {};
+
             async function init() {
                 const { data: { session } } = await sb.auth.getSession();
                 if (!session) {
@@ -437,12 +440,14 @@
                 document.getElementById('p-plec').textContent =
                     profil.plec === 'K' ? 'Kobieta' : profil.plec === 'M' ? 'Mężczyzna' : '—';
 
-                // Pobierz dane Semestr 1, punkty ucznia i umówione poprawy równolegle
-                const [{ data: sem1 }, { data: pkt1 }, { data: poprawkiData }] = await Promise.all([
+                // Pobierz dane Semestr 1, punkty ucznia, umówione poprawy i nazwy sprawdzianów równolegle
+                const [{ data: sem1 }, { data: pkt1 }, { data: poprawkiData }, nazwyMapRes] = await Promise.all([
                     sb.from('semestr1').select('*').eq('profil_id', session.user.id).single(),
                     sb.from('Punktysem1').select('*').eq('profil_id', session.user.id).single(),
-                    sb.from('poprawki').select('*').eq('profil_id', session.user.id)
+                    sb.from('poprawki').select('*').eq('profil_id', session.user.id),
+                    pobierzNazwyPrac(profil.klasa)
                 ]);
+                nazwyMap = nazwyMapRes;
 
                 // Pobierz punkty całej klasy (do średnich)
                 let klasaPkt = [];
@@ -564,7 +569,7 @@
                     };
                 }
 
-                function budujKarty(containerId, count, nazwaBase, kolor, prefixPkt, prefixMax, prefixSem, procKey) {
+                function budujKarty(containerId, count, nazwaBase, kolor, prefixPkt, prefixMax, prefixSem, procKey, typ) {
                     const el = document.getElementById(containerId);
                     let html = '<div class="sprawdzian-lista">';
                     let any = false;
@@ -588,7 +593,7 @@
                         html += `<div class="sprawdzian-karta ${kolor}" id="${id}">
                             <div class="karta-naglowek" onclick="toggleKarta('${id}')">
                                 <div class="karta-lewa">
-                                    <span class="karta-nazwa">${nazwaBase} ${i}</span>
+                                    <span class="karta-nazwa">${nazwaPracy(nazwyMap, typ, i, nazwaBase)}</span>
                                     <span class="karta-ocena-badge ${kolor}">${badge}</span>
                                 </div>
                                 <span class="karta-strzalka">▼</span>
@@ -632,8 +637,8 @@
                     el.innerHTML = any ? html : '';
                 }
 
-                budujKarty('lista-kartkowki', 8, 'Kartkówka',  'niebieski', 'kartp', 'kartmax', 'kartkowka_',       'kart');
-                budujKarty('lista-prace',     4, 'Praca kont.', 'czerwony',  'klasp', 'klasmax', 'praca_kontrolna_', 'klas');
+                budujKarty('lista-kartkowki', 8, 'Kartkówka',  'niebieski', 'kartp', 'kartmax', 'kartkowka_',       'kart', 'kartkowka');
+                budujKarty('lista-prace',     4, 'Praca kont.', 'czerwony',  'klasp', 'klasmax', 'praca_kontrolna_', 'klas', 'praca_kontrolna');
 
                 function formatujDate(iso) {
                     const [y, m, d] = iso.split('-');
@@ -657,10 +662,10 @@
 
                 let poprawyHtml = '';
                 for (let i = 1; i <= 8; i++) {
-                    if (sem1?.[`popk${i}`]) poprawyHtml += poprawaRowHtml(`Kartkówka ${i}`, poprawkiMap[`kartkowka|${i}`]);
+                    if (sem1?.[`popk${i}`]) poprawyHtml += poprawaRowHtml(nazwaPracy(nazwyMap, 'kartkowka', i, 'Kartkówka'), poprawkiMap[`kartkowka|${i}`]);
                 }
                 for (let i = 1; i <= 4; i++) {
-                    if (sem1?.[`popkl${i}`]) poprawyHtml += poprawaRowHtml(`Praca kontrolna ${i}`, poprawkiMap[`praca_kontrolna|${i}`]);
+                    if (sem1?.[`popkl${i}`]) poprawyHtml += poprawaRowHtml(nazwaPracy(nazwyMap, 'praca_kontrolna', i, 'Praca kontrolna'), poprawkiMap[`praca_kontrolna|${i}`]);
                 }
                 document.getElementById('lista-biezace-poprawy').innerHTML = poprawyHtml;
                 document.getElementById('sekcja-biezace-poprawy').style.display = poprawyHtml ? 'block' : 'none';

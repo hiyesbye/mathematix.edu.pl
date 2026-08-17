@@ -136,6 +136,7 @@
     </div>
 
     <script src="supabase-config.js"></script>
+    <script src="nazwy-prac.js"></script>
     <script>
         const TYPY = {
             kartkowka:       { count: 8, prefix: 'kartp',  prefixMax: 'kartmax',  label: 'Kart.',  kolor: 'niebieski', thKolor: 'th-niebieski' },
@@ -147,6 +148,7 @@
         const typ    = params.get('typ')   || '';
         const czyWszystkieKlasy = klasa === 'wszystkie_klasy';
         let dane = [];
+        let nazwyMap = {};
 
         async function init() {
             const t = TYPY[typ];
@@ -161,6 +163,8 @@
             document.title = `Punkty: ${czyWszystkieKlasy ? 'Wszystkie' : klasa} / ${tytulLabel}`;
 
             await sb.auth.getSession();
+
+            nazwyMap = czyWszystkieKlasy ? {} : await pobierzNazwyPrac(klasa);
 
             let q = sb.from('profiles').select('*');
             if (!czyWszystkieKlasy) q = q.eq('klasa', klasa);
@@ -189,7 +193,8 @@
 
             let thRow = `<tr><th class="th-nr">Nr</th><th class="th-uczen">Uczeń</th>${czyWszystkieKlasy ? '<th>Klasa</th>' : ''}`;
             for (let i = 1; i <= t.count; i++) {
-                thRow += `<th class="${t.thKolor}">${t.label} ${i}</th>`;
+                const pelna = nazwaPracy(nazwyMap, typ, i, typ === 'kartkowka' ? 'Kartkówka' : 'Praca kontrolna');
+                thRow += `<th class="${t.thKolor}" title="${pelna}" style="cursor:help;">${nazwaSkrocona(typ, i)}</th>`;
             }
             thead.innerHTML = thRow + '</tr>';
 

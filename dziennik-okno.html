@@ -217,7 +217,9 @@
     </div>
 
     <script src="supabase-config.js"></script>
+    <script src="nazwy-prac.js"></script>
     <script>
+        let nazwyMap = {};
         const TYPY = {
             aktywnosc:       { prefix: 'aktywnosc_',       count: 5, label: 'Aktywność',   kolor: 'zielony',   thKolor: 'th-zielony'   },
             odpowiedz:       { prefix: 'odp',               count: 4, label: 'Odpowiedź',   kolor: 'fioletowy', thKolor: 'th-fioletowy' },
@@ -258,6 +260,8 @@
             // Poczekaj na przywrócenie sesji z localStorage zanim Supabase RLS przepuści zapytanie
             await sb.auth.getSession();
 
+            nazwyMap = czyWszystkieKlasy ? {} : await pobierzNazwyPrac(klasa);
+
             let q = sb.from('profiles').select('*');
             if (!czyWszystkieKlasy) q = q.eq('klasa', klasa);
             const { data: profiles, error: pe } = await q.order('klasa').order('nr');
@@ -290,9 +294,15 @@
 
             let thRow = `<tr><th class="th-nr">Nr</th><th class="th-uczen">Uczeń</th>${czyWszystkieKlasy ? '<th>Klasa</th>' : ''}`;
             for (const sek of SEKCJE_W) {
+                const typKey = sek.prefix === 'kartkowka_' ? 'kartkowka' : sek.prefix === 'praca_kontrolna_' ? 'praca_kontrolna' : null;
                 for (let i = 1; i <= sek.count; i++) {
-                    const etykieta = sek.count > 1 ? `${sek.label} ${i}` : sek.label;
-                    thRow += `<th class="${sek.thKolor}">${etykieta}</th>`;
+                    if (typKey && sek.count > 1) {
+                        const pelna = nazwaPracy(nazwyMap, typKey, i, sek.label);
+                        thRow += `<th class="${sek.thKolor}" title="${pelna}" style="cursor:help;">${nazwaSkrocona(typKey, i)}</th>`;
+                    } else {
+                        const etykieta = sek.count > 1 ? `${sek.label} ${i}` : sek.label;
+                        thRow += `<th class="${sek.thKolor}">${etykieta}</th>`;
+                    }
                 }
             }
             thead.innerHTML = thRow + '</tr>';
@@ -317,10 +327,16 @@
             const thead = document.getElementById('thead');
             const tbody = document.getElementById('tbody');
 
+            const jestNazywalny = typ === 'kartkowka' || typ === 'praca_kontrolna';
             let thRow = `<tr><th class="th-nr">Nr</th><th class="th-uczen">Uczeń</th>${czyWszystkieKlasy ? '<th>Klasa</th>' : ''}`;
             for (let i = 1; i <= t.count; i++) {
-                const label = t.count > 1 ? `${t.label} ${i}` : t.label;
-                thRow += `<th class="${t.thKolor}">${label}</th>`;
+                if (jestNazywalny && t.count > 1) {
+                    const pelna = nazwaPracy(nazwyMap, typ, i, t.label);
+                    thRow += `<th class="${t.thKolor}" title="${pelna}" style="cursor:help;">${nazwaSkrocona(typ, i)}</th>`;
+                } else {
+                    const label = t.count > 1 ? `${t.label} ${i}` : t.label;
+                    thRow += `<th class="${t.thKolor}">${label}</th>`;
+                }
             }
             thead.innerHTML = thRow + '</tr>';
 
