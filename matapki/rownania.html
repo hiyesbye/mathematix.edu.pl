@@ -33,27 +33,36 @@ body { display: flex; align-items: center; justify-content: center;
   background: linear-gradient(135deg, #5c0000 0%, #b71c1c 55%, #ef5350 100%);
   border-radius: 16px; color: #fff;
   text-shadow: 0 2px 10px rgba(0,0,0,0.45), 0 0 28px rgba(255,120,120,0.28);
-  box-shadow: 0 4px 22px rgba(183,28,28,0.45), 0 1px 4px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 22px rgba(183,28,28,0.45), 0 1px 4px rgba(0,0,0,0.2),
+              inset 0 2px 3px rgba(255,255,255,.5),
+              inset 0 -8px 14px rgba(0,0,0,.3);
   position: relative;
+  overflow: hidden;
 }
-.app-title::after {
-  content: '';
-  position: absolute; inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(115deg,
-    transparent 30%,
-    rgba(255,255,255,.55) 46%,
-    rgba(255,255,255,.15) 52%,
-    transparent 62%);
-  background-size: 260% 260%;
-  background-position: -80% -80%;
-  animation: titleShine 4.5s ease-in-out infinite;
+.app-title-text { position: relative; z-index: 1; }
+.fl-letter {
+  position: absolute;
+  z-index: 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 900;
+  font-style: italic;
+  color: #fff;
+  opacity: 0;
   pointer-events: none;
+  animation: flDrift linear infinite;
 }
-@keyframes titleShine {
-  0%   { background-position: -80% -80%; }
-  45%  { background-position: 180% 180%; }
-  100% { background-position: 180% 180%; }
+.fl1 { top: 62%; left: 4%;  font-size: 1.6rem; animation-duration: 11s;   animation-delay: 0s;   }
+.fl2 { top: 8%;  left: 22%; font-size: 1.1rem; animation-duration: 9s;    animation-delay: 1.5s; }
+.fl3 { top: 66%; left: 46%; font-size: 1.8rem; animation-duration: 13s;   animation-delay: 3s;   }
+.fl4 { top: 12%; left: 62%; font-size: 1.2rem; animation-duration: 10s;   animation-delay: 4.5s; }
+.fl5 { top: 58%; left: 78%; font-size: 1.4rem; animation-duration: 12s;   animation-delay: 2s;   }
+.fl6 { top: 5%;  left: 88%; font-size: 1rem;   animation-duration: 8.5s;  animation-delay: 6s;   }
+@keyframes flDrift {
+  0%   { transform: translate(0, 18px) rotate(-4deg); opacity: 0; }
+  15%  { opacity: .18; }
+  50%  { opacity: .22; }
+  85%  { opacity: 0; }
+  100% { transform: translate(10px, -18px) rotate(4deg); opacity: 0; }
 }
 .tabs {
   display: flex; gap: 4px; background: var(--mod-bg);
@@ -432,7 +441,15 @@ body { display: flex; align-items: center; justify-content: center;
 </head>
 <body>
 <div class="card">
-  <div class="app-title">Równania</div>
+  <div class="app-title">
+    <span class="fl-letter fl1">x</span>
+    <span class="fl-letter fl2">y</span>
+    <span class="fl-letter fl3">=</span>
+    <span class="fl-letter fl4">n</span>
+    <span class="fl-letter fl5">+</span>
+    <span class="fl-letter fl6">2</span>
+    <span class="app-title-text">Równania</span>
+  </div>
   <div class="section-box">
     <span class="section-label">Moduły:</span>
     <button class="tab active" onclick="switchTab(0)">📝 Zapisywanie</button>
