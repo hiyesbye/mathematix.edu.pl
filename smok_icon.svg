@@ -1,0 +1,31 @@
+<svg viewBox="18 -14 212 90" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- The dragon's own silhouette, reused as a mask. The "e^x" branding is
+         painted through it, so the marking is confined to the body no matter
+         what - it cannot drift off the shape or spill past its edges. -->
+    <mask id="smokMask" maskUnits="userSpaceOnUse" x="18" y="-14" width="212" height="90">
+      <path d="M142,32 L88,-10 L104,19 L73,9 L94,38 L68,34 L100,47 Z" fill="#fff"/>
+      <path d="M201,30 C176,15 151,20 131,38 C111,56 86,52 69,36"
+            fill="none" stroke="#fff" stroke-width="16" stroke-linecap="round"/>
+      <path d="M69,36 C51,22 33,28 29,45 C25,62 39,70 53,62 C63,56 59,44 47,44"
+            fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round"/>
+      <path d="M226,28 L201,17 L201,39 Z" fill="#fff"/>
+      <path d="M204,17 L209,3 L213,18 Z" fill="#fff"/>
+      <path d="M213,16 L219,4 L221,19 Z" fill="#fff"/>
+    </mask>
+  </defs>
+
+  <path d="M142,32 L88,-10 L104,19 L73,9 L94,38 L68,34 L100,47 Z" fill="#241340" opacity="0.92"/>
+  <path d="M201,30 C176,15 151,20 131,38 C111,56 86,52 69,36"
+        fill="none" stroke="#241340" stroke-width="16" stroke-linecap="round"/>
+  <path d="M69,36 C51,22 33,28 29,45 C25,62 39,70 53,62 C63,56 59,44 47,44"
+        fill="none" stroke="#241340" stroke-width="8" stroke-linecap="round"/>
+  <path d="M226,28 L201,17 L201,39 Z" fill="#241340"/>
+  <path d="M204,17 L209,3 L213,18 Z" fill="#241340"/>
+  <path d="M213,16 L219,4 L221,19 Z" fill="#241340"/>
+
+  <g mask="url(#smokMask)">
+    <text x="97" y="53" font-family="Georgia,'Times New Roman',serif" font-size="15" font-weight="bold" font-style="italic" fill="#f2e8da" text-anchor="middle">e</text>
+    <text x="109" y="47" font-family="Georgia,'Times New Roman',serif" font-size="9" font-weight="bold" font-style="italic" fill="#f2e8da" text-anchor="middle">x</text>
+  </g>
+</svg>
