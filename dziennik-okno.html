@@ -218,19 +218,19 @@
 
     <script src="supabase-config.js"></script>
     <script src="nazwy-prac.js"></script>
+    <script src="pa-saldo.js"></script>
     <script>
         let nazwyMap = {};
         const TYPY = {
-            aktywnosc:       { prefix: 'aktywnosc_',       count: 5, label: 'Aktywność',   kolor: 'zielony',   thKolor: 'th-zielony'   },
+            aktywnosc:       { prefix: 'aktywnosc_',       count: 10, label: 'Aktywność',   kolor: 'zielony',   thKolor: 'th-zielony'   },
             odpowiedz:       { prefix: 'odp',               count: 4, label: 'Odpowiedź',   kolor: 'fioletowy', thKolor: 'th-fioletowy' },
             wkp:             { prefix: 'wkp',               count: 1, label: 'WKP',         kolor: 'zloty',     thKolor: 'th-zloty'     },
             alfik:           { prefix: 'alfik',             count: 1, label: 'Alfik',       kolor: 'zloty',     thKolor: 'th-zloty'     },
-            punkty:          { prefix: 'punkty_aktywnosci', count: 1, label: 'Pkt. akt.',   kolor: '',          thKolor: ''             },
             kartkowka:       { prefix: 'kartkowka_',        count: 8, label: 'Kartkówka',   kolor: 'niebieski', thKolor: 'th-niebieski' },
             praca_kontrolna: { prefix: 'praca_kontrolna_', count: 4, label: 'Praca kont.', kolor: 'czerwony',  thKolor: 'th-czerwony'  },
         };
         const SEKCJE_W = [
-            { prefix: 'aktywnosc_',       count: 5, label: 'Akt.',   kolor: 'zielony',   thKolor: 'th-zielony'   },
+            { prefix: 'aktywnosc_',       count: 10, label: 'Akt.',   kolor: 'zielony',   thKolor: 'th-zielony'   },
             { prefix: 'odp',               count: 4, label: 'Odp.',   kolor: 'fioletowy', thKolor: 'th-fioletowy' },
             { prefix: 'wkp',               count: 1, label: 'WKP',    kolor: 'zloty',     thKolor: 'th-zloty'     },
             { prefix: 'alfik',             count: 1, label: 'Alfik',  kolor: 'zloty',     thKolor: 'th-zloty'     },
@@ -390,11 +390,34 @@
             if (error) {
                 kom.style.color = '#ff7070';
                 kom.textContent = 'Błąd: ' + error.message;
-            } else {
-                kom.style.color = '#6dcc80';
-                kom.textContent = `Zapisano (${toUpsert.length} uczniów) ✓`;
-                setTimeout(() => { kom.textContent = ''; }, 3000);
+                return;
             }
+
+            // Jeśli edytowano Aktywność, cofnij "kupione" oceny (bdb/cel), które zniknęły.
+            let dopisek = '';
+            if (typ === 'aktywnosc' || typ === 'wszystkie') {
+                let laczneUtracone5 = 0, laczneUtracone6 = 0;
+                const zadania = [];
+                dane.forEach(({ profil, sem1 }, idx) => {
+                    const stare = [];
+                    for (let i = 1; i <= 10; i++) stare.push(sem1?.[`aktywnosc_${i}`] ?? null);
+                    const row = toUpsert[idx];
+                    const nowe = [];
+                    for (let i = 1; i <= 10; i++) nowe.push(row[`aktywnosc_${i}`] ?? null);
+                    const { utracone5, utracone6 } = paLiczUtraconeOceny(stare, nowe);
+                    if (utracone5 > 0 || utracone6 > 0) {
+                        laczneUtracone5 += utracone5; laczneUtracone6 += utracone6;
+                        zadania.push(paCofnijZakupyPoUtraconychOcenach(sb, profil.id, utracone5, utracone6));
+                    }
+                });
+                if (zadania.length) await Promise.all(zadania);
+                dane.forEach((d, idx) => { d.sem1 = { ...(d.sem1 || {}), ...toUpsert[idx] }; });
+                if (laczneUtracone5 || laczneUtracone6) dopisek = ` Cofnięto zakupy: bdb −${laczneUtracone5}, cel −${laczneUtracone6}.`;
+            }
+
+            kom.style.color = '#6dcc80';
+            kom.textContent = `Zapisano (${toUpsert.length} uczniów) ✓${dopisek}`;
+            setTimeout(() => { kom.textContent = ''; }, 3000);
         }
 
         init();

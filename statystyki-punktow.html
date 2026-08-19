@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<meta charset="utf-8">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statystyki Punktów Aktywności</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <style>
+        * { margin: 0; box-sizing: border-box; }
+        body { font-family: 'Courier New', Courier, monospace; background: #eef2f5; }
+
+        .topbar {
+            position: sticky; top: 0; z-index: 100;
+            background: #1c1c1c; color: white;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 20px; height: 52px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+        .topbar-title { font-size: 17px; font-weight: bold; letter-spacing: 0.5px; }
+        .btn-powrot {
+            padding: 7px 16px; background: transparent; color: #ccc;
+            border: 1px solid #555; border-radius: 5px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px; cursor: pointer;
+        }
+        .btn-powrot:hover { background: #444; color: white; }
+        .topbar-spacer { width: 90px; flex-shrink: 0; }
+
+        .content { max-width: 560px; margin: 0 auto; padding: 22px 18px 48px; }
+
+        .karty-glowne {
+            display: flex; gap: 14px; margin-bottom: 24px;
+        }
+        .karta-glowna {
+            flex: 1; border-radius: 10px; padding: 16px 14px;
+            text-align: center; color: white;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+        .karta-glowna.overall { background: linear-gradient(160deg, #d99a2b, #9a6200); }
+        .karta-glowna.saldo   { background: linear-gradient(160deg, #2a9d3f, #1a6e2a); }
+        .karta-glowna .etyk { font-size: 12px; letter-spacing: 0.5px; opacity: 0.9; text-transform: uppercase; }
+        .karta-glowna .wart { font-size: 30px; font-weight: bold; margin-top: 4px; }
+
+        .wirtualne-box {
+            display: none;
+            background: #fff8e8; border: 1.5px dashed #d99a2b; border-radius: 8px;
+            padding: 10px 14px; margin-bottom: 22px; font-size: 13.5px; color: #6a4b00;
+        }
+
+        .dzial-naglowek {
+            font-size: 13px; font-weight: bold; text-transform: uppercase;
+            letter-spacing: 1.2px; color: #444;
+            padding: 8px 4px; margin: 22px 0 8px;
+            border-bottom: 2px solid #ccc;
+        }
+
+        .wiersz {
+            display: flex; align-items: center; justify-content: space-between;
+            background: white; border-radius: 8px; border: 1px solid #ddd;
+            padding: 10px 14px; margin-bottom: 8px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+        }
+        .wiersz-nazwa { font-size: 14px; color: #333; }
+        .wiersz-liczba {
+            font-size: 16px; font-weight: bold; color: #222;
+            background: #eef2f5; border-radius: 6px; padding: 3px 12px; min-width: 26px; text-align: center;
+        }
+        .wiersz-liczba.zero { color: #aaa; }
+
+        #ladowanie { text-align: center; padding: 50px; color: #888; font-size: 17px; }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <button class="btn-powrot" onclick="window.opener && !window.opener.closed ? window.close() : window.location.href='profil.html'">&#8592; Powrót</button>
+        <span class="topbar-title">Statystyki Punktów Aktywności</span>
+        <span class="topbar-spacer"></span>
+    </div>
+
+    <div class="content">
+        <div id="ladowanie">Wczytywanie...</div>
+        <div id="tresc" style="display:none;">
+            <div class="karty-glowne">
+                <div class="karta-glowna overall">
+                    <div class="etyk">Overall</div>
+                    <div class="wart" id="s-overall">—</div>
+                </div>
+                <div class="karta-glowna saldo">
+                    <div class="etyk">Saldo</div>
+                    <div class="wart" id="s-saldo">—</div>
+                </div>
+            </div>
+
+            <div class="wirtualne-box" id="s-wirtualne-box">
+                🕓 Masz <b id="s-wirtualne">0</b> wirtualnych PA — nauczyciel jeszcze nie oddał Ci ich fizycznie w klasie, ale są już wliczone do Twojego salda.
+            </div>
+
+            <div class="dzial-naglowek">🏆 Wymienione oceny z aktywności</div>
+            <div class="wiersz"><span class="wiersz-nazwa">Ocena bardzo dobry (5)</span><span class="wiersz-liczba" id="s-bdb">0</span></div>
+            <div class="wiersz"><span class="wiersz-nazwa">Ocena celujący (6)</span><span class="wiersz-liczba" id="s-cel">0</span></div>
+
+            <div class="dzial-naglowek">🔄 Wykorzystane poprawy</div>
+            <div class="wiersz"><span class="wiersz-nazwa">Poprawa kartkówki</span><span class="wiersz-liczba" id="s-poprawa_kartkowki">0</span></div>
+            <div class="wiersz"><span class="wiersz-nazwa">Poprawa pracy kontrolnej</span><span class="wiersz-liczba" id="s-poprawa_klasowki">0</span></div>
+            <div class="wiersz"><span class="wiersz-nazwa">Poprawa odpowiedzi</span><span class="wiersz-liczba" id="s-poprawa_odpowiedzi">0</span></div>
+
+            <div class="dzial-naglowek">😴 Wykorzystane nieprzygotowania</div>
+            <div class="wiersz"><span class="wiersz-nazwa">Jednorazowe</span><span class="wiersz-liczba" id="s-np_jednorazowe">0</span></div>
+            <div class="wiersz"><span class="wiersz-nazwa">Tygodniowe</span><span class="wiersz-liczba" id="s-np_tygodniowe">0</span></div>
+        </div>
+    </div>
+
+    <script src="supabase-config.js"></script>
+    <script src="pa-saldo.js"></script>
+    <script>
+        async function init() {
+            const { data: { session } } = await sb.auth.getSession();
+            if (!session) return;
+
+            const [{ data: sem1 }, { data: zak }] = await Promise.all([
+                sb.from('semestr1').select('punkty_aktywnosci').eq('profil_id', session.user.id).single(),
+                sb.from('pa_zakupy').select('*').eq('profil_id', session.user.id).single(),
+            ]);
+
+            const overall = sem1?.punkty_aktywnosci ?? 0;
+            const zakupy = zak || {};
+            const saldo = paSaldo(overall, zakupy);
+
+            document.getElementById('s-overall').textContent = overall;
+            document.getElementById('s-saldo').textContent = saldo;
+
+            const wirtualne = zakupy.wirtualne || 0;
+            if (wirtualne > 0) {
+                document.getElementById('s-wirtualne').textContent = wirtualne;
+                document.getElementById('s-wirtualne-box').style.display = 'block';
+            }
+
+            ['bdb', 'cel', 'poprawa_kartkowki', 'poprawa_klasowki', 'poprawa_odpowiedzi', 'np_jednorazowe', 'np_tygodniowe'].forEach(pole => {
+                const el = document.getElementById('s-' + pole);
+                const wartosc = zakupy[pole] || 0;
+                el.textContent = wartosc;
+                if (wartosc === 0) el.classList.add('zero');
+            });
+
+            document.getElementById('ladowanie').style.display = 'none';
+            document.getElementById('tresc').style.display = 'block';
+        }
+
+        init();
+    </script>
+</body>
+</html>

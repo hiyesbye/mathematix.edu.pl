@@ -249,6 +249,7 @@
     </div>
 
     <script src="supabase-config.js"></script>
+    <script src="pa-saldo.js"></script>
     <script>
         function oznaczCeny(saldo) {
             document.querySelectorAll('.produkt[data-koszt]').forEach(el => {
@@ -263,15 +264,16 @@
             const { data: { session } } = await sb.auth.getSession();
             if (!session) return;
 
-            const { data: sem1 } = await sb.from('semestr1')
-                .select('punkty_aktywnosci')
-                .eq('profil_id', session.user.id)
-                .single();
+            const [{ data: sem1 }, { data: zakupy }] = await Promise.all([
+                sb.from('semestr1').select('punkty_aktywnosci').eq('profil_id', session.user.id).single(),
+                sb.from('pa_zakupy').select('*').eq('profil_id', session.user.id).single(),
+            ]);
 
-            const pkt = sem1?.punkty_aktywnosci;
-            if (pkt !== null && pkt !== undefined) {
-                document.getElementById('kasa-pa').innerHTML = `${pkt} <span class="jedn">PA</span>`;
-                oznaczCeny(pkt);
+            const overall = sem1?.punkty_aktywnosci;
+            if (overall !== null && overall !== undefined) {
+                const saldo = paSaldo(overall, zakupy);
+                document.getElementById('kasa-pa').innerHTML = `${saldo} <span class="jedn">PA</span>`;
+                oznaczCeny(saldo);
             }
         }
 

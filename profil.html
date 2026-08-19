@@ -338,11 +338,17 @@
                         <h2>Semestr 1</h2>
 
                         <div class="punkty-row">
-                            <span>Punkty aktywności:</span>
-                            <span style="display:flex; align-items:center; gap:12px;">
-                                <span id="p-punkty">—</span>
-                                <button class="btn-poprawa" style="padding:6px 16px; font-size:12px;"
+                            <span>Punkty aktywności — Overall:</span>
+                            <span id="p-punkty">—</span>
+                        </div>
+                        <div class="punkty-row">
+                            <span>Saldo (do wydania):</span>
+                            <span style="display:flex; align-items:center; gap:10px;">
+                                <span id="p-saldo">—</span>
+                                <button class="btn-poprawa" style="padding:6px 14px; font-size:12px;"
                                         onclick="window.open('sklepik.html', '_blank', 'width=680,height=760,resizable=yes,scrollbars=yes')">🛒 Sklepik</button>
+                                <button class="btn-poprawa" style="padding:6px 14px; font-size:12px;"
+                                        onclick="window.open('statystyki-punktow.html', '_blank', 'width=620,height=760,resizable=yes,scrollbars=yes')">📊 Statystyki</button>
                             </span>
                         </div>
 
@@ -407,6 +413,7 @@
         </div>
         <script src="supabase-config.js"></script>
         <script src="nazwy-prac.js"></script>
+        <script src="pa-saldo.js"></script>
         <script>
             let nazwyMap = {};
 
@@ -444,11 +451,12 @@
                     profil.plec === 'K' ? 'Kobieta' : profil.plec === 'M' ? 'Mężczyzna' : '—';
 
                 // Pobierz dane Semestr 1, punkty ucznia, umówione poprawy i nazwy sprawdzianów równolegle
-                const [{ data: sem1 }, { data: pkt1 }, { data: poprawkiData }, nazwyMapRes] = await Promise.all([
+                const [{ data: sem1 }, { data: pkt1 }, { data: poprawkiData }, nazwyMapRes, { data: paZakupy }] = await Promise.all([
                     sb.from('semestr1').select('*').eq('profil_id', session.user.id).single(),
                     sb.from('Punktysem1').select('*').eq('profil_id', session.user.id).single(),
                     sb.from('poprawki').select('*').eq('profil_id', session.user.id),
-                    pobierzNazwyPrac(profil.klasa)
+                    pobierzNazwyPrac(profil.klasa),
+                    sb.from('pa_zakupy').select('*').eq('profil_id', session.user.id).single()
                 ]);
                 nazwyMap = nazwyMapRes;
 
@@ -472,9 +480,10 @@
 
                 const pkt = sem1?.punkty_aktywnosci;
                 document.getElementById('p-punkty').textContent = pkt !== null && pkt !== undefined ? pkt : '—';
+                document.getElementById('p-saldo').textContent = pkt !== null && pkt !== undefined ? paSaldo(pkt, paZakupy) : '—';
 
                 let aktHtml = '';
-                for (let i = 1; i <= 5; i++) aktHtml += kafelek(`Aktywność ${i}`, sem1?.[`aktywnosc_${i}`], 'zielony');
+                for (let i = 1; i <= 10; i++) aktHtml += kafelek(`Aktywność ${i}`, sem1?.[`aktywnosc_${i}`], 'zielony');
                 document.getElementById('grid-aktywnosc').innerHTML = aktHtml;
 
                 let odpHtml = '';
@@ -676,7 +685,7 @@
                 function liczSrednie(s) {
                     if (!s) return { aryt: null, waz: null };
                     const KATEGORIE = [
-                        { prefix: 'aktywnosc_',       count: 5, waga: 1 },
+                        { prefix: 'aktywnosc_',       count: 10, waga: 1 },
                         { prefix: 'odp',               count: 4, waga: 1 },
                         { prefix: 'wkp',               count: 1, waga: 1 },
                         { prefix: 'alfik',             count: 1, waga: 1 },

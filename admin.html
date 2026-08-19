@@ -139,21 +139,6 @@
             .kolor-czerwony .edit-pole input { border-color: #c0392b; background: #fff4f3; }
             .kolor-fioletowy .edit-pole input { border-color: #5a47a0; background: #f3f0ff; }
             .kolor-zloty .edit-pole input { border-color: #d99a2b; background: #fff8e8; }
-            .edit-punkty {
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                margin-bottom: 16px;
-                font-size: 16px;
-            }
-            .edit-punkty input {
-                padding: 6px 10px;
-                font-family: 'Courier New', Courier, monospace;
-                font-size: 16px;
-                border: 1px solid #ccc;
-                border-radius: 4px;
-                width: 100px;
-            }
             .edit-przyciski {
                 display: flex;
                 gap: 12px;
@@ -377,10 +362,6 @@
                     </div>
                     <div id="editPanel">
                         <h3 id="editTytuł"></h3>
-                        <div class="edit-punkty">
-                            <label>Punkty aktywności:</label>
-                            <input type="number" id="e-punkty" min="0" placeholder="—">
-                        </div>
                         <div class="edit-sekcja">
                             <h4>Aktywność</h4>
                             <div class="edit-grid kolor-zielony" id="eg-aktywnosc"></div>
@@ -426,7 +407,6 @@
                                 <option value="odpowiedz">Odpowiedzi</option>
                                 <option value="wkp">WKP</option>
                                 <option value="alfik">Alfik matematyczny</option>
-                                <option value="punkty">Punkty aktywności</option>
                                 <option value="kartkowka">Kartkówki</option>
                                 <option value="praca_kontrolna">Prace kontrolne</option>
                                 <option value="wszystkie">Wszystkie oceny</option>
@@ -490,6 +470,12 @@
                     </div>
 
                     <div style="margin-top: 28px; border-top: 2px solid #ccc; padding-top: 20px;">
+                        <h3 style="font-size: 20px; margin-bottom: 10px;">Punkty Aktywności</h3>
+                        <p style="color: #111; font-size: 15px; margin-bottom: 14px; font-weight: bold;">Overall, saldo i wszystko, na co uczniowie wymienili punkty w sklepiku (poprawy, oceny, nieprzygotowania, punkty wirtualne).</p>
+                        <button class="btn-nowe-okno" onclick="window.open('punkty-aktywnosci-admin.html', '_blank', 'width=1200,height=760,resizable=yes,scrollbars=yes')">&#x2197; Otwórz panel Punktów Aktywności</button>
+                    </div>
+
+                    <div style="margin-top: 28px; border-top: 2px solid #ccc; padding-top: 20px;">
                         <h3 style="font-size: 20px; margin-bottom: 10px;">Umówione poprawy</h3>
                         <p style="color: #111; font-size: 15px; margin-bottom: 14px; font-weight: bold;">Zarządzaj poprawami zgłoszonymi przez uczniów i ustalaj terminy.</p>
                         <button class="btn-nowe-okno" onclick="window.open('umowione-poprawy.html', '_blank', 'width=1000,height=720,resizable=yes,scrollbars=yes')">&#x2197; Otwórz panel poprawek</button>
@@ -507,6 +493,7 @@
         </div>
         <script src="supabase-config.js"></script>
         <script src="nazwy-prac.js"></script>
+        <script src="pa-saldo.js"></script>
         <script>
             let wszyscyUczniowie = [];
             let sortKolumna = 'klasa';
@@ -515,7 +502,7 @@
             function liczSrednie(s) {
                 if (!s) return { srAryt: null, srWaz: null };
                 const KATEGORIE = [
-                    { prefix: 'aktywnosc_',       count: 5, waga: 1 },
+                    { prefix: 'aktywnosc_',       count: 10, waga: 1 },
                     { prefix: 'odp',               count: 4, waga: 1 },
                     { prefix: 'wkp',               count: 1, waga: 1 },
                     { prefix: 'alfik',             count: 1, waga: 1 },
@@ -640,6 +627,7 @@
             }
 
             let edytowanyProfilId = null;
+            let edytowanaAktywnoscStara = []; // aktywnosc_1..10 w chwili otwarcia panelu edycji
 
 
 
@@ -897,7 +885,7 @@
                         el.appendChild(div);
                     }
                 }
-                polaBuduj('eg-aktywnosc', 'akt', 5, 'Aktywność');
+                polaBuduj('eg-aktywnosc', 'akt', 10, 'Aktywność');
                 polaBuduj('eg-odpowiedzi', 'odp', 4, 'Odpowiedź');
 
                 // Pobierz istniejące oceny
@@ -909,9 +897,11 @@
                     if (el) el.value = (val !== null && val !== undefined) ? val : '';
                 }
 
+                edytowanaAktywnoscStara = [];
+                for (let i = 1; i <= 10; i++) edytowanaAktywnoscStara.push(sem1 ? (sem1[`aktywnosc_${i}`] ?? null) : null);
+
                 if (sem1) {
-                    ustaw('e-punkty', sem1.punkty_aktywnosci);
-                    for (let i = 1; i <= 5; i++) ustaw(`e-akt-${i}`, sem1[`aktywnosc_${i}`]);
+                    for (let i = 1; i <= 10; i++) ustaw(`e-akt-${i}`, sem1[`aktywnosc_${i}`]);
                     for (let i = 1; i <= 4; i++) ustaw(`e-odp-${i}`, sem1[`odp${i}`]);
                     ustaw('e-wkp', sem1.wkp);
                     ustaw('e-alfik', sem1.alfik);
@@ -954,9 +944,8 @@
 
                 const dane = {
                     profil_id: edytowanyProfilId,
-                    punkty_aktywnosci: pobierz('e-punkty'),
                 };
-                for (let i = 1; i <= 5; i++) dane[`aktywnosc_${i}`] = pobierz(`e-akt-${i}`);
+                for (let i = 1; i <= 10; i++) dane[`aktywnosc_${i}`] = pobierz(`e-akt-${i}`);
                 for (let i = 1; i <= 4; i++) dane[`odp${i}`] = pobierz(`e-odp-${i}`);
                 dane.wkp = pobierz('e-wkp');
                 dane.alfik = pobierz('e-alfik');
@@ -987,10 +976,22 @@
                 if (error || errorPkt) {
                     kom.style.color = 'red';
                     kom.textContent = 'Błąd zapisu: ' + (error?.message || errorPkt?.message);
-                } else {
-                    kom.style.color = 'green';
-                    kom.textContent = 'Zapisano pomyślnie.';
+                    return;
                 }
+
+                // Jeśli ręcznie skasowano/zmieniono piątkę lub szóstkę w Aktywności,
+                // cofnij odpowiednio licznik "kupionych" ocen w Punktach Aktywności.
+                const noweAktywnosci = [];
+                for (let i = 1; i <= 10; i++) noweAktywnosci.push(dane[`aktywnosc_${i}`]);
+                const { utracone5, utracone6 } = paLiczUtraconeOceny(edytowanaAktywnoscStara, noweAktywnosci);
+                if (utracone5 > 0 || utracone6 > 0) {
+                    await paCofnijZakupyPoUtraconychOcenach(sb, edytowanyProfilId, utracone5, utracone6);
+                    edytowanaAktywnoscStara = noweAktywnosci;
+                }
+
+                kom.style.color = 'green';
+                kom.textContent = 'Zapisano pomyślnie.' +
+                    (utracone5 || utracone6 ? ` (cofnięto: bdb −${utracone5}, cel −${utracone6})` : '');
             }
 
             function anulujEdycje() {
@@ -1000,16 +1001,15 @@
 
             // ── Dziennik ocen ──
             const TYPY_DZ = {
-                aktywnosc:       { prefix: 'aktywnosc_',       count: 5, label: 'Aktywność',   kolor: 'zielony',   thKolor: 'th-zielony'   },
+                aktywnosc:       { prefix: 'aktywnosc_',       count: 10, label: 'Aktywność',   kolor: 'zielony',   thKolor: 'th-zielony'   },
                 odpowiedz:       { prefix: 'odp',               count: 4, label: 'Odpowiedź',   kolor: 'fioletowy', thKolor: 'th-fioletowy' },
                 wkp:             { prefix: 'wkp',               count: 1, label: 'WKP',         kolor: 'zloty',     thKolor: 'th-zloty'     },
                 alfik:           { prefix: 'alfik',             count: 1, label: 'Alfik',       kolor: 'zloty',     thKolor: 'th-zloty'     },
-                punkty:          { prefix: 'punkty_aktywnosci', count: 1, label: 'Pkt. akt.',   kolor: '',          thKolor: ''             },
                 kartkowka:       { prefix: 'kartkowka_',        count: 8, label: 'Kartkówka',   kolor: 'niebieski', thKolor: 'th-niebieski' },
                 praca_kontrolna: { prefix: 'praca_kontrolna_', count: 4, label: 'Praca kont.', kolor: 'czerwony',  thKolor: 'th-czerwony'  },
             };
             const SEKCJE_W = [
-                { prefix: 'aktywnosc_',       count: 5, label: 'Akt.',   kolor: 'zielony',   thKolor: 'th-zielony'   },
+                { prefix: 'aktywnosc_',       count: 10, label: 'Akt.',   kolor: 'zielony',   thKolor: 'th-zielony'   },
                 { prefix: 'odp',               count: 4, label: 'Odp.',   kolor: 'fioletowy', thKolor: 'th-fioletowy' },
                 { prefix: 'wkp',               count: 1, label: 'WKP',    kolor: 'zloty',     thKolor: 'th-zloty'     },
                 { prefix: 'alfik',             count: 1, label: 'Alfik',  kolor: 'zloty',     thKolor: 'th-zloty'     },
@@ -1174,10 +1174,36 @@
                 if (error) {
                     kom.style.color = 'red';
                     kom.textContent = 'Błąd zapisu: ' + error.message;
-                } else {
-                    kom.style.color = 'green';
-                    kom.textContent = `Zapisano pomyślnie (${toUpsert.length} uczniów).`;
+                    return;
                 }
+
+                // Jeśli edytowano Aktywność, cofnij "kupione" oceny (bdb/cel), które zniknęły.
+                if (dzTyp === 'aktywnosc' || dzTyp === 'wszystkie') {
+                    let laczneUtracone5 = 0, laczneUtracone6 = 0;
+                    const zadania = [];
+                    dzDane.forEach(({ profil, sem1 }, idx) => {
+                        const stare = [];
+                        for (let i = 1; i <= 10; i++) stare.push(sem1?.[`aktywnosc_${i}`] ?? null);
+                        const row = toUpsert[idx];
+                        const nowe = [];
+                        for (let i = 1; i <= 10; i++) nowe.push(row[`aktywnosc_${i}`] ?? null);
+                        const { utracone5, utracone6 } = paLiczUtraconeOceny(stare, nowe);
+                        if (utracone5 > 0 || utracone6 > 0) {
+                            laczneUtracone5 += utracone5; laczneUtracone6 += utracone6;
+                            zadania.push(paCofnijZakupyPoUtraconychOcenach(sb, profil.id, utracone5, utracone6));
+                        }
+                    });
+                    if (zadania.length) await Promise.all(zadania);
+                    dzDane.forEach((d, idx) => { d.sem1 = { ...(d.sem1 || {}), ...toUpsert[idx] }; });
+
+                    kom.style.color = 'green';
+                    kom.textContent = `Zapisano pomyślnie (${toUpsert.length} uczniów).` +
+                        (laczneUtracone5 || laczneUtracone6 ? ` Cofnięto zakupy: bdb −${laczneUtracone5}, cel −${laczneUtracone6}.` : '');
+                    return;
+                }
+
+                kom.style.color = 'green';
+                kom.textContent = `Zapisano pomyślnie (${toUpsert.length} uczniów).`;
             }
 
             // ── Nazwy sprawdzianów ──

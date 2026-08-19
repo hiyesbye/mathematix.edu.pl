@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html>
+<meta charset="utf-8">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Punkty Aktywności — panel admina</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <style>
+        * { margin: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            background: #eef2f5;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .topbar {
+            position: sticky; top: 0; z-index: 100;
+            background: #1c1c1c; color: white;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 20px; height: 52px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+        .topbar-title { font-size: 17px; font-weight: bold; letter-spacing: 0.5px; }
+        .topbar-left { display: flex; align-items: center; gap: 14px; }
+        .topbar-right { display: flex; align-items: center; gap: 14px; }
+        #komunikat { font-size: 14px; min-width: 140px; text-align: right; }
+        .btn-powrot {
+            padding: 7px 16px; background: transparent; color: #ccc;
+            border: 1px solid #555; border-radius: 5px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px; cursor: pointer;
+        }
+        .btn-powrot:hover { background: #444; color: white; }
+
+        input#szukaj {
+            padding: 6px 10px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            border-radius: 5px;
+            border: 1px solid #555;
+            background: #2d2d2d;
+            color: white;
+            width: 220px;
+        }
+        input#szukaj::placeholder { color: #999; }
+        input#szukaj:focus { outline: none; border-color: rgb(11,105,148); }
+
+        .podpasek {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 20px;
+            background: #dfe6ea;
+            border-bottom: 1px solid #c3ccd1;
+        }
+        .podpasek label { font-size: 14px; font-weight: bold; color: #333; }
+        select#klasa {
+            padding: 6px 10px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            border-radius: 5px;
+            border: 1px solid #999;
+            background: white;
+            color: #222;
+        }
+
+        .kolumny-wybor { position: relative; }
+        .btn-kolumny {
+            padding: 6px 12px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            border-radius: 5px;
+            border: 1px solid #999;
+            background: white;
+            color: #222;
+            cursor: pointer;
+        }
+        .btn-kolumny:hover { background: #f0f0f0; }
+        .kolumny-panel {
+            display: none;
+            position: absolute; top: calc(100% + 4px); left: 0;
+            background: white; border: 1px solid #999; border-radius: 6px;
+            padding: 10px 14px; box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+            z-index: 50; min-width: 210px;
+        }
+        .kolumny-panel.otwarty { display: block; }
+        .kolumny-panel label {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 13.5px; font-weight: normal; color: #222;
+            padding: 3px 0; cursor: pointer; white-space: nowrap;
+        }
+        .kolumny-skroty { display: flex; gap: 8px; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #ddd; }
+        .kolumny-skroty a { font-size: 12px; color: rgb(11,105,148); cursor: pointer; text-decoration: underline; }
+
+        .legenda {
+            padding: 8px 20px;
+            background: #fff8e8;
+            border-bottom: 1px solid #e6c470;
+            font-size: 12.5px;
+            color: #6a4b00;
+        }
+
+        .table-wrap {
+            height: calc(100vh - 52px - 44px - 34px);
+            overflow: auto;
+        }
+
+        table {
+            border-collapse: collapse;
+            font-size: 13.5px;
+            background: white;
+            min-width: 100%;
+            box-shadow: 0 1px 6px rgba(0,0,0,0.1);
+        }
+
+        th {
+            background: #2d2d2d; color: white;
+            padding: 8px 6px; text-align: center; white-space: nowrap;
+            position: sticky; top: 0; z-index: 10;
+            border-right: 1px solid rgba(255,255,255,0.1);
+        }
+        th.th-overall  { background: #6a4b00; }
+        th.th-saldo    { background: #1a7a2e; }
+        th.th-zielony  { background: #2a9d3f; }
+        th.th-niebieski{ background: rgb(11, 105, 148); }
+        th.th-czerwony { background: #b52a1e; }
+        th.th-fioletowy{ background: #5a47a0; }
+        th.th-szary    { background: #555; }
+        th.th-wirtualny{ background: #8a6d00; }
+
+        th.th-nr {
+            background: #2d2d2d; position: sticky; top: 0; left: 0; z-index: 30;
+            min-width: 40px; border-right: 2px solid #555;
+        }
+        th.th-uczen {
+            background: #2d2d2d; position: sticky; top: 0; left: 40px; z-index: 30;
+            text-align: left; padding-left: 12px; min-width: 150px;
+            border-right: 2px solid #555;
+        }
+
+        td {
+            padding: 4px 5px; border-bottom: 1px solid #e8e8e8;
+            border-right: 1px solid #f0f0f0;
+            text-align: center; vertical-align: middle;
+        }
+        td.td-nr {
+            position: sticky; left: 0; background: #f5f7f9; z-index: 5;
+            font-weight: bold; color: #444; border-right: 2px solid #ddd; min-width: 40px;
+        }
+        td.td-uczen {
+            position: sticky; left: 40px; background: #f5f7f9; z-index: 5;
+            text-align: left; padding: 4px 12px; white-space: nowrap;
+            border-right: 2px solid #ddd; min-width: 150px;
+        }
+        tr:nth-child(even) td { background: #fafbfc; }
+        tr:nth-child(even) td.td-nr,
+        tr:nth-child(even) td.td-uczen { background: #eff2f5; }
+        tr:hover td { background: #ddeef9 !important; }
+
+        .td-saldo { font-weight: bold; font-size: 15px; }
+        .saldo-ok  { color: #1a7a2e; }
+        .saldo-zle { color: #b52a1e; }
+
+        .pa-cell { display: flex; align-items: center; justify-content: center; gap: 2px; }
+        .pa-cell input {
+            width: 38px; padding: 3px 2px; text-align: center;
+            font-family: 'Courier New', Courier, monospace; font-size: 13px;
+            border: 2px solid #ccc; border-radius: 4px;
+        }
+        .pa-cell input:focus { outline: none; border-color: rgb(11,105,148); }
+        .pa-btn {
+            width: 20px; height: 20px; line-height: 18px; padding: 0;
+            border: none; border-radius: 4px; cursor: pointer;
+            font-family: 'Courier New', Courier, monospace; font-weight: bold; font-size: 13px;
+            background: #ddd; color: #333; flex-shrink: 0;
+        }
+        .pa-btn:hover { background: #c8c8c8; }
+        .pa-btn.plus  { background: #d7f0dc; color: #1a7a2e; }
+        .pa-btn.plus:hover  { background: #b9e4c2; }
+        .pa-btn.minus { background: #fbdcd8; color: #a5301f; }
+        .pa-btn.minus:hover { background: #f5c2bc; }
+
+        .col-overall input { border-color: #d99a2b; background: #fff8e8; }
+        .col-wirtualny input { border-color: #d99a2b; background: #fff8e8; }
+
+        #ladowanie { text-align: center; padding: 60px 20px; font-size: 20px; color: #555; }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="topbar-left">
+            <button class="btn-powrot" onclick="window.opener && !window.opener.closed ? window.close() : window.location.href='admin.html'">&#8592; Powrót</button>
+            <span class="topbar-title">Punkty Aktywności</span>
+            <input type="text" id="szukaj" placeholder="Szukaj ucznia..." oninput="filtrujUczniow()">
+        </div>
+        <div class="topbar-right">
+            <span id="komunikat"></span>
+        </div>
+    </div>
+    <div class="podpasek">
+        <label for="klasa">Klasa:</label>
+        <select id="klasa" onchange="wczytaj()">
+            <option value="">Wybierz klasę...</option>
+            <option value="wszystkie_klasy">Wszystkie klasy</option>
+        </select>
+        <div class="kolumny-wybor">
+            <button class="btn-kolumny" onclick="toggleKolumnyPanel()">Kolumny ▾</button>
+            <div class="kolumny-panel" id="kolumnyPanel"></div>
+        </div>
+    </div>
+    <div class="legenda">
+        Saldo = Overall − 5×bdb − 10×cel − 2×popr.kartk. − 4×popr.klas. − 5×popr.odp. − 10×np.jednoraz. − 30×np.tyg. + Wirtualne.
+        Kliknij <b>+</b>/<b>−</b> żeby zmienić o 1, albo wpisz liczbę wprost i naciśnij Enter/kliknij poza polem.
+        <b>bdb/cel automatycznie wpisuje ocenę 5/6 do pierwszego wolnego pola Aktywności</b> (i usuwa ją przy odjęciu) — dziennik ocen ma teraz 10 pól Aktywności.
+    </div>
+
+    <div id="ladowanie">Wybierz klasę, aby zacząć.</div>
+    <div class="table-wrap" id="tableWrap" style="display:none;">
+        <table>
+            <thead>
+                <tr>
+                    <th class="th-nr">Nr</th>
+                    <th class="th-uczen">Uczeń</th>
+                    <th class="th-overall" data-kol="overall">Overall</th>
+                    <th class="th-saldo" data-kol="saldo">Saldo</th>
+                    <th class="th-zielony" data-kol="bdb">bdb</th>
+                    <th class="th-zielony" data-kol="cel">cel</th>
+                    <th class="th-niebieski" data-kol="poprawa_kartkowki">Popr.<br>kartk.</th>
+                    <th class="th-czerwony" data-kol="poprawa_klasowki">Popr.<br>klas.</th>
+                    <th class="th-fioletowy" data-kol="poprawa_odpowiedzi">Popr.<br>odp.</th>
+                    <th class="th-szary" data-kol="np_jednorazowe">Np.<br>jednoraz.</th>
+                    <th class="th-szary" data-kol="np_tygodniowe">Np.<br>tyg.</th>
+                    <th class="th-wirtualny" data-kol="wirtualne">Wirtualne</th>
+                </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+        </table>
+    </div>
+
+    <script src="supabase-config.js"></script>
+    <script src="pa-saldo.js"></script>
+    <script>
+        const POLA_ZAKUPY = ['bdb', 'cel', 'poprawa_kartkowki', 'poprawa_klasowki', 'poprawa_odpowiedzi', 'np_jednorazowe', 'np_tygodniowe', 'wirtualne'];
+        const AKTYWNOSC_LICZBA = 10;
+        const OCENA_ZA_ZAKUP = { bdb: 5, cel: 6 };
+        const KOLUMNY_OPCJE = [
+            { klucz: 'overall', etykieta: 'Overall' },
+            { klucz: 'saldo', etykieta: 'Saldo' },
+            { klucz: 'bdb', etykieta: 'bdb' },
+            { klucz: 'cel', etykieta: 'cel' },
+            { klucz: 'poprawa_kartkowki', etykieta: 'Poprawa kartkówki' },
+            { klucz: 'poprawa_klasowki', etykieta: 'Poprawa pracy kontrolnej' },
+            { klucz: 'poprawa_odpowiedzi', etykieta: 'Poprawa odpowiedzi' },
+            { klucz: 'np_jednorazowe', etykieta: 'Nieprzygotowanie jednorazowe' },
+            { klucz: 'np_tygodniowe', etykieta: 'Nieprzygotowanie tygodniowe' },
+            { klucz: 'wirtualne', etykieta: 'Wirtualne' },
+        ];
+        let stan = {}; // profil_id -> { overall, zakupy: {...}, aktywnosc: [10 x wartość-lub-null] }
+        let klasyZaladowane = false;
+        let aktualneProfile = [];
+        let aktualneCzyWszystkie = false;
+        let widoczneKolumny = {}; // klucz -> bool; domyślnie wszystkie widoczne
+        KOLUMNY_OPCJE.forEach(k => { widoczneKolumny[k.klucz] = true; });
+
+        function zbudujPanelKolumn() {
+            const panel = document.getElementById('kolumnyPanel');
+            let html = `<div class="kolumny-skroty">
+                <a onclick="ustawWszystkieKolumny(true)">Zaznacz wszystkie</a>
+                <a onclick="ustawWszystkieKolumny(false)">Odznacz wszystkie</a>
+            </div>`;
+            html += KOLUMNY_OPCJE.map(k => `<label>
+                <input type="checkbox" ${widoczneKolumny[k.klucz] ? 'checked' : ''} onchange="przelaczKolumne('${k.klucz}', this.checked)">
+                ${k.etykieta}
+            </label>`).join('');
+            panel.innerHTML = html;
+        }
+
+        function toggleKolumnyPanel() {
+            document.getElementById('kolumnyPanel').classList.toggle('otwarty');
+        }
+
+        document.addEventListener('click', (e) => {
+            const wybor = document.querySelector('.kolumny-wybor');
+            if (wybor && !wybor.contains(e.target)) document.getElementById('kolumnyPanel')?.classList.remove('otwarty');
+        });
+
+        function przelaczKolumne(klucz, widoczna) {
+            widoczneKolumny[klucz] = widoczna;
+            ustawWidocznoscKolumn();
+        }
+
+        function ustawWszystkieKolumny(widoczne) {
+            KOLUMNY_OPCJE.forEach(k => { widoczneKolumny[k.klucz] = widoczne; });
+            document.querySelectorAll('#kolumnyPanel input[type=checkbox]').forEach(cb => { cb.checked = widoczne; });
+            ustawWidocznoscKolumn();
+        }
+
+        function ustawWidocznoscKolumn() {
+            KOLUMNY_OPCJE.forEach(k => {
+                const pokaz = widoczneKolumny[k.klucz];
+                document.querySelectorAll(`[data-kol="${k.klucz}"]`).forEach(el => {
+                    el.style.display = pokaz ? '' : 'none';
+                });
+            });
+        }
+
+        function filtrujUczniow() {
+            const q = (document.getElementById('szukaj').value || '').trim().toLowerCase();
+            const lista = !q ? aktualneProfile : aktualneProfile.filter(p =>
+                `${p.imie || ''} ${p.nazwisko || ''}`.toLowerCase().includes(q)
+            );
+            renderuj(lista, aktualneCzyWszystkie);
+        }
+
+        function komunikat(tekst, kolor) {
+            const el = document.getElementById('komunikat');
+            el.style.color = kolor || '#ccc';
+            el.textContent = tekst;
+            if (tekst) setTimeout(() => { if (el.textContent === tekst) el.textContent = ''; }, 2500);
+        }
+
+        async function zaladujListeKlas() {
+            const { data } = await sb.from('profiles').select('klasa');
+            const klasy = [...new Set((data || []).map(p => p.klasa).filter(Boolean))].sort();
+            const sel = document.getElementById('klasa');
+            klasy.forEach(k => {
+                const opt = document.createElement('option');
+                opt.value = k; opt.textContent = `Klasa ${k}`;
+                sel.appendChild(opt);
+            });
+            klasyZaladowane = true;
+        }
+
+        async function wczytaj() {
+            const klasa = document.getElementById('klasa').value;
+            if (!klasa) {
+                document.getElementById('tableWrap').style.display = 'none';
+                document.getElementById('ladowanie').style.display = 'block';
+                document.getElementById('ladowanie').textContent = 'Wybierz klasę, aby zacząć.';
+                return;
+            }
+            document.getElementById('ladowanie').style.display = 'block';
+            document.getElementById('ladowanie').textContent = 'Wczytywanie...';
+            document.getElementById('tableWrap').style.display = 'none';
+
+            const czyWszystkie = klasa === 'wszystkie_klasy';
+            let q = sb.from('profiles').select('*');
+            if (!czyWszystkie) q = q.eq('klasa', klasa);
+            const { data: profile, error } = await q.order('klasa').order('nr');
+
+            if (error || !profile || profile.length === 0) {
+                document.getElementById('ladowanie').textContent = error ? 'Błąd: ' + error.message : 'Brak uczniów.';
+                return;
+            }
+
+            const ids = profile.map(p => p.id);
+            const [{ data: semData }, { data: zakData }] = await Promise.all([
+                sb.from('semestr1').select('*').in('profil_id', ids),
+                sb.from('pa_zakupy').select('*').in('profil_id', ids),
+            ]);
+
+            const semMap = {};
+            (semData || []).forEach(r => { semMap[r.profil_id] = r; });
+            const zakMap = {};
+            (zakData || []).forEach(r => { zakMap[r.profil_id] = r; });
+
+            stan = {};
+            profile.forEach(p => {
+                const zak = zakMap[p.id] || {};
+                const zakuChist = {};
+                POLA_ZAKUPY.forEach(f => { zakuChist[f] = zak[f] || 0; });
+                const sem = semMap[p.id] || {};
+                const aktywnosc = [];
+                for (let i = 1; i <= AKTYWNOSC_LICZBA; i++) aktywnosc.push(sem[`aktywnosc_${i}`] ?? null);
+                stan[p.id] = { profil: p, overall: sem.punkty_aktywnosci ?? 0, zakupy: zakuChist, aktywnosc };
+            });
+
+            aktualneProfile = profile;
+            aktualneCzyWszystkie = czyWszystkie;
+            filtrujUczniow();
+            document.getElementById('ladowanie').style.display = 'none';
+            document.getElementById('tableWrap').style.display = 'block';
+        }
+
+        function komorkaLiczbowa(profilId, pole, wartosc, klasaDod) {
+            return `<div class="pa-cell ${klasaDod || ''}">
+                <button class="pa-btn minus" onclick="zmien('${profilId}','${pole}',-1)">−</button>
+                <input type="number" step="1" value="${wartosc}"
+                    id="pa-${pole}-${profilId}"
+                    onchange="ustawWartosc('${profilId}','${pole}', this.value)">
+                <button class="pa-btn plus" onclick="zmien('${profilId}','${pole}',1)">+</button>
+            </div>`;
+        }
+
+        function renderuj(profile, czyWszystkie) {
+            const tbody = document.getElementById('tbody');
+            tbody.innerHTML = profile.map(p => {
+                const s = stan[p.id];
+                const saldo = paSaldo(s.overall, s.zakupy);
+                let tds = `<td class="td-nr">${p.nr ?? '—'}</td>`;
+                tds += `<td class="td-uczen">${p.imie || ''} ${p.nazwisko || ''}${czyWszystkie ? ' <span style="color:#999;">(' + (p.klasa||'') + ')</span>' : ''}</td>`;
+                tds += `<td data-kol="overall">${komorkaLiczbowa(p.id, 'overall', s.overall, 'col-overall')}</td>`;
+                tds += `<td class="td-saldo" data-kol="saldo" id="saldo-${p.id}"><span class="${saldo >= 0 ? 'saldo-ok' : 'saldo-zle'}">${saldo}</span></td>`;
+                POLA_ZAKUPY.forEach(f => {
+                    tds += `<td data-kol="${f}">${komorkaLiczbowa(p.id, f, s.zakupy[f], f === 'wirtualne' ? 'col-wirtualny' : '')}</td>`;
+                });
+                return `<tr>${tds}</tr>`;
+            }).join('');
+            ustawWidocznoscKolumn();
+        }
+
+        function odswiezSaldo(profilId) {
+            const s = stan[profilId];
+            const saldo = paSaldo(s.overall, s.zakupy);
+            const el = document.getElementById(`saldo-${profilId}`);
+            if (el) el.innerHTML = `<span class="${saldo >= 0 ? 'saldo-ok' : 'saldo-zle'}">${saldo}</span>`;
+        }
+
+        // Dla bdb/cel: przy dodaniu — wpisz ocenę (5/6) w pierwsze wolne pole
+        // Aktywności; przy odjęciu — wyczyść ostatnie pole z tą oceną.
+        // Zwraca true, jeśli coś w Aktywności się zmieniło (trzeba zapisać do semestr1).
+        function skorelujAktywnosc(profilId, pole, kierunek) {
+            const ocena = OCENA_ZA_ZAKUP[pole];
+            if (!ocena) return false;
+            const s = stan[profilId];
+            if (kierunek > 0) {
+                const idx = s.aktywnosc.findIndex(v => v === null || v === undefined);
+                if (idx === -1) {
+                    komunikat(`Brak wolnego miejsca w Aktywności (wszystkie ${AKTYWNOSC_LICZBA} zajęte)`, '#ffb347');
+                    return false;
+                }
+                s.aktywnosc[idx] = ocena;
+                return true;
+            } else {
+                for (let i = s.aktywnosc.length - 1; i >= 0; i--) {
+                    if (s.aktywnosc[i] === ocena) { s.aktywnosc[i] = null; return true; }
+                }
+                return false;
+            }
+        }
+
+        function zmien(profilId, pole, delta) {
+            const s = stan[profilId];
+            if (!s) return;
+            const biezaca = pole === 'overall' ? s.overall : s.zakupy[pole];
+            const nowa = Math.max(0, (biezaca || 0) + delta);
+            const faktycznaZmiana = nowa - (biezaca || 0);
+            if (pole === 'overall') s.overall = nowa; else s.zakupy[pole] = nowa;
+            const input = document.getElementById(`pa-${pole}-${profilId}`);
+            if (input) input.value = nowa;
+            odswiezSaldo(profilId);
+            const aktZmieniona = faktycznaZmiana !== 0 && skorelujAktywnosc(profilId, pole, faktycznaZmiana);
+            zapisz(profilId, pole, aktZmieniona);
+        }
+
+        function ustawWartosc(profilId, pole, wartosc) {
+            const s = stan[profilId];
+            if (!s) return;
+            let nowa = parseInt(wartosc, 10);
+            if (isNaN(nowa) || nowa < 0) nowa = 0;
+            const biezaca = pole === 'overall' ? s.overall : s.zakupy[pole];
+            const roznica = nowa - (biezaca || 0);
+            if (pole === 'overall') s.overall = nowa; else s.zakupy[pole] = nowa;
+            const input = document.getElementById(`pa-${pole}-${profilId}`);
+            if (input) input.value = nowa;
+            odswiezSaldo(profilId);
+            // Skoreluj Aktywność raz na każdą jednostkę różnicy (np. wpisanie od razu +3).
+            let aktZmieniona = false;
+            const krok = roznica > 0 ? 1 : -1;
+            for (let i = 0; i < Math.abs(roznica); i++) {
+                if (skorelujAktywnosc(profilId, pole, krok)) aktZmieniona = true;
+            }
+            zapisz(profilId, pole, aktZmieniona);
+        }
+
+        async function zapisz(profilId, pole, aktZmieniona) {
+            const s = stan[profilId];
+            if (!s) return;
+            komunikat('Zapisywanie...');
+            try {
+                if (pole === 'overall') {
+                    const { error } = await sb.from('semestr1')
+                        .upsert({ profil_id: profilId, punkty_aktywnosci: s.overall }, { onConflict: 'profil_id' });
+                    if (error) throw error;
+                } else {
+                    const row = { profil_id: profilId, ...s.zakupy, updated_at: new Date().toISOString() };
+                    const { error } = await sb.from('pa_zakupy').upsert(row, { onConflict: 'profil_id' });
+                    if (error) throw error;
+
+                    if (aktZmieniona) {
+                        const semRow = { profil_id: profilId };
+                        s.aktywnosc.forEach((v, i) => { semRow[`aktywnosc_${i + 1}`] = v; });
+                        const { error: semErr } = await sb.from('semestr1').upsert(semRow, { onConflict: 'profil_id' });
+                        if (semErr) throw semErr;
+                    }
+                }
+                komunikat('Zapisano ✓', '#6dcc80');
+            } catch (e) {
+                komunikat('Błąd: ' + e.message, '#ff7070');
+            }
+        }
+
+        async function init() {
+            const { data: { session } } = await sb.auth.getSession();
+            if (!session) { document.getElementById('ladowanie').textContent = 'Musisz być zalogowany.'; return; }
+            const { data: adminRow } = await sb.from('admins').select('id').eq('id', session.user.id).single();
+            if (!adminRow) { document.getElementById('ladowanie').textContent = 'Brak uprawnień admina.'; return; }
+            zbudujPanelKolumn();
+            await zaladujListeKlas();
+        }
+
+        init();
+    </script>
+</body>
+</html>
