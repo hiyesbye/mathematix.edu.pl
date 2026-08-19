@@ -16,7 +16,7 @@ input[type=text], input[type=password], input[type=number] {
 
 button[type=submit] {
     width: 100%;
-    background-color: rgb(12, 151, 151);
+    background: linear-gradient(120deg, rgba(93, 56, 112, 0.95), rgba(214, 133, 66, 0.95));
     color: white;
     padding: 14px 20px;
     margin: 8px 0;
@@ -26,12 +26,22 @@ button[type=submit] {
 }
 
 button[type=submit]:hover {
-    background-color: rgb(11, 105, 148);
+    background: linear-gradient(120deg, rgba(70, 40, 85, 1), rgba(190, 108, 48, 1));
 }
 
 .toform {
-    border-radius: 5px;
+    border-radius: 12px;
     font-size: 22px;
-    background-color: #f2f2f2;
+    background: linear-gradient(160deg, rgba(255, 221, 173, 0.45), rgba(220, 175, 150, 0.3));
+    border: 3px solid rgba(61, 38, 74, 0.85);
     padding: 20px;
+    box-sizing: border-box;
+}
+
+.toform h2 {
+    margin: -20px -20px 16px -20px;
+    padding: 12px 20px;
+    border-radius: 9px 9px 0 0;
+    background: linear-gradient(120deg, rgba(93, 56, 112, 0.8), rgba(214, 133, 66, 0.8));
+    text-align: center;
 }

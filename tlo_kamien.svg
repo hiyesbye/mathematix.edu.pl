@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="360" viewBox="0 0 360 360">
+  <defs>
+    <filter id="pebbles" x="0" y="0" width="360" height="360" filterUnits="userSpaceOnUse" primitiveUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feTurbulence type="turbulence" baseFrequency="0.026 0.026" numOctaves="2" seed="11" stitchTiles="stitch" result="shape"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.15 0.15" numOctaves="3" seed="4" stitchTiles="stitch" result="grain"/>
+      <feComposite in="shape" in2="grain" operator="arithmetic" k1="0" k2="0.82" k3="0.18" k4="0" result="bumpMap"/>
+
+      <feDiffuseLighting in="bumpMap" surfaceScale="6.5" diffuseConstant="1.05" lighting-color="#f0d9ac" result="diffuse">
+        <feDistantLight azimuth="235" elevation="48"/>
+      </feDiffuseLighting>
+      <feSpecularLighting in="bumpMap" surfaceScale="6.5" specularConstant="0.28" specularExponent="9" lighting-color="#fff3da" result="spec">
+        <feDistantLight azimuth="235" elevation="48"/>
+      </feSpecularLighting>
+      <feComposite in="spec" in2="SourceAlpha" operator="in" result="specClipped"/>
+      <feBlend in="diffuse" in2="specClipped" mode="screen" result="lit"/>
+
+      <feColorMatrix in="bumpMap" type="matrix"
+        values="0 0 0 0 0
+                0 0 0 0 0
+                0 0 0 0 0
+                0.33 0.33 0.33 0 -0.12" result="shadowMask"/>
+      <feComponentTransfer in="shadowMask" result="shadowSoft">
+        <feFuncA type="gamma" amplitude="1.6" exponent="1.6" offset="0"/>
+      </feComponentTransfer>
+      <feFlood flood-color="#392a4a" flood-opacity="0.55" result="shadowColor"/>
+      <feComposite in="shadowColor" in2="shadowSoft" operator="in" result="groutShadow"/>
+
+      <feBlend in="lit" in2="groutShadow" mode="multiply"/>
+    </filter>
+  </defs>
+  <rect width="360" height="360" fill="#a99cab" filter="url(#pebbles)"/>
+</svg>
