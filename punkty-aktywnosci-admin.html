@@ -225,7 +225,7 @@
         </div>
     </div>
     <div class="legenda">
-        Saldo = Overall − 5×bdb − 10×cel − 2×popr.kartk. − 4×popr.klas. − 5×popr.odp. − 10×np.jednoraz. − 30×np.tyg. + Wirtualne.
+        Pozostało = Łącznie − 5×bdb − 10×cel − 2×popr.kartk. − 4×popr.klas. − 5×popr.odp. − 10×np.jednoraz. − 30×np.tyg. + Wirtualne.
         Kliknij <b>+</b>/<b>−</b> żeby zmienić o 1, albo wpisz liczbę wprost i naciśnij Enter/kliknij poza polem.
         <b>bdb/cel automatycznie wpisuje ocenę 5/6 do pierwszego wolnego pola Aktywności</b> (i usuwa ją przy odjęciu) — dziennik ocen ma teraz 10 pól Aktywności.
     </div>
@@ -237,8 +237,8 @@
                 <tr>
                     <th class="th-nr">Nr</th>
                     <th class="th-uczen">Uczeń</th>
-                    <th class="th-overall" data-kol="overall">Overall</th>
-                    <th class="th-saldo" data-kol="saldo">Saldo</th>
+                    <th class="th-overall" data-kol="overall">Łącznie</th>
+                    <th class="th-saldo" data-kol="saldo">Pozostało</th>
                     <th class="th-zielony" data-kol="bdb">bdb</th>
                     <th class="th-zielony" data-kol="cel">cel</th>
                     <th class="th-niebieski" data-kol="poprawa_kartkowki">Popr.<br>kartk.</th>
@@ -260,8 +260,8 @@
         const AKTYWNOSC_LICZBA = 10;
         const OCENA_ZA_ZAKUP = { bdb: 5, cel: 6 };
         const KOLUMNY_OPCJE = [
-            { klucz: 'overall', etykieta: 'Overall' },
-            { klucz: 'saldo', etykieta: 'Saldo' },
+            { klucz: 'overall', etykieta: 'Łącznie' },
+            { klucz: 'saldo', etykieta: 'Pozostało' },
             { klucz: 'bdb', etykieta: 'bdb' },
             { klucz: 'cel', etykieta: 'cel' },
             { klucz: 'poprawa_kartkowki', etykieta: 'Poprawa kartkówki' },
