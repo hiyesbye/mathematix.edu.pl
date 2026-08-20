@@ -320,10 +320,6 @@
                             <span class="profil-value" id="p-imie"></span>
                         </div>
                         <div class="profil-row">
-                            <span class="profil-label">Nazwisko:</span>
-                            <span class="profil-value" id="p-nazwisko"></span>
-                        </div>
-                        <div class="profil-row">
                             <span class="profil-label">Klasa:</span>
                             <span class="profil-value" id="p-klasa"></span>
                         </div>
@@ -446,7 +442,6 @@
                 document.getElementById('p-nr-dziennika').textContent = profil.nr != null ? profil.nr % 100 : '—';
                 document.getElementById('p-login').textContent = profil.login;
                 document.getElementById('p-imie').textContent = profil.imie || '—';
-                document.getElementById('p-nazwisko').textContent = profil.nazwisko || '—';
                 document.getElementById('p-klasa').textContent = profil.klasa || '—';
                 document.getElementById('p-plec').textContent =
                     profil.plec === 'K' ? 'Kobieta' : profil.plec === 'M' ? 'Mężczyzna' : '—';
