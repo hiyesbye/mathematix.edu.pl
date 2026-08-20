@@ -170,6 +170,7 @@
             }
             .karta-ocena-badge.niebieski { color: #0a6a96; border-color: rgb(11,105,148); }
             .karta-ocena-badge.czerwony  { color: #b52a1e; border-color: #c0392b; }
+            .ocena-plus { font-size: 0.7em; font-weight: bold; margin-left: 1px; }
             .karta-strzalka { font-size: 11px; color: #888; transition: transform 0.2s; flex-shrink: 0; }
             .karta-open .karta-strzalka { transform: rotate(180deg); }
             .karta-szczegoly {
@@ -505,6 +506,19 @@
                     if (proc < 97) return 5; return 6;
                 }
 
+                // Czysto wizualna wskazówka "(+)" — sugeruje, że uczeń jest blisko
+                // wyższej oceny i mógłby dopłacić Punktami Aktywności. Nie wpływa
+                // na żadne przeliczenia ani średnie.
+                function progOcenaPlus(proc) {
+                    if (proc == null) return null;
+                    if (proc >= 20 && proc < 30) return 1;
+                    if (proc >= 40 && proc < 50) return 2;
+                    if (proc >= 60 && proc < 70) return 3;
+                    if (proc >= 80 && proc < 87) return 4;
+                    if (proc >= 91 && proc < 97) return 5;
+                    return null;
+                }
+
                 function barKolor(ocena) {
                     const o = Number(ocena);
                     if (isNaN(o)) return '#aaa';
@@ -599,13 +613,15 @@
 
                         const id    = `karta-${prefixSem}${i}`;
                         const badge = myOcena != null ? myOcena : '—';
+                        const plus  = hasPoints && progOcenaPlus(myProc) === Number(badge);
+                        const badgeHtml = plus ? `${badge}<span class="ocena-plus">(+)</span>` : `${badge}`;
 
                         const bk = barKolor(badge);
                         html += `<div class="sprawdzian-karta ${kolor}" id="${id}">
                             <div class="karta-naglowek" onclick="toggleKarta('${id}')">
                                 <div class="karta-lewa">
                                     <span class="karta-nazwa">${nazwaPracy(nazwyMap, typ, i, nazwaBase)}</span>
-                                    <span class="karta-ocena-badge ${kolor}">${badge}</span>
+                                    <span class="karta-ocena-badge ${kolor}">${badgeHtml}</span>
                                 </div>
                                 <span class="karta-strzalka">▼</span>
                             </div>
@@ -627,7 +643,7 @@
                                         </div>` : ''}
                                         <div class="wynik-box" style="border-color:${bk};color:${bk};">
                                             <div class="wynik-box-label">Ocena</div>
-                                            <div class="wynik-box-val">${badge}</div>
+                                            <div class="wynik-box-val">${badgeHtml}</div>
                                         </div>
                                     </div>
                                 </div>

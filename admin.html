@@ -285,6 +285,9 @@
                 font-weight: bold; background: #f8f8f8; border: 2px solid #ccc;
                 border-radius: 4px; font-family: 'Courier New', Courier, monospace;
             }
+            .ocena-plus {
+                font-size: 0.7em; font-weight: bold; margin-left: 1px;
+            }
             .pkt-wynik {
                 margin-top: 8px; padding: 5px 12px; border-radius: 4px;
                 background: #eee; font-size: 14px; font-weight: bold; color: #333;
@@ -786,6 +789,19 @@
                 return 6;
             }
 
+            // Czysto wizualna wskazówka "(+)" — sugeruje, że uczeń jest blisko
+            // wyższej oceny i mógłby dopłacić Punktami Aktywności. Nie wpływa
+            // na żadne przeliczenia ani średnie.
+            function progOcenaPlus(proc) {
+                if (proc == null) return null;
+                if (proc >= 20 && proc < 30) return 1;
+                if (proc >= 40 && proc < 50) return 2;
+                if (proc >= 60 && proc < 70) return 3;
+                if (proc >= 80 && proc < 87) return 4;
+                if (proc >= 91 && proc < 97) return 5;
+                return null;
+            }
+
             function ocenaNaKolor(ocena) {
                 if (ocena <= 2) return '#c0392b';
                 if (ocena === 3) return '#e67e22';
@@ -840,7 +856,8 @@
                                 const kolor = ocenaNaKolor(ocena);
                                 procEl.style.color = kolor;
                                 procEl.style.borderColor = kolor;
-                                ocenaEl.textContent = `${ocena}`;
+                                const plus = progOcenaPlus(proc) === ocena;
+                                ocenaEl.innerHTML = plus ? `${ocena}<span class="ocena-plus">(+)</span>` : `${ocena}`;
                                 ocenaEl.style.color = kolor;
                                 ocenaEl.style.borderColor = kolor;
                             } else {
