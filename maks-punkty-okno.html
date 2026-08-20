@@ -13,13 +13,19 @@
             position: sticky; top: 0; z-index: 100;
             background: #1c1c1c; color: white;
             display: flex; align-items: center; justify-content: space-between;
-            padding: 0 20px; height: 52px;
+            flex-wrap: wrap; row-gap: 8px;
+            padding: 10px 20px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.4);
         }
-        .topbar-left { display: flex; align-items: center; gap: 14px; }
+        .topbar-left { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; row-gap: 8px; }
         .topbar-title { font-size: 17px; font-weight: bold; letter-spacing: 0.5px; }
         .topbar-right { display: flex; align-items: center; gap: 14px; }
         #komunikat { font-size: 14px; min-width: 180px; text-align: right; }
+
+        @media (max-width: 480px) {
+            .topbar { padding: 10px 12px; }
+            #komunikat { min-width: 0; }
+        }
 
         .btn-powrot {
             padding: 7px 16px; background: transparent; color: #ccc;
@@ -93,7 +99,7 @@
     <div class="topbar">
         <div class="topbar-left">
             <button class="btn-powrot" onclick="window.opener && !window.opener.closed ? window.close() : window.location.href='admin.html'">&#8592; Powrót</button>
-            <span class="topbar-title">Maks. punkty dla klasy</span>
+            <span class="topbar-title">Max. pkt.</span>
         </div>
         <div class="topbar-right">
             <span id="komunikat"></span>
