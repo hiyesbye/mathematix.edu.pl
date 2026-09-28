@@ -107,6 +107,9 @@
             <div class="dzial-naglowek">😴 Wykorzystane nieprzygotowania</div>
             <div class="wiersz"><span class="wiersz-nazwa">Jednorazowe</span><span class="wiersz-liczba" id="s-np_jednorazowe">0</span></div>
             <div class="wiersz"><span class="wiersz-nazwa">Tygodniowe</span><span class="wiersz-liczba" id="s-np_tygodniowe">0</span></div>
+
+            <div class="dzial-naglowek">Z plusem</div>
+            <div class="wiersz"><span class="wiersz-nazwa">Punkty Z plusem (−1 PA za punkt)</span><span class="wiersz-liczba" id="s-z_plusem">0</span></div>
         </div>
     </div>
 
@@ -135,7 +138,7 @@
                 document.getElementById('s-wirtualne-box').style.display = 'block';
             }
 
-            ['bdb', 'cel', 'poprawa_kartkowki', 'poprawa_klasowki', 'poprawa_odpowiedzi', 'np_jednorazowe', 'np_tygodniowe'].forEach(pole => {
+            ['bdb', 'cel', 'poprawa_kartkowki', 'poprawa_klasowki', 'poprawa_odpowiedzi', 'np_jednorazowe', 'np_tygodniowe', 'z_plusem'].forEach(pole => {
                 const el = document.getElementById('s-' + pole);
                 const wartosc = zakupy[pole] || 0;
                 el.textContent = wartosc;

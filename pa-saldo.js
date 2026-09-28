@@ -6,6 +6,7 @@
 //         - 5*bdb - 10*cel
 //         - 2*poprawa_kartkowki - 4*poprawa_klasowki - 5*poprawa_odpowiedzi
 //         - 10*np_jednorazowe - 30*np_tygodniowe
+//         - 1*z_plusem
 //         + wirtualne
 
 const PA_CENNIK = {
@@ -16,6 +17,7 @@ const PA_CENNIK = {
     poprawa_odpowiedzi: 5,
     np_jednorazowe: 10,
     np_tygodniowe: 30,
+    z_plusem: 1,
 };
 
 const PA_ETYKIETY = {
@@ -26,6 +28,7 @@ const PA_ETYKIETY = {
     poprawa_odpowiedzi: 'Poprawa odpowiedzi',
     np_jednorazowe: 'Nieprzygotowanie jednorazowe',
     np_tygodniowe: 'Nieprzygotowanie tygodniowe',
+    z_plusem: 'Z plusem',
 };
 
 function paWydane(zakupy) {

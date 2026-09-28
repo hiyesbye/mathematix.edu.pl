@@ -225,7 +225,7 @@
         </div>
     </div>
     <div class="legenda">
-        Pozostało = Łącznie − 5×bdb − 10×cel − 2×popr.kartk. − 4×popr.klas. − 5×popr.odp. − 10×np.jednoraz. − 30×np.tyg. + Wirtualne.
+        Pozostało = Łącznie − 5×bdb − 10×cel − 2×popr.kartk. − 4×popr.klas. − 5×popr.odp. − 10×np.jednoraz. − 30×np.tyg. − 1×Z plusem + Wirtualne.
         Kliknij <b>+</b>/<b>−</b> żeby zmienić o 1, albo wpisz liczbę wprost i naciśnij Enter/kliknij poza polem.
         <b>bdb/cel automatycznie wpisuje ocenę 5/6 do pierwszego wolnego pola Aktywności</b> (i usuwa ją przy odjęciu) — dziennik ocen ma teraz 10 pól Aktywności.
     </div>
@@ -246,6 +246,7 @@
                     <th class="th-fioletowy" data-kol="poprawa_odpowiedzi">Popr.<br>odp.</th>
                     <th class="th-szary" data-kol="np_jednorazowe">Np.<br>jednoraz.</th>
                     <th class="th-szary" data-kol="np_tygodniowe">Np.<br>tyg.</th>
+                    <th class="th-fioletowy" data-kol="z_plusem">Z plusem</th>
                     <th class="th-wirtualny" data-kol="wirtualne">Wirtualne</th>
                 </tr>
             </thead>
@@ -256,7 +257,7 @@
     <script src="supabase-config.js"></script>
     <script src="pa-saldo.js"></script>
     <script>
-        const POLA_ZAKUPY = ['bdb', 'cel', 'poprawa_kartkowki', 'poprawa_klasowki', 'poprawa_odpowiedzi', 'np_jednorazowe', 'np_tygodniowe', 'wirtualne'];
+        const POLA_ZAKUPY = ['bdb', 'cel', 'poprawa_kartkowki', 'poprawa_klasowki', 'poprawa_odpowiedzi', 'np_jednorazowe', 'np_tygodniowe', 'z_plusem', 'wirtualne'];
         const AKTYWNOSC_LICZBA = 10;
         const OCENA_ZA_ZAKUP = { bdb: 5, cel: 6 };
         const KOLUMNY_OPCJE = [
@@ -269,6 +270,7 @@
             { klucz: 'poprawa_odpowiedzi', etykieta: 'Poprawa odpowiedzi' },
             { klucz: 'np_jednorazowe', etykieta: 'Nieprzygotowanie jednorazowe' },
             { klucz: 'np_tygodniowe', etykieta: 'Nieprzygotowanie tygodniowe' },
+            { klucz: 'z_plusem', etykieta: 'Z plusem' },
             { klucz: 'wirtualne', etykieta: 'Wirtualne' },
         ];
         let stan = {}; // profil_id -> { overall, zakupy: {...}, aktywnosc: [10 x wartość-lub-null] }
