@@ -110,7 +110,7 @@
         /* Komórka pkt / max */
         .dpkt-cell { display: flex; align-items: center; gap: 3px; justify-content: center; }
         .dpkt-cell input {
-            width: 48px; padding: 4px 3px; text-align: center;
+            width: 78px; padding: 4px 3px; text-align: center;
             font-family: 'Courier New', Courier, monospace; font-size: 14px;
             border: 2px solid #ccc; border-radius: 4px;
             transition: border-color 0.15s;
@@ -148,6 +148,7 @@
     <script src="supabase-config.js"></script>
     <script src="nazwy-prac.js"></script>
     <script src="pa-procenty.js"></script>
+    <script src="punkty-liczby.js"></script>
     <script>
         const TYPY = {
             kartkowka:       { count: 8, prefix: 'kartp',  prefixMax: 'kartmax',  label: 'Kart.',  kolor: 'niebieski', thKolor: 'th-niebieski' },
@@ -224,9 +225,9 @@
                     const pDisp = (pVal !== null && pVal !== undefined) ? pVal : '';
                     const mDisp = (mVal !== null && mVal !== undefined) ? mVal : '';
                     tds += `<td><div class="dpkt-cell ${t.kolor}">
-                        <input type="number" id="dpkt-${profil.id}-p${i}" min="0" step="1" value="${pDisp}" placeholder="pkt">
+                        <input type="text" inputmode="decimal" id="dpkt-${profil.id}-p${i}" value="${pDisp}" placeholder="pkt">
                         <span class="dpkt-sep">/</span>
-                        <input type="number" id="dpkt-${profil.id}-m${i}" min="0" step="1" value="${mDisp}" placeholder="max">
+                        <input type="text" inputmode="decimal" id="dpkt-${profil.id}-m${i}" value="${mDisp}" placeholder="max">
                     </div></td>`;
                 }
                 return `<tr>${tds}</tr>`;
@@ -251,17 +252,24 @@
 
             function pobierz(id) {
                 const val = document.getElementById(id)?.value;
-                return val !== '' && val !== undefined ? parseInt(val) : null;
+                return parsujPunkty(val);
             }
 
-            const rows = dane.map(({ profil }) => {
-                const row = { profil_id: profil.id };
-                for (let i = 1; i <= t.count; i++) {
-                    row[`${t.prefix}${i}`]    = pobierz(`dpkt-${profil.id}-p${i}`);
-                    row[`${t.prefixMax}${i}`] = pobierz(`dpkt-${profil.id}-m${i}`);
-                }
-                return row;
-            });
+            let rows;
+            try {
+                rows = dane.map(({ profil }) => {
+                    const row = { profil_id: profil.id };
+                    for (let i = 1; i <= t.count; i++) {
+                        row[`${t.prefix}${i}`]    = pobierz(`dpkt-${profil.id}-p${i}`);
+                        row[`${t.prefixMax}${i}`] = pobierz(`dpkt-${profil.id}-m${i}`);
+                    }
+                    return row;
+                });
+            } catch (e) {
+                kom.style.color = '#ff7070';
+                kom.textContent = e.message;
+                return;
+            }
 
             const { error } = await sb.from('Punktysem1').upsert(rows, { onConflict: 'profil_id' });
             if (error) {

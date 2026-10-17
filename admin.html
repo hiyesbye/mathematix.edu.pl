@@ -264,7 +264,7 @@
             /* ── Dziennik punktów — komórki pkt/max ── */
             .dpkt-cell { display: flex; align-items: center; gap: 3px; justify-content: center; }
             .dpkt-cell input {
-                width: 48px; padding: 4px 3px; text-align: center;
+                width: 78px; padding: 4px 3px; text-align: center;
                 font-family: 'Courier New', Courier, monospace; font-size: 14px;
                 border: 2px solid #ccc; border-radius: 4px; box-sizing: border-box;
             }
@@ -277,7 +277,7 @@
             .pkt-row  { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
             .pkt-row label { width: 88px; font-size: 13px; color: #555; flex-shrink: 0; }
             .pkt-row input {
-                width: 66px; padding: 5px 6px; text-align: center;
+                width: 84px; padding: 5px 6px; text-align: center;
                 font-family: 'Courier New', Courier, monospace; font-size: 14px;
                 border: 2px solid #ccc; border-radius: 4px; box-sizing: border-box;
             }
@@ -315,7 +315,7 @@
 
             @media (max-width: 480px) {
                 .pkt-row label { width: 100%; }
-                .pkt-row input { width: 56px; }
+                .pkt-row input { width: 84px; }
                 .admin-box { padding: 20px 14px; }
             }
         </style>
@@ -520,6 +520,7 @@
         <script src="nazwy-prac.js"></script>
         <script src="pa-saldo.js"></script>
         <script src="pa-procenty.js"></script>
+        <script src="punkty-liczby.js"></script>
         <script src="oceny-plus.js"></script>
         <script>
             let wszyscyUczniowie = [];
@@ -731,9 +732,9 @@
                         const pDisp = (pVal !== null && pVal !== undefined) ? pVal : '';
                         const mDisp = (mVal !== null && mVal !== undefined) ? mVal : '';
                         tds += `<td><div class="dpkt-cell ${typ.kolor}">
-                            <input type="number" id="dpkt-${profil.id}-p${i}" min="0" step="1" value="${pDisp}" placeholder="pkt">
+                            <input type="text" inputmode="decimal" id="dpkt-${profil.id}-p${i}" value="${pDisp}" placeholder="pkt">
                             <span class="dpkt-sep">/</span>
-                            <input type="number" id="dpkt-${profil.id}-m${i}" min="0" step="1" value="${mDisp}" placeholder="max">
+                            <input type="text" inputmode="decimal" id="dpkt-${profil.id}-m${i}" value="${mDisp}" placeholder="max">
                         </div></td>`;
                     }
                     return `<tr>${tds}</tr>`;
@@ -749,17 +750,24 @@
 
                 function pobierz(id) {
                     const val = document.getElementById(id)?.value;
-                    return val !== '' && val !== undefined ? parseInt(val) : null;
+                    return parsujPunkty(val);
                 }
 
-                const rows = pktDane.map(({ profil }) => {
-                    const row = { profil_id: profil.id };
-                    for (let i = 1; i <= typ.count; i++) {
-                        row[`${typ.prefix}${i}`]    = pobierz(`dpkt-${profil.id}-p${i}`);
-                        row[`${typ.prefixMax}${i}`] = pobierz(`dpkt-${profil.id}-m${i}`);
-                    }
-                    return row;
-                });
+                let rows;
+                try {
+                    rows = pktDane.map(({ profil }) => {
+                        const row = { profil_id: profil.id };
+                        for (let i = 1; i <= typ.count; i++) {
+                            row[`${typ.prefix}${i}`]    = pobierz(`dpkt-${profil.id}-p${i}`);
+                            row[`${typ.prefixMax}${i}`] = pobierz(`dpkt-${profil.id}-m${i}`);
+                        }
+                        return row;
+                    });
+                } catch (e) {
+                    kom.style.color = 'red';
+                    kom.textContent = e.message;
+                    return;
+                }
 
                 const { error } = await sb.from('Punktysem1').upsert(rows, { onConflict: 'profil_id' });
                 if (error) {
@@ -843,10 +851,10 @@
                     const label = (nazwyMap && typ) ? nazwaPracy(nazwyMap, typ, i, etykieta) : `${etykieta} ${i}`;
                     row.innerHTML = `
                         <label>${label}:</label>
-                        <input type="number" id="${idP}${i}" min="0" step="1" placeholder="pkt"
+                        <input type="text" inputmode="decimal" id="${idP}${i}" placeholder="pkt"
                             oninput="przeliczPkt('${idP}','${idMax}',${count},'${wynikId}')">
                         <span class="pkt-sep">/</span>
-                        <input type="number" id="${idMax}${i}" min="0" step="1" placeholder="max"
+                        <input type="text" inputmode="decimal" id="${idMax}${i}" placeholder="max"
                             oninput="przeliczPkt('${idP}','${idMax}',${count},'${wynikId}')">
                         <span class="pkt-proc" id="${idP}proc${i}">—</span>
                         <span class="pkt-grade" id="${idP}ocena${i}">—</span>
@@ -860,14 +868,14 @@
                 for (let i = 1; i <= count; i++) {
                     const pVal = document.getElementById(`${idP}${i}`)?.value;
                     const mVal = document.getElementById(`${idMax}${i}`)?.value;
-                    sumP += parseFloat(pVal) || 0;
-                    sumM += parseFloat(mVal) || 0;
+                    sumP += podgladPunktow(pVal) || 0;
+                    sumM += podgladPunktow(mVal) || 0;
                     const procEl  = document.getElementById(`${idP}proc${i}`);
                     const ocenaEl = document.getElementById(`${idP}ocena${i}`);
                     if (procEl && ocenaEl) {
-                        const pNum = parseFloat(pVal);
-                        const mNum = parseFloat(mVal);
-                        if (!isNaN(pNum) && !isNaN(mNum) && mNum > 0) {
+                        const pNum = podgladPunktow(pVal);
+                        const mNum = podgladPunktow(mVal);
+                        if (pNum !== null && mNum !== null && mNum > 0) {
                             const proc  = Math.round(pNum / mNum * 100);
                             const poleBonusu = idP === 'e-kp-' ? `kartkowka_${i}` : `praca_kontrolna_${i}`;
                             const bonus = edytowanyBonus[poleBonusu] || 0;
@@ -993,30 +1001,37 @@
                     return val !== '' && val !== undefined ? parseInt(val) : null;
                 }
 
-                const dane = {
-                    profil_id: edytowanyProfilId,
-                };
-                for (let i = 1; i <= 10; i++) dane[`aktywnosc_${i}`] = pobierz(`e-akt-${i}`);
-                for (let i = 1; i <= 4; i++) dane[`odp${i}`] = pobierz(`e-odp-${i}`);
-                dane.wkp = pobierz('e-wkp');
-                dane.alfik = pobierz('e-alfik');
-                for (let i = 1; i <= 8; i++) {
-                    const oc = paOcenaPoZakupie(pobierz(`e-kp-${i}`), pobierz(`e-km-${i}`), edytowanyBonus[`kartkowka_${i}`]);
-                    dane[`kartkowka_${i}`] = typeof oc === 'number' ? oc : null;
-                }
-                for (let i = 1; i <= 4; i++) {
-                    const oc = paOcenaPoZakupie(pobierz(`e-lp-${i}`), pobierz(`e-lm-${i}`), edytowanyBonus[`praca_kontrolna_${i}`]);
-                    dane[`praca_kontrolna_${i}`] = typeof oc === 'number' ? oc : null;
-                }
+                function pobierzPkt(id) { return parsujPunkty(document.getElementById(id)?.value); }
 
-                const danePkt = { profil_id: edytowanyProfilId };
-                for (let i = 1; i <= 8; i++) {
-                    danePkt[`kartp${i}`]    = pobierz(`e-kp-${i}`);
-                    danePkt[`kartmax${i}`] = pobierz(`e-km-${i}`);
-                }
-                for (let i = 1; i <= 4; i++) {
-                    danePkt[`klasp${i}`]   = pobierz(`e-lp-${i}`);
-                    danePkt[`klasmax${i}`] = pobierz(`e-lm-${i}`);
+                let dane, danePkt;
+                try {
+                    dane = { profil_id: edytowanyProfilId };
+                    for (let i = 1; i <= 10; i++) dane[`aktywnosc_${i}`] = pobierz(`e-akt-${i}`);
+                    for (let i = 1; i <= 4; i++) dane[`odp${i}`] = pobierz(`e-odp-${i}`);
+                    dane.wkp = pobierz('e-wkp');
+                    dane.alfik = pobierz('e-alfik');
+                    for (let i = 1; i <= 8; i++) {
+                        const oc = paOcenaPoZakupie(pobierzPkt(`e-kp-${i}`), pobierzPkt(`e-km-${i}`), edytowanyBonus[`kartkowka_${i}`]);
+                        dane[`kartkowka_${i}`] = typeof oc === 'number' ? oc : null;
+                    }
+                    for (let i = 1; i <= 4; i++) {
+                        const oc = paOcenaPoZakupie(pobierzPkt(`e-lp-${i}`), pobierzPkt(`e-lm-${i}`), edytowanyBonus[`praca_kontrolna_${i}`]);
+                        dane[`praca_kontrolna_${i}`] = typeof oc === 'number' ? oc : null;
+                    }
+
+                    danePkt = { profil_id: edytowanyProfilId };
+                    for (let i = 1; i <= 8; i++) {
+                        danePkt[`kartp${i}`]    = pobierzPkt(`e-kp-${i}`);
+                        danePkt[`kartmax${i}`] = pobierzPkt(`e-km-${i}`);
+                    }
+                    for (let i = 1; i <= 4; i++) {
+                        danePkt[`klasp${i}`]   = pobierzPkt(`e-lp-${i}`);
+                        danePkt[`klasmax${i}`] = pobierzPkt(`e-lm-${i}`);
+                    }
+                } catch (e) {
+                    kom.style.color = 'red';
+                    kom.textContent = e.message;
+                    return;
                 }
 
                 const [{ error }, { error: errorPkt }] = await Promise.all([

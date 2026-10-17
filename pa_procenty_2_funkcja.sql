@@ -5,8 +5,8 @@ create or replace function public.pa_zmien_procent(
 ) returns integer language plpgsql security definer
 set search_path = public, pg_temp as $$
 declare
-  v_pkt integer;
-  v_max integer;
+  v_pkt numeric;
+  v_max numeric;
   v_procent integer;
   v_cel integer;
   v_stare integer;
@@ -30,11 +30,11 @@ begin
 
   perform pg_advisory_xact_lock(hashtext(p_profil::text));
   select case when p_typ = 'kartkowka'
-           then (to_jsonb(p)->>('kartp' || p_numer))::integer
-           else (to_jsonb(p)->>('klasp' || p_numer))::integer end,
+           then (to_jsonb(p)->>('kartp' || p_numer))::numeric
+           else (to_jsonb(p)->>('klasp' || p_numer))::numeric end,
          case when p_typ = 'kartkowka'
-           then (to_jsonb(p)->>('kartmax' || p_numer))::integer
-           else (to_jsonb(p)->>('klasmax' || p_numer))::integer end
+           then (to_jsonb(p)->>('kartmax' || p_numer))::numeric
+           else (to_jsonb(p)->>('klasmax' || p_numer))::numeric end
     into v_pkt, v_max from public."Punktysem1" p where p.profil_id = p_profil;
   select punkty_procentowe into v_stare from public.pa_procenty
     where profil_id = p_profil and typ = p_typ and numer = p_numer;
