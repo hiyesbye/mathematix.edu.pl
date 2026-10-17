@@ -488,6 +488,7 @@
 
                 let aktHtml = '';
                 for (let i = 1; i <= 10; i++) aktHtml += kafelek(`Aktywność ${i}`, sem1?.[`aktywnosc_${i}`], 'zielony');
+                for (let i = 1; i <= 4; i++) aktHtml += kafelek(`Aktywność dodatkowa ${i}`, sem1?.[`aktdod${i}`], 'zielony');
                 document.getElementById('grid-aktywnosc').innerHTML = aktHtml;
 
                 let odpHtml = '';
@@ -708,6 +709,7 @@
                     if (!s) return { aryt: null, waz: null };
                     const KATEGORIE = [
                         { prefix: 'aktywnosc_',       count: 10, waga: 1 },
+                        { prefix: 'aktdod',           count: 4, waga: 1 },
                         { prefix: 'odp',               count: 4, waga: 1 },
                         { prefix: 'wkp',               count: 1, waga: 1 },
                         { prefix: 'alfik',             count: 1, waga: 1 },

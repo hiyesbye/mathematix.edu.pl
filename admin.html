@@ -386,6 +386,10 @@
                             <div class="edit-grid kolor-zielony" id="eg-aktywnosc"></div>
                         </div>
                         <div class="edit-sekcja">
+                            <h4>Aktywność dodatkowa</h4>
+                            <div class="edit-grid kolor-zielony" id="eg-aktdod"></div>
+                        </div>
+                        <div class="edit-sekcja">
                             <h4>Odpowiedzi</h4>
                             <div class="edit-grid kolor-fioletowy" id="eg-odpowiedzi"></div>
                         </div>
@@ -423,6 +427,7 @@
                             <select id="dz-typ" onchange="odswiezDziennik()">
                                 <option value="">Wybierz formę sprawdzenia...</option>
                                 <option value="aktywnosc">Aktywność</option>
+                                <option value="aktdod">Aktywność dodatkowa</option>
                                 <option value="odpowiedz">Odpowiedzi</option>
                                 <option value="wkp">WKP</option>
                                 <option value="alfik">Alfik matematyczny</option>
@@ -531,6 +536,7 @@
                 if (!s) return { srAryt: null, srWaz: null };
                 const KATEGORIE = [
                     { prefix: 'aktywnosc_',       count: 10, waga: 1 },
+                    { prefix: 'aktdod',           count: 4, waga: 1 },
                     { prefix: 'odp',               count: 4, waga: 1 },
                     { prefix: 'wkp',               count: 1, waga: 1 },
                     { prefix: 'alfik',             count: 1, waga: 1 },
@@ -943,6 +949,7 @@
                     }
                 }
                 polaBuduj('eg-aktywnosc', 'akt', 10, 'Aktywność');
+                polaBuduj('eg-aktdod', 'aktdod', 4, 'Aktywność dodatkowa');
                 polaBuduj('eg-odpowiedzi', 'odp', 4, 'Odpowiedź');
 
                 // Pobierz istniejące oceny
@@ -959,6 +966,7 @@
 
                 if (sem1) {
                     for (let i = 1; i <= 10; i++) ustaw(`e-akt-${i}`, sem1[`aktywnosc_${i}`]);
+                    for (let i = 1; i <= 4; i++) ustaw(`e-aktdod-${i}`, sem1[`aktdod${i}`]);
                     for (let i = 1; i <= 4; i++) ustaw(`e-odp-${i}`, sem1[`odp${i}`]);
                     ustaw('e-wkp', sem1.wkp);
                     ustaw('e-alfik', sem1.alfik);
@@ -1007,6 +1015,7 @@
                 try {
                     dane = { profil_id: edytowanyProfilId };
                     for (let i = 1; i <= 10; i++) dane[`aktywnosc_${i}`] = pobierz(`e-akt-${i}`);
+                    for (let i = 1; i <= 4; i++) dane[`aktdod${i}`] = pobierz(`e-aktdod-${i}`);
                     for (let i = 1; i <= 4; i++) dane[`odp${i}`] = pobierz(`e-odp-${i}`);
                     dane.wkp = pobierz('e-wkp');
                     dane.alfik = pobierz('e-alfik');
@@ -1068,6 +1077,7 @@
             // ── Dziennik ocen ──
             const TYPY_DZ = {
                 aktywnosc:       { prefix: 'aktywnosc_',       count: 10, label: 'Aktywność',   kolor: 'zielony',   thKolor: 'th-zielony'   },
+                aktdod:          { prefix: 'aktdod',           count: 4, label: 'Aktywność dodatkowa', kolor: 'zielony', thKolor: 'th-zielony' },
                 odpowiedz:       { prefix: 'odp',               count: 4, label: 'Odpowiedź',   kolor: 'fioletowy', thKolor: 'th-fioletowy' },
                 wkp:             { prefix: 'wkp',               count: 1, label: 'WKP',         kolor: 'zloty',     thKolor: 'th-zloty'     },
                 alfik:           { prefix: 'alfik',             count: 1, label: 'Alfik',       kolor: 'zloty',     thKolor: 'th-zloty'     },
@@ -1076,6 +1086,7 @@
             };
             const SEKCJE_W = [
                 { prefix: 'aktywnosc_',       count: 10, label: 'Akt.',   kolor: 'zielony',   thKolor: 'th-zielony'   },
+                { prefix: 'aktdod',           count: 4, label: 'Akt. dod.', kolor: 'zielony', thKolor: 'th-zielony' },
                 { prefix: 'odp',               count: 4, label: 'Odp.',   kolor: 'fioletowy', thKolor: 'th-fioletowy' },
                 { prefix: 'wkp',               count: 1, label: 'WKP',    kolor: 'zloty',     thKolor: 'th-zloty'     },
                 { prefix: 'alfik',             count: 1, label: 'Alfik',  kolor: 'zloty',     thKolor: 'th-zloty'     },
