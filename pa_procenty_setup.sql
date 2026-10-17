@@ -123,11 +123,11 @@ begin
     on conflict (profil_id, typ, numer) do update
       set punkty_procentowe = excluded.punkty_procentowe;
 
-  insert into public.pa_zakupy (profil_id, z_plusem)
+  insert into public.pa_zakupy as zakup (profil_id, z_plusem)
     values (p_profil, (select coalesce(sum(punkty_procentowe), 0)
                        from public.pa_procenty where profil_id = p_profil))
     on conflict (profil_id) do update set z_plusem =
-      z_plusem_wczesniej + excluded.z_plusem;
+      zakup.z_plusem_wczesniej + excluded.z_plusem;
 
   if v_procent is not null then
     v_ocena := case when least(100, v_procent + v_nowe) < 30 then 1
