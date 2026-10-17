@@ -55,8 +55,17 @@
                 font-size: 15px;
                 color: #111;
                 font-weight: bold;
-                margin-bottom: 10px;
+                margin-left: 8px;
             }
+            .lista-uczniow { margin-bottom: 20px; }
+            .lista-uczniow summary {
+                cursor: pointer; padding: 12px 14px; font-weight: bold;
+                background: #e7f1f7; border: 1px solid #b8d2df; border-radius: 6px;
+            }
+            .lista-uczniow[open] summary { margin-bottom: 14px; }
+            .lista-uczniow summary:focus-visible { outline: 2px solid rgb(11,105,148); outline-offset: 2px; }
+            .dz-ocena-wrap { display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
+            .dz-plus:not([hidden]) { font-size: 12px; font-weight: bold; color: #333; }
             .btn-wyloguj {
                 display: inline-block;
                 margin-top: 20px;
@@ -343,13 +352,14 @@
             <div id="panelContent" style="display:none;">
                 <div class="admin-box">
                     <h2>Panel admina</h2>
+                    <details class="lista-uczniow" id="listaUczniow">
+                        <summary>Wyświetlani uczniowie: <span class="licznik" id="licznik">0 / 0</span></summary>
                     <div class="filtry">
                         <input type="text" id="szukaj" placeholder="Szukaj (login, imię, nazwisko)..." oninput="filtruj()">
                         <select id="filterKlasa" onchange="filtruj()">
                             <option value="">Wszystkie klasy</option>
                         </select>
                     </div>
-                    <div class="licznik" id="licznik"></div>
                     <div style="overflow-x:auto;">
                         <table id="tabela">
                             <thead>
@@ -368,6 +378,7 @@
                             <tbody id="tbody"></tbody>
                         </table>
                     </div>
+                    </details>
                     <div id="editPanel">
                         <h3 id="editTytuł"></h3>
                         <div class="edit-sekcja">
@@ -502,6 +513,7 @@
         <script src="supabase-config.js"></script>
         <script src="nazwy-prac.js"></script>
         <script src="pa-saldo.js"></script>
+        <script src="oceny-plus.js"></script>
         <script>
             let wszyscyUczniowie = [];
             let sortKolumna = 'klasa';
@@ -612,7 +624,7 @@
                 });
 
                 document.getElementById('licznik').textContent =
-                    'Wyświetlani uczniowie: ' + posortowana.length + ' / ' + wszyscyUczniowie.length;
+                    posortowana.length + ' / ' + wszyscyUczniowie.length;
 
                 const tbody = document.getElementById('tbody');
                 tbody.innerHTML = posortowana.map(u => `
@@ -1042,6 +1054,7 @@
             let dzTyp = '';
             let dzKlasa = '';
             let dzNazwyMap = {};
+            window.dzPunktyMap = {};
 
             async function odswiezDziennik() {
                 dzKlasa = document.getElementById('dz-klasa').value;
@@ -1070,9 +1083,13 @@
                 }
 
                 const ids = profiles.map(p => p.id);
-                const { data: semData } = await sb.from('semestr1').select('*').in('profil_id', ids);
+                const [{ data: semData }, { data: pktData }] = await Promise.all([
+                    sb.from('semestr1').select('*').in('profil_id', ids),
+                    sb.from('Punktysem1').select('*').in('profil_id', ids),
+                ]);
                 const semMap = {};
                 (semData || []).forEach(row => { semMap[row.profil_id] = row; });
+                window.dzPunktyMap = Object.fromEntries((pktData || []).map(row => [row.profil_id, row]));
 
                 dzDane = profiles.map(p => ({ profil: p, sem1: semMap[p.id] || null }));
                 kom.textContent = '';
@@ -1112,7 +1129,7 @@
                         const val = sem1?.[field];
                         const displayed = (val !== null && val !== undefined) ? val : '';
                         const colorCls = typ.kolor ? `kolor-${typ.kolor}` : '';
-                        tds += `<td><input class="dz-input ${colorCls}" type="number" id="dz-${profil.id}-${i}" step="1" value="${displayed}" placeholder="—"></td>`;
+                        tds += `<td>${poleOcenyZPlusem(`dz-${profil.id}-${i}`, profil.id, field, displayed, window.dzPunktyMap[profil.id], colorCls)}</td>`;
                     }
                     return `<tr>${tds}</tr>`;
                 }).join('');
@@ -1146,7 +1163,7 @@
                             const field = sek.count === 1 ? sek.prefix : `${sek.prefix}${i}`;
                             const val = sem1?.[field];
                             const displayed = (val !== null && val !== undefined) ? val : '';
-                            tds += `<td><input class="dz-input kolor-${sek.kolor}" type="number" id="dz-${profil.id}-${field}" step="1" value="${displayed}" placeholder="—"></td>`;
+                            tds += `<td>${poleOcenyZPlusem(`dz-${profil.id}-${field}`, profil.id, field, displayed, window.dzPunktyMap[profil.id], `kolor-${sek.kolor}`)}</td>`;
                         }
                     }
                     return `<tr>${tds}</tr>`;

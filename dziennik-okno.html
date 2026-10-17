@@ -179,6 +179,8 @@
         .dz-input:focus.kolor-czerwony  { border-color: #8e1e15; box-shadow: 0 0 0 2px rgba(192,57,43,0.25); }
         .dz-input:focus.kolor-fioletowy { border-color: #453580; box-shadow: 0 0 0 2px rgba(90,71,160,0.25); }
         .dz-input:focus.kolor-zloty     { border-color: #7a4e00; box-shadow: 0 0 0 2px rgba(217,154,43,0.25); }
+        .dz-ocena-wrap { display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
+        .dz-plus:not([hidden]) { font-size: 12px; font-weight: bold; color: #333; }
 
         #ladowanie {
             text-align: center;
@@ -219,8 +221,10 @@
     <script src="supabase-config.js"></script>
     <script src="nazwy-prac.js"></script>
     <script src="pa-saldo.js"></script>
+    <script src="oceny-plus.js"></script>
     <script>
         let nazwyMap = {};
+        window.dzPunktyMap = {};
         const TYPY = {
             aktywnosc:       { prefix: 'aktywnosc_',       count: 10, label: 'Aktywność',   kolor: 'zielony',   thKolor: 'th-zielony'   },
             odpowiedz:       { prefix: 'odp',               count: 4, label: 'Odpowiedź',   kolor: 'fioletowy', thKolor: 'th-fioletowy' },
@@ -273,9 +277,13 @@
             }
 
             const ids = profiles.map(p => p.id);
-            const { data: semData } = await sb.from('semestr1').select('*').in('profil_id', ids);
+            const [{ data: semData }, { data: pktData }] = await Promise.all([
+                sb.from('semestr1').select('*').in('profil_id', ids),
+                sb.from('Punktysem1').select('*').in('profil_id', ids),
+            ]);
             const semMap = {};
             (semData || []).forEach(row => { semMap[row.profil_id] = row; });
+            window.dzPunktyMap = Object.fromEntries((pktData || []).map(row => [row.profil_id, row]));
 
             dane = profiles.map(p => ({ profil: p, sem1: semMap[p.id] || null }));
 
@@ -316,7 +324,7 @@
                         const field = sek.count === 1 ? sek.prefix : `${sek.prefix}${i}`;
                         const val = sem1?.[field];
                         const displayed = (val !== null && val !== undefined) ? val : '';
-                        tds += `<td><input class="dz-input kolor-${sek.kolor}" type="number" id="dz-${profil.id}-${field}" step="1" value="${displayed}" placeholder="—"></td>`;
+                        tds += `<td>${poleOcenyZPlusem(`dz-${profil.id}-${field}`, profil.id, field, displayed, window.dzPunktyMap[profil.id], `kolor-${sek.kolor}`)}</td>`;
                     }
                 }
                 return `<tr>${tds}</tr>`;
@@ -349,7 +357,7 @@
                     const val = sem1?.[field];
                     const displayed = (val !== null && val !== undefined) ? val : '';
                     const colorCls = t.kolor ? `kolor-${t.kolor}` : '';
-                    tds += `<td><input class="dz-input ${colorCls}" type="number" id="dz-${profil.id}-${i}" step="1" value="${displayed}" placeholder="—"></td>`;
+                    tds += `<td>${poleOcenyZPlusem(`dz-${profil.id}-${i}`, profil.id, field, displayed, window.dzPunktyMap[profil.id], colorCls)}</td>`;
                 }
                 return `<tr>${tds}</tr>`;
             }).join('');
