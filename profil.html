@@ -411,6 +411,7 @@
         <script src="supabase-config.js"></script>
         <script src="nazwy-prac.js"></script>
         <script src="pa-saldo.js"></script>
+        <script src="pa-procenty.js"></script>
         <script>
             let nazwyMap = {};
 
@@ -447,22 +448,29 @@
                     profil.plec === 'K' ? 'Kobieta' : profil.plec === 'M' ? 'Mężczyzna' : '—';
 
                 // Pobierz dane Semestr 1, punkty ucznia, umówione poprawy i nazwy sprawdzianów równolegle
-                const [{ data: sem1 }, { data: pkt1 }, { data: poprawkiData }, nazwyMapRes, { data: paZakupy }] = await Promise.all([
+                const [{ data: sem1 }, { data: pkt1 }, { data: poprawkiData }, nazwyMapRes, { data: paZakupy }, { data: bonusData }] = await Promise.all([
                     sb.from('semestr1').select('*').eq('profil_id', session.user.id).single(),
                     sb.from('Punktysem1').select('*').eq('profil_id', session.user.id).single(),
                     sb.from('poprawki').select('*').eq('profil_id', session.user.id),
                     pobierzNazwyPrac(profil.klasa),
-                    sb.from('pa_zakupy').select('*').eq('profil_id', session.user.id).single()
+                    sb.from('pa_zakupy').select('*').eq('profil_id', session.user.id).single(),
+                    sb.from('pa_procenty').select('*').eq('profil_id', session.user.id)
                 ]);
                 nazwyMap = nazwyMapRes;
+                const mojeBonusy = paMapaBonusow(bonusData)[session.user.id] || {};
 
                 // Pobierz punkty całej klasy (do średnich)
                 let klasaPkt = [];
+                let klasaOceny = {};
                 if (profil.klasa) {
                     const { data: kp } = await sb.from('profiles').select('id').eq('klasa', profil.klasa);
                     if (kp && kp.length > 0) {
-                        const { data: kpData } = await sb.from('Punktysem1').select('*').in('profil_id', kp.map(p => p.id));
+                        const [{ data: kpData }, { data: semKlasy }] = await Promise.all([
+                            sb.from('Punktysem1').select('*').in('profil_id', kp.map(p => p.id)),
+                            sb.from('semestr1').select('*').in('profil_id', kp.map(p => p.id)),
+                        ]);
                         klasaPkt = kpData || [];
+                        klasaOceny = Object.fromEntries((semKlasy || []).map(s => [s.profil_id, s]));
                     }
                 }
 
@@ -578,7 +586,7 @@
                             const proc = Math.round(p / effectiveMax * 100);
                             if (proc >= 0 && proc <= 100) {
                                 sumProc += proc; cntProc++;
-                                const oc = punktyNaOcene(p, effectiveMax);
+                                const oc = klasaOceny[row.profil_id]?.[`${prefixSem}${index}`] ?? punktyNaOcene(p, effectiveMax);
                                 if (typeof oc === 'number') { sumOcena += oc; cntOcena++; }
                             }
                         }
@@ -599,10 +607,12 @@
                         const myPkt   = pkt1?.[`${prefixPkt}${i}`];
                         const myMax   = pkt1?.[`${prefixMax}${i}`];
                         const myOcena = sem1?.[`${prefixSem}${i}`];
-                        if (myPkt == null && myOcena == null) continue;
+                        const kupione = mojeBonusy[`${typ}_${i}`] || 0;
+                        if (myPkt == null && myOcena == null && kupione === 0) continue;
 
                         const hasPoints = myPkt != null && myMax != null && myMax > 0;
                         const myProc    = hasPoints ? Math.round(myPkt / myMax * 100) : null;
+                        const procentPoZakupie = myProc == null ? null : Math.min(100, myProc + kupione);
 
                         const { avgPkt, avgProc, avgOcena } = liczSrednieKlasy(prefixPkt, prefixMax, procKey, i);
                         const hasKlasa = avgPkt !== null || avgProc !== null || avgOcena !== null;
@@ -627,6 +637,7 @@
                                     ${hasPoints ? `
                                     <div class="prog-label">${myPkt} / ${myMax} pkt &nbsp;·&nbsp; ${myProc}%</div>
                                     <div class="prog-track"><div class="prog-fill" style="width:${myProc}%;background-color:${bk};"></div></div>` : ''}
+                                    ${kupione > 0 ? `<div class="prog-label" style="color:#1a7a2e;font-weight:bold;">Podniesiono ocenę o ${kupione} p.p. za ${kupione} Punktów Aktywności${procentPoZakupie !== null ? `. Procent do oceny: ${procentPoZakupie}%` : ''}.</div>` : ''}
                                     <div class="wynik-boxes">
                                         ${hasPoints ? `
                                         <div class="wynik-box" style="border-color:${bk};color:${bk};">

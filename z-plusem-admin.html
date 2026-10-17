@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Z plusem — panel admina</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; font: 15px 'Courier New', monospace; background: #eef2f5; color: #222; }
+        header { background: #1c1c1c; color: white; padding: 12px 20px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+        header a { color: white; text-decoration: none; border: 1px solid #777; padding: 7px 12px; border-radius: 5px; }
+        header strong { font-size: 19px; }
+        main { max-width: 1250px; margin: 20px auto; padding: 0 16px; }
+        .opis { background: #fff8e8; border: 1px solid #e6c470; border-radius: 6px; padding: 12px; line-height: 1.5; }
+        .filtry { display: flex; gap: 12px; flex-wrap: wrap; margin: 18px 0; }
+        select, input { font: inherit; padding: 8px; border: 1px solid #999; border-radius: 5px; background: white; }
+        input { min-width: 230px; }
+        .tabela { overflow-x: auto; background: white; border-radius: 6px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #333; color: white; text-align: left; white-space: nowrap; }
+        td, th { padding: 10px; border-bottom: 1px solid #ddd; }
+        tr:hover td { background: #f1f8fc; }
+        .praca { min-width: 170px; }
+        .licznik { display: inline-flex; gap: 8px; align-items: center; white-space: nowrap; }
+        button { font: inherit; font-weight: bold; border: 0; border-radius: 4px; width: 30px; height: 30px; cursor: pointer; }
+        button.plus { background: #d7f0dc; color: #1a7a2e; }
+        button.minus { background: #fbdcd8; color: #a5301f; }
+        button:disabled { opacity: .35; cursor: not-allowed; }
+        .info { margin-top: 8px; min-height: 22px; }
+        .blad { color: #b52a1e; }
+        .sukces { color: #1a7a2e; }
+        @media(max-width:650px) { td, th { padding: 8px 5px; } }
+    </style>
+</head>
+<body>
+    <header><a href="admin.html">← Panel admina</a><strong>Z plusem — punkty procentowe za PA</strong></header>
+    <main>
+        <p class="opis">Każdy dodany punkt procentowy kosztuje 1 Punkt Aktywności. Punkty zdobyte z pracy pozostają bez zmian. Przycisk <b>+</b> działa do progu następnej oceny; <b>−</b> cofa zakup i zwraca 1 PA.</p>
+        <div class="filtry">
+            <select id="klasa" onchange="filtruj()"><option value="">Wszystkie klasy</option></select>
+            <input id="szukaj" placeholder="Szukaj ucznia..." oninput="filtruj()">
+        </div>
+        <div id="stan" class="info">Wczytywanie...</div>
+        <div class="tabela"><table>
+            <thead><tr><th>Uczeń</th><th>Klasa</th><th class="praca">Praca</th><th>Zdobyte punkty</th><th>Zdobyty procent</th><th>Dokupione p.p.</th><th>Procent po zakupie</th><th>Ocena</th></tr></thead>
+            <tbody id="wiersze"></tbody>
+        </table></div>
+    </main>
+    <script src="supabase-config.js"></script>
+    <script src="nazwy-prac.js"></script>
+    <script src="pa-procenty.js"></script>
+    <script>
+        let prace = [];
+        let wTrakcie = false;
+        const stanEl = document.getElementById('stan');
+        const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+        async function init() {
+            const { data: { session } } = await sb.auth.getSession();
+            if (!session) { stanEl.textContent = 'Musisz być zalogowany.'; return; }
+            const { data: admin } = await sb.from('admins').select('id').eq('id', session.user.id).single();
+            if (!admin) { stanEl.textContent = 'Brak uprawnień admina.'; return; }
+            await wczytaj();
+        }
+
+        async function wczytaj() {
+            stanEl.className = 'info';
+            stanEl.textContent = 'Wczytywanie...';
+            const { data: profile, error } = await sb.from('profiles').select('id,imie,nazwisko,klasa,nr').order('klasa').order('nr');
+            if (error) { stanEl.textContent = 'Błąd: ' + error.message; return; }
+            const ids = (profile || []).map(p => p.id);
+            if (!ids.length) { stanEl.textContent = 'Brak uczniów.'; return; }
+            const [wynikPkt, wynikBonus, wynikOceny] = await Promise.all([
+                sb.from('Punktysem1').select('*').in('profil_id', ids),
+                sb.from('pa_procenty').select('*').in('profil_id', ids),
+                sb.from('semestr1').select('*').in('profil_id', ids),
+            ]);
+            if (wynikPkt.error || wynikBonus.error || wynikOceny.error) {
+                stanEl.textContent = 'Błąd: ' + (wynikPkt.error || wynikBonus.error || wynikOceny.error).message;
+                return;
+            }
+            const pktMap = Object.fromEntries((wynikPkt.data || []).map(p => [p.profil_id, p]));
+            const ocenyMap = Object.fromEntries((wynikOceny.data || []).map(s => [s.profil_id, s]));
+            const bonusMap = paMapaBonusow(wynikBonus.data);
+            const klasy = [...new Set((profile || []).map(p => p.klasa).filter(Boolean))].sort();
+            const wyb = document.getElementById('klasa');
+            const wybrana = wyb.value;
+            wyb.innerHTML = '<option value="">Wszystkie klasy</option>';
+            klasy.forEach(k => { const o = document.createElement('option'); o.value = k; o.textContent = `Klasa ${k}`; wyb.appendChild(o); });
+            wyb.value = wybrana;
+            const nazwy = {};
+            await Promise.all(klasy.map(async k => { nazwy[k] = await pobierzNazwyPrac(k); }));
+            prace = [];
+            for (const p of profile || []) {
+                const pkt = pktMap[p.id];
+                if (!pkt) continue;
+                for (const [typ, limit, prefix, maxPrefix, baza] of [
+                    ['kartkowka', 8, 'kartp', 'kartmax', 'Kartkówka'],
+                    ['praca_kontrolna', 4, 'klasp', 'klasmax', 'Praca kontrolna']
+                ]) {
+                    for (let nr = 1; nr <= limit; nr++) {
+                        const zdobyte = pkt[`${prefix}${nr}`], maks = pkt[`${maxPrefix}${nr}`];
+                        const procent = paProcent(zdobyte, maks);
+                        const kupione = bonusMap[p.id]?.[`${typ}_${nr}`] || 0;
+                        const cel = paCelDlaPlusa(procent);
+                        if (procent == null && kupione === 0) continue;
+                        if (cel == null && kupione === 0) continue;
+                        const poleOceny = `${typ}_${nr}`;
+                        if (kupione === 0 && Number(ocenyMap[p.id]?.[poleOceny]) !== paOcenaZProcentu(procent)) continue;
+                        prace.push({ profil: p, typ, nr, nazwa: nazwaPracy(nazwy[p.klasa], typ, nr, baza), zdobyte, maks, procent, kupione, cel });
+                    }
+                }
+            }
+            filtruj();
+        }
+
+        function filtruj() {
+            const klasa = document.getElementById('klasa').value;
+            const q = document.getElementById('szukaj').value.trim().toLowerCase();
+            const widoczne = prace.filter(w => (!klasa || w.profil.klasa === klasa) &&
+                (!q || `${w.profil.imie || ''} ${w.profil.nazwisko || ''}`.toLowerCase().includes(q)));
+            const tbody = document.getElementById('wiersze');
+            tbody.innerHTML = widoczne.map(w => {
+                const p = w.profil;
+                const po = w.procent == null ? null : Math.min(100, w.procent + w.kupione);
+                const ocenaPrzed = paOcenaZProcentu(w.procent), ocenaPo = paOcenaZProcentu(po);
+                return `<tr><td>${esc(`${p.imie || ''} ${p.nazwisko || ''}`)} (nr ${esc(p.nr ?? '—')})</td>
+                    <td>${esc(p.klasa || '—')}</td><td>${esc(w.nazwa)}</td>
+                    <td>${w.zdobyte ?? '—'} / ${w.maks ?? '—'}</td><td>${w.procent == null ? '—' : `${w.procent}%`}</td>
+                    <td><span class="licznik"><button class="minus" aria-label="Cofnij 1 punkt procentowy" ${wTrakcie || !w.kupione ? 'disabled' : ''} onclick="zmien('${p.id}','${w.typ}',${w.nr},-1)">−</button><b>${w.kupione}</b><button class="plus" aria-label="Dodaj 1 punkt procentowy" ${wTrakcie || !w.cel || w.kupione >= w.cel - w.procent ? 'disabled' : ''} onclick="zmien('${p.id}','${w.typ}',${w.nr},1)">+</button></span></td>
+                    <td>${po == null ? '—' : `${po}%`}</td><td>${ocenaPrzed ?? '—'}${ocenaPo !== ocenaPrzed ? ` → ${ocenaPo}` : ''}</td></tr>`;
+            }).join('');
+            if (stanEl.className === 'info') stanEl.textContent = `${widoczne.length} prac z oznaczeniem (+) lub kupionymi punktami procentowymi.`;
+        }
+
+        async function zmien(profilId, typ, numer, delta) {
+            if (wTrakcie) return;
+            wTrakcie = true;
+            filtruj();
+            stanEl.textContent = 'Zapisywanie...';
+            try {
+                const { error } = await sb.rpc('pa_zmien_procent', {
+                    p_profil: profilId, p_typ: typ, p_numer: numer, p_zmiana: delta
+                });
+                if (error) throw error;
+                await wczytaj();
+                stanEl.textContent = 'Zapisano. Saldo PA i ocena zostały przeliczone.';
+                stanEl.className = 'info sukces';
+            } catch (e) {
+                stanEl.textContent = 'Błąd: ' + e.message;
+                stanEl.className = 'info blad';
+            } finally { wTrakcie = false; filtruj(); }
+        }
+        init();
+    </script>
+</body>
+</html>

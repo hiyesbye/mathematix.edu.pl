@@ -495,6 +495,12 @@
                     </div>
 
                     <div style="margin-top: 28px; border-top: 2px solid #ccc; padding-top: 20px;">
+                        <h3 style="font-size: 20px; margin-bottom: 10px;">Z plusem — procenty za PA</h3>
+                        <p style="font-size: 15px; margin-bottom: 14px;">Prace z oceną (+), zdobyty procent i wymiana Punktów Aktywności na punkty procentowe.</p>
+                        <button class="btn-nowe-okno" onclick="window.open('z-plusem-admin.html', '_blank', 'width=1200,height=760,resizable=yes,scrollbars=yes')">&#x2197; Otwórz panel Z plusem</button>
+                    </div>
+
+                    <div style="margin-top: 28px; border-top: 2px solid #ccc; padding-top: 20px;">
                         <h3 style="font-size: 20px; margin-bottom: 10px;">Umówione poprawy</h3>
                         <p style="color: #111; font-size: 15px; margin-bottom: 14px; font-weight: bold;">Zarządzaj poprawami zgłoszonymi przez uczniów i ustalaj terminy.</p>
                         <button class="btn-nowe-okno" onclick="window.open('umowione-poprawy.html', '_blank', 'width=1000,height=720,resizable=yes,scrollbars=yes')">&#x2197; Otwórz panel poprawek</button>
@@ -513,6 +519,7 @@
         <script src="supabase-config.js"></script>
         <script src="nazwy-prac.js"></script>
         <script src="pa-saldo.js"></script>
+        <script src="pa-procenty.js"></script>
         <script src="oceny-plus.js"></script>
         <script>
             let wszyscyUczniowie = [];
@@ -658,6 +665,8 @@
             };
             let pktDane = [], pktTyp = '', pktKlasa = '';
             let pktNazwyMap = {};
+            let pktBonusMap = {};
+            let edytowanyBonus = {};
 
             async function odswiezDziennikPkt() {
                 pktKlasa = document.getElementById('pkt-klasa').value;
@@ -683,7 +692,11 @@
                 if (!profiles || profiles.length === 0) { kom.textContent = 'Brak uczniów.'; return; }
 
                 const ids = profiles.map(p => p.id);
-                const { data: pktData } = await sb.from('Punktysem1').select('*').in('profil_id', ids);
+                const [{ data: pktData }, { data: bonusData }] = await Promise.all([
+                    sb.from('Punktysem1').select('*').in('profil_id', ids),
+                    sb.from('pa_procenty').select('*').in('profil_id', ids),
+                ]);
+                pktBonusMap = paMapaBonusow(bonusData);
                 const pktMap = {};
                 (pktData || []).forEach(row => { pktMap[row.profil_id] = row; });
 
@@ -762,13 +775,13 @@
                         for (let i = 1; i <= 8; i++) {
                             const p = row[`kartp${i}`], m = row[`kartmax${i}`];
                             if (p != null && m != null && m > 0)
-                                sem[`kartkowka_${i}`] = punktyNaOcene(p, m);
+                                sem[`kartkowka_${i}`] = paOcenaPoZakupie(p, m, pktBonusMap[row.profil_id]?.[`kartkowka_${i}`]);
                         }
                     } else {
                         for (let i = 1; i <= 4; i++) {
                             const p = row[`klasp${i}`], m = row[`klasmax${i}`];
                             if (p != null && m != null && m > 0)
-                                sem[`praca_kontrolna_${i}`] = punktyNaOcene(p, m);
+                                sem[`praca_kontrolna_${i}`] = paOcenaPoZakupie(p, m, pktBonusMap[row.profil_id]?.[`praca_kontrolna_${i}`]);
                         }
                     }
                     return sem;
@@ -856,7 +869,9 @@
                         const mNum = parseFloat(mVal);
                         if (!isNaN(pNum) && !isNaN(mNum) && mNum > 0) {
                             const proc  = Math.round(pNum / mNum * 100);
-                            const ocena = punktyNaOcene(pNum, mNum);
+                            const poleBonusu = idP === 'e-kp-' ? `kartkowka_${i}` : `praca_kontrolna_${i}`;
+                            const bonus = edytowanyBonus[poleBonusu] || 0;
+                            const ocena = paOcenaPoZakupie(pNum, mNum, bonus);
                             procEl.textContent = `${proc}%`;
                             if (ocena === 'BŁĄD') {
                                 procEl.style.color = '#c0392b';
@@ -869,7 +884,7 @@
                                 procEl.style.color = kolor;
                                 procEl.style.borderColor = kolor;
                                 const plus = progOcenaPlus(proc) === ocena;
-                                ocenaEl.innerHTML = plus ? `${ocena}<span class="ocena-plus">(+)</span>` : `${ocena}`;
+                                ocenaEl.innerHTML = `${ocena}${plus ? '<span class="ocena-plus">(+)</span>' : ''}${bonus ? `<span class="ocena-plus" title="Kupione za PA"> +${bonus} p.p.</span>` : ''}`;
                                 ocenaEl.style.color = kolor;
                                 ocenaEl.style.borderColor = kolor;
                             } else {
@@ -948,6 +963,8 @@
                 document.getElementById('wynik-klas').textContent = '—';
 
                 const { data: pkt1 } = await sb.from('Punktysem1').select('*').eq('profil_id', profilId).single();
+                const { data: bonusData } = await sb.from('pa_procenty').select('*').eq('profil_id', profilId);
+                edytowanyBonus = paMapaBonusow(bonusData)[profilId] || {};
                 if (pkt1) {
                     for (let i = 1; i <= 8; i++) {
                         ustaw(`e-kp-${i}`, pkt1[`kartp${i}`]);
@@ -984,11 +1001,11 @@
                 dane.wkp = pobierz('e-wkp');
                 dane.alfik = pobierz('e-alfik');
                 for (let i = 1; i <= 8; i++) {
-                    const oc = punktyNaOcene(pobierz(`e-kp-${i}`), pobierz(`e-km-${i}`));
+                    const oc = paOcenaPoZakupie(pobierz(`e-kp-${i}`), pobierz(`e-km-${i}`), edytowanyBonus[`kartkowka_${i}`]);
                     dane[`kartkowka_${i}`] = typeof oc === 'number' ? oc : null;
                 }
                 for (let i = 1; i <= 4; i++) {
-                    const oc = punktyNaOcene(pobierz(`e-lp-${i}`), pobierz(`e-lm-${i}`));
+                    const oc = paOcenaPoZakupie(pobierz(`e-lp-${i}`), pobierz(`e-lm-${i}`), edytowanyBonus[`praca_kontrolna_${i}`]);
                     dane[`praca_kontrolna_${i}`] = typeof oc === 'number' ? oc : null;
                 }
 

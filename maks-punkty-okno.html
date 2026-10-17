@@ -127,6 +127,7 @@
     </div>
 
     <script src="supabase-config.js"></script>
+    <script src="pa-procenty.js"></script>
     <script>
         function buduj(containerId, prefix, count, etykieta, kolor) {
             const el = document.getElementById(containerId);
@@ -221,7 +222,11 @@
             // Przelicz oceny dla uczniów z wpisanymi punktami
             kom.textContent = 'Przeliczanie ocen...';
             const ids = profiles.map(p => p.id);
-            const { data: pktData } = await sb.from('Punktysem1').select('*').in('profil_id', ids);
+            const [{ data: pktData }, { data: bonusData }] = await Promise.all([
+                sb.from('Punktysem1').select('*').in('profil_id', ids),
+                sb.from('pa_procenty').select('*').in('profil_id', ids),
+            ]);
+            const bonusMap = paMapaBonusow(bonusData);
             if (pktData && pktData.length > 0) {
                 const semRows = [];
                 for (const pkt of pktData) {
@@ -231,7 +236,7 @@
                         const pts = pkt[`kartp${i}`];
                         const max = maks[`kartmax${i}`];
                         if (pts !== null && pts !== undefined && max) {
-                            const oc = punktyNaOcene(pts, max);
+                            const oc = paOcenaPoZakupie(pts, max, bonusMap[pkt.profil_id]?.[`kartkowka_${i}`]);
                             row[`kartkowka_${i}`] = typeof oc === 'number' ? oc : null;
                             hasAny = true;
                         }
@@ -240,7 +245,7 @@
                         const pts = pkt[`klasp${i}`];
                         const max = maks[`klasmax${i}`];
                         if (pts !== null && pts !== undefined && max) {
-                            const oc = punktyNaOcene(pts, max);
+                            const oc = paOcenaPoZakupie(pts, max, bonusMap[pkt.profil_id]?.[`praca_kontrolna_${i}`]);
                             row[`praca_kontrolna_${i}`] = typeof oc === 'number' ? oc : null;
                             hasAny = true;
                         }
