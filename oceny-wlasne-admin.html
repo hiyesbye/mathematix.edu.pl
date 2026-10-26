@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Własne oceny — panel admina</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        [hidden] { display: none !important; }
+        body { margin: 0; background: #edf2f5; color: #202b33; font: 15px 'Courier New', monospace; }
+        header { background: #1c1c1c; color: white; padding: 15px max(20px, calc((100vw - 1180px)/2)); display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+        header a { color: white; text-decoration: none; border: 1px solid #888; padding: 7px 11px; border-radius: 5px; }
+        header strong { font-size: 20px; }
+        main { max-width: 1180px; margin: 22px auto; padding: 0 16px 45px; }
+        .lead { margin: 0 0 20px; line-height: 1.5; }
+        .layout { display: grid; grid-template-columns: minmax(270px, 350px) minmax(0, 1fr); gap: 18px; align-items: start; }
+        .card { background: white; border: 1px solid #d3dde2; border-radius: 10px; padding: 19px; box-shadow: 0 4px 16px #152c3b0b; }
+        h2 { margin: 0 0 15px; font-size: 19px; }
+        h3 { font-size: 16px; margin: 24px 0 9px; }
+        label { display: block; font-weight: bold; margin: 13px 0 6px; }
+        input, select { width: 100%; border: 1px solid #aebbc2; border-radius: 6px; padding: 9px 10px; background: white; color: #202b33; font: inherit; }
+        input:focus, select:focus { outline: 2px solid #2c88a9; outline-offset: 1px; }
+        button { font: inherit; font-weight: bold; cursor: pointer; border-radius: 6px; padding: 9px 14px; }
+        .primary { background: #0b6994; border: 1px solid #0b6994; color: white; }
+        .secondary { background: white; border: 1px solid #aebbc2; color: #24536a; }
+        button:disabled { opacity: .55; cursor: wait; }
+        .actions { display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
+        .help { color: #536673; line-height: 1.45; font-size: 13px; margin: 9px 0; }
+        .def-list { display: grid; gap: 7px; max-height: 390px; overflow-y: auto; }
+        .def-item { width: 100%; text-align: left; background: #f6f9fa; border: 1px solid #cfdae0; color: #202b33; }
+        .def-item.active { background: #e5f3f8; border-color: #0b6994; }
+        .def-item small { display: block; color: #536673; font-weight: normal; margin-top: 4px; }
+        .empty { color: #5d6e78; padding: 22px 5px; }
+        .student-table { width: 100%; border-collapse: collapse; }
+        .student-table th { text-align: left; background: #edf4f7; }
+        .student-table td, .student-table th { border-bottom: 1px solid #e0e6ea; padding: 9px 8px; }
+        .student-table td:first-child { width: 58px; color: #64737b; }
+        .student-table td:last-child { width: 125px; }
+        .student-table select { min-width: 90px; }
+        .table-wrap { max-height: 60vh; overflow: auto; }
+        #status { min-height: 22px; margin: 14px 0; }
+        .error { color: #af2424; } .success { color: #1b733e; }
+        @media(max-width: 760px) { .layout { grid-template-columns: 1fr; } header { padding: 14px 16px; } }
+    </style>
+</head>
+<body>
+    <header><a href="admin.html">← Panel admina</a><strong>Własne oceny</strong></header>
+    <main>
+        <p class="lead">Utwórz pozycję dla klasy, wybierz kategorię, nazwę i wagę. Następnie wpisz stopnie uczniom tej klasy. Puste pole nie wpływa na średnią.</p>
+        <div id="status">Sprawdzanie uprawnień...</div>
+        <div class="layout" id="panel" hidden>
+            <section class="card">
+                <h2>Pozycja oceny</h2>
+                <label for="klasa">Klasa</label>
+                <select id="klasa" onchange="zmienKlase()"><option value="">Wybierz klasę…</option></select>
+                <label for="lista">Istniejące pozycje</label>
+                <div class="def-list" id="lista"></div>
+                <div class="actions"><button class="secondary" onclick="nowa()">+ Nowa pozycja</button></div>
+                <form id="formularz" onsubmit="zapiszDefinicje(event)">
+                    <h3 id="formularz-tytul">Nowa pozycja</h3>
+                    <label for="kategoria">Kategoria</label>
+                    <input id="kategoria" list="kategorie" maxlength="80" required placeholder="np. Projekt, odpowiedź, aktywność">
+                    <datalist id="kategorie"></datalist>
+                    <label for="nazwa">Nazwa oceny</label>
+                    <input id="nazwa" maxlength="120" required placeholder="np. Plakat o ułamkach">
+                    <label for="waga">Waga</label>
+                    <input id="waga" type="number" min="0.01" max="100" step="0.01" value="1" required>
+                    <p class="help">Jedna wpisana ocena liczy się raz do średniej arytmetycznej. W średniej ważonej liczy się z podaną wagą.</p>
+                    <div class="actions"><button class="primary" type="submit" id="zapisz-def">Zapisz pozycję</button></div>
+                </form>
+            </section>
+            <section class="card">
+                <h2 id="oceny-tytul">Oceny uczniów</h2>
+                <p class="help" id="oceny-opis">Wybierz zapisaną pozycję oceny.</p>
+                <div class="table-wrap"><table class="student-table" id="oceny-tabela" hidden>
+                    <thead><tr><th>Nr</th><th>Uczeń</th><th>Ocena</th></tr></thead><tbody id="uczniowie"></tbody>
+                </table></div>
+                <div class="actions"><button class="primary" id="zapisz-oceny" onclick="zapiszOceny()" hidden>Zapisz oceny uczniów</button></div>
+            </section>
+        </div>
+    </main>
+    <script src="supabase-config.js"></script>
+    <script>
+        const $ = id => document.getElementById(id);
+        const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+        let definicje = [], profile = [], wybraneId = null, zajety = false;
+        function komunikat(tekst, klasa = '') { $('status').textContent = tekst; $('status').className = klasa; }
+        function aktualnaKlasa() { return $('klasa').value; }
+        function wybrana() { return definicje.find(d => d.id === wybraneId); }
+
+        async function init() {
+            const { data: { session } } = await sb.auth.getSession();
+            if (!session) { komunikat('Zaloguj się, aby otworzyć panel.'); return; }
+            const { data: admin, error: adminError } = await sb.from('admins').select('id').eq('id', session.user.id).single();
+            if (adminError || !admin) { komunikat('Brak uprawnień administratora.', 'error'); return; }
+            const [p, d] = await Promise.all([
+                sb.from('profiles').select('id, nr, imie, nazwisko, klasa').order('nr'),
+                sb.from('oceny_wlasne').select('*').order('created_at', { ascending: false })
+            ]);
+            if (p.error || d.error) { komunikat('Błąd odczytu: ' + (p.error || d.error).message, 'error'); return; }
+            profile = p.data || []; definicje = d.data || [];
+            const klasy = [...new Set(profile.map(p => p.klasa).filter(Boolean))].sort();
+            for (const klasa of klasy) {
+                const option = document.createElement('option'); option.value = klasa; option.textContent = klasa;
+                $('klasa').appendChild(option);
+            }
+            $('panel').hidden = false;
+            komunikat('Wybierz klasę i utwórz lub wybierz pozycję oceny.');
+            nowa();
+        }
+        function zmienKlase() { wybraneId = null; nowa(); renderujListe(); }
+        function nowa() {
+            wybraneId = null;
+            $('formularz-tytul').textContent = 'Nowa pozycja';
+            $('kategoria').value = ''; $('nazwa').value = ''; $('waga').value = '1';
+            $('oceny-tytul').textContent = 'Oceny uczniów';
+            $('oceny-opis').textContent = 'Zapisz pozycję, aby móc wpisać stopnie.';
+            $('uczniowie').innerHTML = '';
+            $('oceny-tabela').hidden = true; $('zapisz-oceny').hidden = true;
+            renderujListe();
+        }
+        function renderujListe() {
+            const klasa = aktualnaKlasa();
+            const lista = definicje.filter(d => d.klasa === klasa);
+            $('lista').innerHTML = klasa
+                ? (lista.length ? lista.map(d => `<button type="button" class="def-item ${d.id === wybraneId ? 'active' : ''}" onclick="wybierz('${d.id}')"><b>${esc(d.nazwa)}</b><small>${esc(d.kategoria)} · waga ${esc(d.waga)}</small></button>`).join('') : '<div class="empty">Brak pozycji w tej klasie.</div>')
+                : '<div class="empty">Najpierw wybierz klasę.</div>';
+            $('kategorie').innerHTML = [...new Set(definicje.map(d => d.kategoria))].map(k => `<option value="${esc(k)}"></option>`).join('');
+        }
+        async function wybierz(id) {
+            const d = definicje.find(item => item.id === id);
+            if (!d || d.klasa !== aktualnaKlasa()) return;
+            wybraneId = id;
+            $('formularz-tytul').textContent = 'Edytuj pozycję';
+            $('kategoria').value = d.kategoria; $('nazwa').value = d.nazwa; $('waga').value = d.waga;
+            $('oceny-tytul').textContent = d.nazwa;
+            $('oceny-opis').textContent = `${d.kategoria} · klasa ${d.klasa} · waga ${d.waga}. Puste pole usuwa stopień ze średnich.`;
+            renderujListe();
+            const obecneId = id;
+            const { data, error } = await sb.from('oceny_wlasne_uczniow').select('profil_id,stopien').eq('ocena_id', id);
+            if (obecneId !== wybraneId) return;
+            if (error) { komunikat('Błąd odczytu ocen: ' + error.message, 'error'); return; }
+            const mapa = Object.fromEntries((data || []).map(row => [row.profil_id, row.stopien]));
+            const uczniowie = profile.filter(p => p.klasa === d.klasa).sort((a, b) => (a.nr ?? 0) - (b.nr ?? 0));
+            $('uczniowie').innerHTML = uczniowie.map(p => `<tr><td>${esc(p.nr ?? '—')}</td><td>${esc(`${p.imie || ''} ${p.nazwisko || ''}`)}</td><td><select data-profil="${p.id}" aria-label="Ocena: ${esc(`${p.imie || ''} ${p.nazwisko || ''}`)}"><option value="">—</option>${[1,2,3,4,5,6].map(n => `<option value="${n}" ${mapa[p.id] === n ? 'selected' : ''}>${n}</option>`).join('')}</select></td></tr>`).join('');
+            $('oceny-tabela').hidden = !uczniowie.length; $('zapisz-oceny').hidden = !uczniowie.length;
+            if (!uczniowie.length) $('oceny-opis').textContent = 'W tej klasie nie ma uczniów.';
+        }
+        async function zapiszDefinicje(event) {
+            event.preventDefault();
+            const klasa = aktualnaKlasa();
+            const kategoria = $('kategoria').value.trim(), nazwa = $('nazwa').value.trim();
+            const waga = Number($('waga').value);
+            if (!klasa || !kategoria || !nazwa || !Number.isFinite(waga) || waga <= 0 || waga > 100) {
+                komunikat('Wybierz klasę i wpisz kategorię, nazwę oraz wagę od 0,01 do 100.', 'error'); return;
+            }
+            if (zajety) return;
+            zajety = true; $('zapisz-def').disabled = true;
+            komunikat('Zapisywanie pozycji...');
+            try {
+                const row = { klasa, kategoria, nazwa, waga };
+                const q = wybraneId
+                    ? sb.from('oceny_wlasne').update(row).eq('id', wybraneId)
+                    : sb.from('oceny_wlasne').insert(row);
+                const { data, error } = await q.select('*').single();
+                if (error) throw error;
+                if (wybraneId) definicje = definicje.map(d => d.id === data.id ? data : d);
+                else definicje.unshift(data);
+                komunikat('Pozycja zapisana. Możesz teraz wpisać oceny uczniom.', 'success');
+                await wybierz(data.id);
+                if (window.opener && !window.opener.closed) window.opener.odswiezSrednieWlasne?.();
+            } catch (e) { komunikat('Błąd zapisu pozycji: ' + e.message, 'error'); }
+            finally { zajety = false; $('zapisz-def').disabled = false; }
+        }
+        async function zapiszOceny() {
+            const d = wybrana();
+            if (!d || zajety) return;
+            const rows = [...$('uczniowie').querySelectorAll('select[data-profil]')].map(el => ({
+                ocena_id: d.id, profil_id: el.dataset.profil, stopien: el.value ? Number(el.value) : null
+            }));
+            if (!rows.length) return;
+            zajety = true; $('zapisz-oceny').disabled = true;
+            komunikat('Zapisywanie ocen...');
+            try {
+                const { error } = await sb.from('oceny_wlasne_uczniow').upsert(rows, { onConflict: 'ocena_id,profil_id' });
+                if (error) throw error;
+                komunikat(`Zapisano oceny ${rows.length} uczniów.`, 'success');
+                if (window.opener && !window.opener.closed) window.opener.odswiezSrednieWlasne?.();
+            } catch (e) {
+                komunikat('Błąd zapisu ocen: ' + e.message, 'error');
+            } finally {
+                zajety = false; $('zapisz-oceny').disabled = false;
+            }
+        }
+        init();
+    </script>
+</body>
+</html>

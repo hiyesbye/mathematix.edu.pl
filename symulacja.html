@@ -256,6 +256,7 @@
 
     <script src="supabase-config.js"></script>
     <script src="nazwy-prac.js"></script>
+    <script src="oceny-wlasne.js"></script>
     <script>
         let nazwyMap = {};
 
@@ -281,7 +282,7 @@
         }
 
         const KATEGORIE = [
-            { prefix: 'aktywnosc_',       count: 5, waga: 1, nazwa: 'Aktywność',      kolor: 'zielony',   minOcena: 5, maxOcena: 6 },
+            { prefix: 'aktywnosc_',       count: 10, waga: 1, nazwa: 'Aktywność',      kolor: 'zielony',   minOcena: 5, maxOcena: 6 },
             { prefix: 'aktdod',           count: 4, waga: 1, nazwa: 'Aktywność dodatkowa', kolor: 'zielony', minOcena: 1, maxOcena: 6 },
             { prefix: 'odp',               count: 4, waga: 1, nazwa: 'Odpowiedź',       kolor: 'fioletowy', minOcena: 1, maxOcena: 6 },
             { prefix: 'wkp',               count: 1, waga: 1, nazwa: 'WKP',              kolor: 'zloty',     minOcena: 1, maxOcena: 6 },
@@ -462,6 +463,12 @@
                 sb.from('profiles').select('klasa').eq('id', session.user.id).single(),
             ]);
             nazwyMap = await pobierzNazwyPrac(profil?.klasa);
+            let ocenyWlasne;
+            try { ocenyWlasne = await pobierzOcenyWlasneUcznia(session.user.id, profil?.klasa); }
+            catch (e) {
+                document.getElementById('ladowanie').textContent = 'Błąd odczytu ocen: ' + e.message;
+                return;
+            }
 
             document.getElementById('ladowanie').style.display   = 'none';
             document.getElementById('avg-panel').style.display   = 'flex';
@@ -476,6 +483,11 @@
                         simState[key] = { val: v, orig: v, waga: kat.waga, minOcena: kat.minOcena, maxOcena: kat.maxOcena, kolor: kat.kolor };
                     }
                 }
+            }
+            for (const o of ocenyWlasne) {
+                const key = `wlasna_${o.id}`;
+                simState[key] = { val: o.stopien, orig: o.stopien, waga: o.waga,
+                    minOcena: 1, maxOcena: 6, kolor: 'zielony' };
             }
 
             aktCounter  = 0;
@@ -519,6 +531,23 @@
                 if (isAkt)  html += `<button class="btn-add-akt"  id="btn-add-akt"  onclick="addAktywnosc()">＋ Dodaj aktywność</button>`;
                 if (isKart) html += `<button class="btn-add-kart" id="btn-add-kart" onclick="addKartkowka()">＋ Dodaj kartkówkę</button>`;
                 if (isPK)   html += `<button class="btn-add-pk"   id="btn-add-pk"   onclick="addPracaKontrolna()">＋ Dodaj pracę kontrolną</button>`;
+            }
+            if (ocenyWlasne.length) {
+                const esc = tekst => String(tekst ?? '').replace(/[&<>"']/g, znak =>
+                    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[znak]));
+                html += '<div class="sekcja-tytul">Pozostałe oceny</div><div class="sim-grid">';
+                for (const o of ocenyWlasne) {
+                    const key = `wlasna_${o.id}`, item = simState[key];
+                    html += `<div class="sim-karta zielony" id="sk-${key}">
+                        <div class="sim-info"><div class="sim-nazwa">${esc(o.kategoria)} — ${esc(o.nazwa)} (waga ${o.waga})</div>
+                        <div class="sim-oryg" id="so-${key}">Oryginalna: ${o.stopien}</div></div>
+                        <div class="sim-controls">
+                            <button class="sim-btn" id="sb-minus-${key}" onclick="zmienOcene('${key}', -1)" ${o.stopien <= 1 ? 'disabled' : ''}>−</button>
+                            <span class="sim-val" id="sv-${key}" style="color:${ocenaKolor(item.val)};">${item.val}</span>
+                            <button class="sim-btn" id="sb-plus-${key}" onclick="zmienOcene('${key}', +1)" ${o.stopien >= 6 ? 'disabled' : ''}>+</button>
+                        </div></div>`;
+                }
+                html += '</div>';
             }
             document.getElementById('sim-content').innerHTML = html;
             updateAvgDisplay();

@@ -506,6 +506,12 @@
                     </div>
 
                     <div style="margin-top: 28px; border-top: 2px solid #ccc; padding-top: 20px;">
+                        <h3 style="font-size: 20px; margin-bottom: 10px;">Własne oceny</h3>
+                        <p style="font-size: 15px; margin-bottom: 14px;">Utwórz ocenę dla klasy, nazwij kategorię, ustaw wagę i wpisz stopnie uczniom.</p>
+                        <button class="btn-nowe-okno" onclick="window.open('oceny-wlasne-admin.html', '_blank', 'width=1200,height=780,resizable=yes,scrollbars=yes')">&#x2197; Otwórz panel własnych ocen</button>
+                    </div>
+
+                    <div style="margin-top: 28px; border-top: 2px solid #ccc; padding-top: 20px;">
                         <h3 style="font-size: 20px; margin-bottom: 10px;">Umówione poprawy</h3>
                         <p style="color: #111; font-size: 15px; margin-bottom: 14px; font-weight: bold;">Zarządzaj poprawami zgłoszonymi przez uczniów i ustalaj terminy.</p>
                         <button class="btn-nowe-okno" onclick="window.open('umowione-poprawy.html', '_blank', 'width=1000,height=720,resizable=yes,scrollbars=yes')">&#x2197; Otwórz panel poprawek</button>
@@ -527,13 +533,17 @@
         <script src="pa-procenty.js"></script>
         <script src="punkty-liczby.js"></script>
         <script src="oceny-plus.js"></script>
+        <script src="oceny-wlasne.js"></script>
         <script>
             let wszyscyUczniowie = [];
+            let semMapAdmin = {};
+            let ocenyWlasneMapAdmin = {};
             let sortKolumna = 'klasa';
             let sortDir = 1;
 
-            function liczSrednie(s) {
-                if (!s) return { srAryt: null, srWaz: null };
+            function liczSrednie(s, ocenyWlasne = []) {
+                if (!s && !ocenyWlasne.length) return { srAryt: null, srWaz: null };
+                s = s || {};
                 const KATEGORIE = [
                     { prefix: 'aktywnosc_',       count: 10, waga: 1 },
                     { prefix: 'aktdod',           count: 4, waga: 1 },
@@ -554,6 +564,9 @@
                         }
                     }
                 }
+                const dodatkowe = sumaOcenWlasnych(ocenyWlasne);
+                sumAryt += dodatkowe.suma; cntAryt += dodatkowe.liczba;
+                sumWaz += dodatkowe.sumaWazona; sumWag += dodatkowe.sumaWag;
                 return {
                     srAryt: cntAryt ? sumAryt / cntAryt : null,
                     srWaz:  sumWag  ? sumWaz  / sumWag  : null,
@@ -572,24 +585,33 @@
                     return;
                 }
 
-                const [{ data: uczniowie, error }, { data: semData }] = await Promise.all([
+                const [{ data: uczniowie, error }, { data: semData, error: semError }, { data: definicje, error: defError }, { data: wpisy, error: wpisyError }] = await Promise.all([
                     sb.from('profiles').select('*').order('klasa'),
-                    sb.from('semestr1').select('*')
+                    sb.from('semestr1').select('*'),
+                    sb.from('oceny_wlasne').select('id,klasa,waga'),
+                    sb.from('oceny_wlasne_uczniow').select('ocena_id,profil_id,stopien')
                 ]);
                 document.getElementById('ladowanie').style.display = 'none';
 
-                if (error) {
+                if (error || semError || defError || wpisyError) {
                     document.getElementById('blad').style.display = 'block';
-                    document.getElementById('blad').textContent = 'Błąd pobierania danych: ' + error.message;
+                    document.getElementById('blad').textContent = 'Błąd pobierania danych: ' + (error || semError || defError || wpisyError).message;
                     return;
                 }
 
-                const semMap = {};
-                (semData || []).forEach(row => { semMap[row.profil_id] = row; });
+                semMapAdmin = Object.fromEntries((semData || []).map(row => [row.profil_id, row]));
+                const definicjeMap = Object.fromEntries((definicje || []).map(d => [d.id, d]));
+                const profileMap = Object.fromEntries((uczniowie || []).map(u => [u.id, u]));
+                ocenyWlasneMapAdmin = {};
+                (wpisy || []).forEach(w => {
+                    const d = definicjeMap[w.ocena_id];
+                    if (!d || w.stopien == null || profileMap[w.profil_id]?.klasa !== d.klasa) return;
+                    (ocenyWlasneMapAdmin[w.profil_id] ||= []).push({ stopien: w.stopien, waga: d.waga });
+                });
 
                 wszyscyUczniowie = (uczniowie || []).map(u => ({
                     ...u,
-                    ...liczSrednie(semMap[u.id])
+                    ...liczSrednie(semMapAdmin[u.id], ocenyWlasneMapAdmin[u.id])
                 }));
 
                 const klasy = [...new Set(wszyscyUczniowie.map(u => u.klasa).filter(Boolean))].sort();
@@ -603,6 +625,23 @@
 
                 renderuj(wszyscyUczniowie);
                 document.getElementById('panelContent').style.display = 'block';
+            }
+
+            async function odswiezSrednieWlasne() {
+                const [def, wpisy] = await Promise.all([
+                    sb.from('oceny_wlasne').select('id,klasa,waga'),
+                    sb.from('oceny_wlasne_uczniow').select('ocena_id,profil_id,stopien')
+                ]);
+                if (def.error || wpisy.error) return;
+                const mapa = Object.fromEntries((def.data || []).map(d => [d.id, d]));
+                ocenyWlasneMapAdmin = {};
+                (wpisy.data || []).forEach(w => {
+                    if (w.stopien == null || !mapa[w.ocena_id] ||
+                        wszyscyUczniowie.find(u => u.id === w.profil_id)?.klasa !== mapa[w.ocena_id].klasa) return;
+                    (ocenyWlasneMapAdmin[w.profil_id] ||= []).push({ stopien: w.stopien, waga: mapa[w.ocena_id].waga });
+                });
+                wszyscyUczniowie.forEach(u => Object.assign(u, liczSrednie(semMapAdmin[u.id], ocenyWlasneMapAdmin[u.id])));
+                filtruj();
             }
 
             function filtruj() {

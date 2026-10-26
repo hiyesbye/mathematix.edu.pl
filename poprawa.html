@@ -185,6 +185,7 @@
 
     <script src="supabase-config.js"></script>
     <script src="nazwy-prac.js"></script>
+    <script src="oceny-wlasne.js"></script>
     <script>
         const PROGI = [
             { min: 1.0,  max: 1.5,  ocena: 1, nazwa: 'niedostateczny' },
@@ -196,7 +197,7 @@
         ];
 
         const KAT = [
-            { prefix: 'aktywnosc_',       count: 5, waga: 1 },
+            { prefix: 'aktywnosc_',       count: 10, waga: 1 },
             { prefix: 'aktdod',           count: 4, waga: 1 },
             { prefix: 'odp',               count: 4, waga: 1 },
             { prefix: 'wkp',               count: 1, waga: 1 },
@@ -205,13 +206,15 @@
             { prefix: 'praca_kontrolna_', count: 4, waga: 3 },
         ];
 
-        function liczWaz(sem1) {
+        function liczWaz(sem1, ocenyWlasne = []) {
             let sw = 0, sg = 0;
             for (const k of KAT)
                 for (let i = 1; i <= k.count; i++) {
                     const v = sem1?.[k.count === 1 ? k.prefix : `${k.prefix}${i}`];
                     if (v != null) { sw += v * k.waga; sg += k.waga; }
                 }
+            const dodatkowe = sumaOcenWlasnych(ocenyWlasne);
+            sw += dodatkowe.sumaWazona; sg += dodatkowe.sumaWag;
             return { waz: sg ? sw / sg : null, sw, sg };
         }
 
@@ -445,12 +448,18 @@
                 sb.from('profiles').select('imie, nazwisko, klasa').eq('id', session.user.id).single(),
             ]);
             const nazwyMap = await pobierzNazwyPrac(profil?.klasa);
+            let ocenyWlasne;
+            try { ocenyWlasne = await pobierzOcenyWlasneUcznia(session.user.id, profil?.klasa); }
+            catch (e) {
+                document.getElementById('ladowanie').textContent = 'Błąd odczytu ocen: ' + e.message;
+                return;
+            }
 
             document.getElementById('ladowanie').style.display = 'none';
             const wynik = document.getElementById('wynik');
             wynik.style.display = 'block';
 
-            const { waz, sw, sg } = liczWaz(sem1);
+            const { waz, sw, sg } = liczWaz(sem1, ocenyWlasne);
             const obecna = propOcena(waz);
 
             let html = `<div class="info-box">

@@ -364,6 +364,11 @@
                             <div class="oceny-grid" id="grid-konkursy"></div>
                         </div>
 
+                        <div class="oceny-sekcja" style="margin-top: 16px; display:none;" id="sekcja-oceny-wlasne">
+                            <h3>Pozostałe oceny</h3>
+                            <div class="oceny-grid" id="grid-oceny-wlasne"></div>
+                        </div>
+
                         <div class="oceny-sekcja" style="margin-top: 16px;">
                             <h3>Kartkówki</h3>
                             <div id="lista-kartkowki"></div>
@@ -412,6 +417,7 @@
         <script src="nazwy-prac.js"></script>
         <script src="pa-saldo.js"></script>
         <script src="pa-procenty.js"></script>
+        <script src="oceny-wlasne.js"></script>
         <script>
             let nazwyMap = {};
 
@@ -458,6 +464,16 @@
                 ]);
                 nazwyMap = nazwyMapRes;
                 const mojeBonusy = paMapaBonusow(bonusData)[session.user.id] || {};
+                let ocenyWlasne = [];
+                try {
+                    ocenyWlasne = await pobierzOcenyWlasneUcznia(session.user.id, profil.klasa);
+                } catch (e) {
+                    const blad = document.createElement('p');
+                    blad.className = 'duzaramka';
+                    blad.textContent = 'Nie udało się pobrać własnych ocen: ' + e.message;
+                    document.getElementById('newsy').prepend(blad);
+                    return;
+                }
 
                 // Pobierz punkty całej klasy (do średnich)
                 let klasaPkt = [];
@@ -501,6 +517,13 @@
                 konkursyHtml += kafelek('Alfik matematyczny', sem1?.alfik, 'zloty');
                 document.getElementById('grid-konkursy').innerHTML = konkursyHtml;
                 document.getElementById('sekcja-konkursy').style.display = konkursyHtml ? 'block' : 'none';
+
+                const bezpiecznyTekst = tekst => String(tekst ?? '').replace(/[&<>"']/g, znak =>
+                    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[znak]));
+                const wlasneHtml = ocenyWlasne.map(o =>
+                    kafelek(`${bezpiecznyTekst(o.kategoria)} — ${bezpiecznyTekst(o.nazwa)} (waga ${o.waga})`, o.stopien, 'zielony')).join('');
+                document.getElementById('grid-oceny-wlasne').innerHTML = wlasneHtml;
+                document.getElementById('sekcja-oceny-wlasne').style.display = wlasneHtml ? 'block' : 'none';
 
                 function punktyNaOcene(pkt, max) {
                     if (max == null || max <= 0 || pkt == null) return null;
@@ -706,7 +729,8 @@
                 document.getElementById('sekcja-biezace-poprawy').style.display = poprawyHtml ? 'block' : 'none';
 
                 function liczSrednie(s) {
-                    if (!s) return { aryt: null, waz: null };
+                    if (!s && !ocenyWlasne.length) return { aryt: null, waz: null };
+                    s = s || {};
                     const KATEGORIE = [
                         { prefix: 'aktywnosc_',       count: 10, waga: 1 },
                         { prefix: 'aktdod',           count: 4, waga: 1 },
@@ -727,6 +751,9 @@
                             }
                         }
                     }
+                    const dodatkowe = sumaOcenWlasnych(ocenyWlasne);
+                    sumAryt += dodatkowe.suma; cntAryt += dodatkowe.liczba;
+                    sumWaz += dodatkowe.sumaWazona; sumWag += dodatkowe.sumaWag;
                     return {
                         aryt: cntAryt ? sumAryt / cntAryt : null,
                         waz:  sumWag  ? sumWaz  / sumWag  : null,
