@@ -260,6 +260,7 @@
             .dz-input.kolor-zloty     { border-color: #d99a2b; background: #fff8e8; }
             #dz-komunikat  { font-size: 15px; min-height: 20px; }
             #pkt-komunikat { font-size: 15px; min-height: 20px; }
+            #pkt-tabela [data-praca][hidden] { display: none !important; }
 
             /* ── Dziennik punktów — komórki pkt/max ── */
             .dpkt-cell { display: flex; align-items: center; gap: 3px; justify-content: center; }
@@ -454,10 +455,13 @@
                                 <option value="">Wybierz klasę...</option>
                                 <option value="wszystkie_klasy">Wszystkie klasy</option>
                             </select>
-                            <select id="pkt-typ" onchange="odswiezDziennikPkt()">
+                            <select id="pkt-typ" onchange="ustawFiltrPracPkt(); odswiezDziennikPkt()">
                                 <option value="">Wybierz formę...</option>
                                 <option value="kartkowka">Kartkówki</option>
                                 <option value="praca_kontrolna">Prace kontrolne</option>
+                            </select>
+                            <select id="pkt-praca" aria-label="Filtruj pracę" onchange="filtrujDziennikPkt()" disabled>
+                                <option value="">Wszystkie prace</option>
                             </select>
                             <button class="btn-zapisz-dz" id="btnZapiszPkt" onclick="zapiszDziennikPkt()" style="display:none;">Zapisz wszystkie</button>
                             <button class="btn-nowe-okno" id="btnNoweOknoPkt" onclick="otworzNoweOknoPkt()" style="display:none;">&#x2197; Nowe okno</button>
@@ -719,6 +723,26 @@
             let pktBonusMap = {};
             let edytowanyBonus = {};
 
+            function ustawFiltrPracPkt() {
+                const filtr = document.getElementById('pkt-praca');
+                const typ = document.getElementById('pkt-typ').value;
+                const config = TYPY_PKT[typ];
+                filtr.replaceChildren(new Option('Wszystkie prace', ''));
+                filtr.disabled = !config;
+                if (!config) return;
+                for (let i = 1; i <= config.count; i++)
+                    filtr.add(new Option(nazwaSkrocona(typ, i), String(i)));
+            }
+
+            function filtrujDziennikPkt() {
+                const numer = document.getElementById('pkt-praca').value;
+                document.getElementById('btnZapiszPkt').textContent = numer
+                    ? `Zapisz ${nazwaSkrocona(pktTyp, Number(numer))}` : 'Zapisz wszystkie';
+                document.querySelectorAll('#pkt-tabela [data-praca]').forEach(el => {
+                    el.hidden = Boolean(numer && el.dataset.praca !== numer);
+                });
+            }
+
             async function odswiezDziennikPkt() {
                 pktKlasa = document.getElementById('pkt-klasa').value;
                 pktTyp   = document.getElementById('pkt-typ').value;
@@ -736,6 +760,10 @@
                 kom.textContent = 'Wczytywanie...';
 
                 pktNazwyMap = (pktKlasa !== 'wszystkie_klasy') ? await pobierzNazwyPrac(pktKlasa) : {};
+                const filtrPrac = document.getElementById('pkt-praca');
+                for (let i = 1; i <= TYPY_PKT[pktTyp].count; i++) {
+                    filtrPrac.options[i].textContent = `${nazwaSkrocona(pktTyp, i)} — ${nazwaPracy(pktNazwyMap, pktTyp, i, TYPY_PKT[pktTyp].label)}`;
+                }
 
                 let q = sb.from('profiles').select('*');
                 if (pktKlasa !== 'wszystkie_klasy') q = q.eq('klasa', pktKlasa);
@@ -769,7 +797,7 @@
                 let thRow = `<tr><th>Nr</th><th>Uczeń</th>${showKlasa ? '<th>Klasa</th>' : ''}`;
                 for (let i = 1; i <= typ.count; i++) {
                     const pelna = nazwaPracy(pktNazwyMap, pktTyp, i, typ.label);
-                    thRow += `<th class="${typ.thKolor}" title="${pelna}" style="cursor:help;">${nazwaSkrocona(pktTyp, i)}</th>`;
+                    thRow += `<th data-praca="${i}" class="${typ.thKolor}" title="${pelna}" style="cursor:help;">${nazwaSkrocona(pktTyp, i)}</th>`;
                 }
                 thead.innerHTML = thRow + '</tr>';
 
@@ -781,7 +809,7 @@
                         const mVal = pkt?.[`${typ.prefixMax}${i}`];
                         const pDisp = (pVal !== null && pVal !== undefined) ? pVal : '';
                         const mDisp = (mVal !== null && mVal !== undefined) ? mVal : '';
-                        tds += `<td><div class="dpkt-cell ${typ.kolor}">
+                        tds += `<td data-praca="${i}"><div class="dpkt-cell ${typ.kolor}">
                             <input type="text" inputmode="decimal" id="dpkt-${profil.id}-p${i}" value="${pDisp}" placeholder="pkt">
                             <span class="dpkt-sep">/</span>
                             <input type="text" inputmode="decimal" id="dpkt-${profil.id}-m${i}" value="${mDisp}" placeholder="max">
@@ -789,6 +817,7 @@
                     }
                     return `<tr>${tds}</tr>`;
                 }).join('');
+                filtrujDziennikPkt();
             }
 
             async function zapiszDziennikPkt() {
@@ -805,9 +834,11 @@
 
                 let rows;
                 try {
+                    const wybranaPraca = Number(document.getElementById('pkt-praca').value);
                     rows = pktDane.map(({ profil }) => {
                         const row = { profil_id: profil.id };
                         for (let i = 1; i <= typ.count; i++) {
+                            if (wybranaPraca && i !== wybranaPraca) continue;
                             row[`${typ.prefix}${i}`]    = pobierz(`dpkt-${profil.id}-p${i}`);
                             row[`${typ.prefixMax}${i}`] = pobierz(`dpkt-${profil.id}-m${i}`);
                         }
@@ -855,7 +886,8 @@
 
             function otworzNoweOknoPkt() {
                 if (!pktKlasa || !pktTyp) return;
-                const url = `dziennik-punkty-okno.html?klasa=${encodeURIComponent(pktKlasa)}&typ=${encodeURIComponent(pktTyp)}`;
+                const praca = document.getElementById('pkt-praca').value;
+                const url = `dziennik-punkty-okno.html?klasa=${encodeURIComponent(pktKlasa)}&typ=${encodeURIComponent(pktTyp)}${praca ? `&praca=${encodeURIComponent(praca)}` : ''}`;
                 window.open(url, '_blank', 'width=1100,height=700,resizable=yes,scrollbars=yes');
             }
 
