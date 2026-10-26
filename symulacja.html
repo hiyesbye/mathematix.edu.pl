@@ -484,7 +484,7 @@
                     }
                 }
             }
-            for (const o of ocenyWlasne) {
+            for (const o of ocenyWlasne.filter(o => o.stopien != null)) {
                 const key = `wlasna_${o.id}`;
                 simState[key] = { val: o.stopien, orig: o.stopien, waga: o.waga,
                     minOcena: 1, maxOcena: 6, kolor: 'zielony' };
@@ -532,11 +532,11 @@
                 if (isKart) html += `<button class="btn-add-kart" id="btn-add-kart" onclick="addKartkowka()">＋ Dodaj kartkówkę</button>`;
                 if (isPK)   html += `<button class="btn-add-pk"   id="btn-add-pk"   onclick="addPracaKontrolna()">＋ Dodaj pracę kontrolną</button>`;
             }
-            if (ocenyWlasne.length) {
+            if (ocenyWlasne.some(o => o.stopien != null)) {
                 const esc = tekst => String(tekst ?? '').replace(/[&<>"']/g, znak =>
                     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[znak]));
                 html += '<div class="sekcja-tytul">Pozostałe oceny</div><div class="sim-grid">';
-                for (const o of ocenyWlasne) {
+                for (const o of ocenyWlasne.filter(o => o.stopien != null)) {
                     const key = `wlasna_${o.id}`, item = simState[key];
                     html += `<div class="sim-karta zielony" id="sk-${key}">
                         <div class="sim-info"><div class="sim-nazwa">${esc(o.kategoria)} — ${esc(o.nazwa)} (waga ${o.waga})</div>

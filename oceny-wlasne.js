@@ -1,4 +1,4 @@
-// Własne oceny ucznia w oddzielnych tabelach; puste stopnie nie wchodzą do średnich.
+// Wszystkie pozycje klasy, także te bez stopnia. Puste stopnie nie wchodzą do średnich.
 async function pobierzOcenyWlasneUcznia(profilId, klasa) {
     if (!klasa) return [];
     const [def, wpisy] = await Promise.all([
@@ -6,9 +6,11 @@ async function pobierzOcenyWlasneUcznia(profilId, klasa) {
         sb.from('oceny_wlasne_uczniow').select('ocena_id,stopien').eq('profil_id', profilId)
     ]);
     if (def.error || wpisy.error) throw new Error((def.error || wpisy.error).message);
-    const mapa = Object.fromEntries((def.data || []).map(d => [d.id, d]));
-    return (wpisy.data || []).filter(w => w.stopien != null && mapa[w.ocena_id])
-        .map(w => ({ ...mapa[w.ocena_id], stopien: Number(w.stopien), waga: Number(mapa[w.ocena_id].waga) }));
+    const stopnie = Object.fromEntries((wpisy.data || []).map(w => [w.ocena_id, w.stopien]));
+    return (def.data || []).map(d => ({ ...d,
+        stopien: stopnie[d.id] == null ? null : Number(stopnie[d.id]),
+        waga: Number(d.waga)
+    }));
 }
 
 function sumaOcenWlasnych(oceny) {

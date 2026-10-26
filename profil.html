@@ -521,7 +521,8 @@
                 const bezpiecznyTekst = tekst => String(tekst ?? '').replace(/[&<>"']/g, znak =>
                     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[znak]));
                 const wlasneHtml = ocenyWlasne.map(o =>
-                    kafelek(`${bezpiecznyTekst(o.kategoria)} — ${bezpiecznyTekst(o.nazwa)} (waga ${o.waga})`, o.stopien, 'zielony')).join('');
+                    `<div class="ocena-para"><div class="ocena-nazwa-box">${bezpiecznyTekst(o.kategoria)} — ${bezpiecznyTekst(o.nazwa)} (waga ${o.waga})</div>
+                    <div class="ocena-wartosc-box zielony">${o.stopien ?? '—'}</div></div>`).join('');
                 document.getElementById('grid-oceny-wlasne').innerHTML = wlasneHtml;
                 document.getElementById('sekcja-oceny-wlasne').style.display = wlasneHtml ? 'block' : 'none';
 

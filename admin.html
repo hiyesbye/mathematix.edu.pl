@@ -420,7 +420,7 @@
                     <div id="dziennikPanel" style="margin-top: 28px; border-top: 2px solid #ccc; padding-top: 20px;">
                         <h3 style="font-size: 20px; margin-bottom: 16px;">Dziennik ocen</h3>
                         <div class="dziennik-filtry">
-                            <select id="dz-klasa" onchange="odswiezDziennik()">
+                            <select id="dz-klasa" onchange="zmienKlaseDziennika()">
                                 <option value="">Wybierz klasę...</option>
                                 <option value="wszystkie_klasy">Wszystkie klasy</option>
                             </select>
@@ -538,6 +538,7 @@
             let wszyscyUczniowie = [];
             let semMapAdmin = {};
             let ocenyWlasneMapAdmin = {};
+            let ocenyWlasneDefinicjeAdmin = [];
             let sortKolumna = 'klasa';
             let sortDir = 1;
 
@@ -588,7 +589,7 @@
                 const [{ data: uczniowie, error }, { data: semData, error: semError }, { data: definicje, error: defError }, { data: wpisy, error: wpisyError }] = await Promise.all([
                     sb.from('profiles').select('*').order('klasa'),
                     sb.from('semestr1').select('*'),
-                    sb.from('oceny_wlasne').select('id,klasa,waga'),
+                    sb.from('oceny_wlasne').select('id,klasa,kategoria,nazwa,waga'),
                     sb.from('oceny_wlasne_uczniow').select('ocena_id,profil_id,stopien')
                 ]);
                 document.getElementById('ladowanie').style.display = 'none';
@@ -601,6 +602,7 @@
 
                 semMapAdmin = Object.fromEntries((semData || []).map(row => [row.profil_id, row]));
                 const definicjeMap = Object.fromEntries((definicje || []).map(d => [d.id, d]));
+                ocenyWlasneDefinicjeAdmin = definicje || [];
                 const profileMap = Object.fromEntries((uczniowie || []).map(u => [u.id, u]));
                 ocenyWlasneMapAdmin = {};
                 (wpisy || []).forEach(w => {
@@ -622,6 +624,7 @@
                         document.getElementById(id).appendChild(opt);
                     });
                 });
+                aktualizujFormyDziennika();
 
                 renderuj(wszyscyUczniowie);
                 document.getElementById('panelContent').style.display = 'block';
@@ -629,10 +632,12 @@
 
             async function odswiezSrednieWlasne() {
                 const [def, wpisy] = await Promise.all([
-                    sb.from('oceny_wlasne').select('id,klasa,waga'),
+                    sb.from('oceny_wlasne').select('id,klasa,kategoria,nazwa,waga'),
                     sb.from('oceny_wlasne_uczniow').select('ocena_id,profil_id,stopien')
                 ]);
                 if (def.error || wpisy.error) return;
+                ocenyWlasneDefinicjeAdmin = def.data || [];
+                aktualizujFormyDziennika();
                 const mapa = Object.fromEntries((def.data || []).map(d => [d.id, d]));
                 ocenyWlasneMapAdmin = {};
                 (wpisy.data || []).forEach(w => {
@@ -1136,11 +1141,47 @@
             let dzTyp = '';
             let dzKlasa = '';
             let dzNazwyMap = {};
+            let dzWlasna = null;
             window.dzPunktyMap = {};
+
+            function aktualizujFormyDziennika() {
+                const wyb = document.getElementById('dz-typ');
+                const wartosc = wyb.value;
+                wyb.querySelector('optgroup[data-wlasne]')?.remove();
+                const klasa = document.getElementById('dz-klasa').value;
+                const lista = ocenyWlasneDefinicjeAdmin.filter(d =>
+                    !klasa || klasa === 'wszystkie_klasy' || d.klasa === klasa);
+                if (lista.length) {
+                    const grupa = document.createElement('optgroup');
+                    grupa.label = 'Własne oceny';
+                    grupa.dataset.wlasne = '1';
+                    lista.sort((a, b) => a.klasa.localeCompare(b.klasa) || a.kategoria.localeCompare(b.kategoria) || a.nazwa.localeCompare(b.nazwa));
+                    for (const d of lista) {
+                        const opcja = document.createElement('option');
+                        opcja.value = `wlasna:${d.id}`;
+                        opcja.textContent = `${d.klasa} · ${d.kategoria} — ${d.nazwa} (waga ${d.waga})`;
+                        grupa.appendChild(opcja);
+                    }
+                    wyb.appendChild(grupa);
+                }
+                wyb.value = [...wyb.options].some(o => o.value === wartosc) ? wartosc : '';
+            }
+
+            function zmienKlaseDziennika() {
+                aktualizujFormyDziennika();
+                odswiezDziennik();
+            }
 
             async function odswiezDziennik() {
                 dzKlasa = document.getElementById('dz-klasa').value;
                 dzTyp = document.getElementById('dz-typ').value;
+                dzWlasna = dzTyp.startsWith('wlasna:')
+                    ? ocenyWlasneDefinicjeAdmin.find(d => `wlasna:${d.id}` === dzTyp) : null;
+                if (dzWlasna && dzKlasa !== dzWlasna.klasa) {
+                    dzKlasa = dzWlasna.klasa;
+                    document.getElementById('dz-klasa').value = dzKlasa;
+                    aktualizujFormyDziennika();
+                }
                 const tabela = document.getElementById('dz-tabela');
                 const btn = document.getElementById('btnZapiszDz');
                 const kom = document.getElementById('dz-komunikat');
@@ -1161,6 +1202,20 @@
                 const { data: profiles } = await q.order('klasa').order('nr');
                 if (!profiles || profiles.length === 0) {
                     kom.textContent = 'Brak uczniów.';
+                    return;
+                }
+
+                if (dzWlasna) {
+                    const { data: wpisy, error: bladWpisow } = await sb.from('oceny_wlasne_uczniow')
+                        .select('profil_id,stopien').eq('ocena_id', dzWlasna.id);
+                    if (bladWpisow) { kom.style.color = 'red'; kom.textContent = bladWpisow.message; return; }
+                    const stopnie = Object.fromEntries((wpisy || []).map(w => [w.profil_id, w.stopien]));
+                    dzDane = profiles.map(p => ({ profil: p, stopien: stopnie[p.id] ?? null }));
+                    kom.textContent = '';
+                    renderujDziennikWlasna();
+                    tabela.style.display = 'table';
+                    btn.style.display = 'inline-block';
+                    document.getElementById('btnNoweOkno').style.display = 'inline-block';
                     return;
                 }
 
@@ -1217,6 +1272,18 @@
                 }).join('');
             }
 
+            function renderujDziennikWlasna() {
+                const d = dzWlasna;
+                if (!d) return;
+                const esc = tekst => String(tekst ?? '').replace(/[&<>"']/g, znak =>
+                    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[znak]));
+                document.getElementById('dz-thead').innerHTML = `<tr><th>Nr</th><th>Uczeń</th><th>${esc(d.kategoria)} — ${esc(d.nazwa)} (waga ${esc(d.waga)})</th></tr>`;
+                document.getElementById('dz-tbody').innerHTML = dzDane.map(({ profil, stopien }) =>
+                    `<tr><td>${esc(profil.nr ?? '—')}</td><td>${esc(`${profil.imie || ''} ${profil.nazwisko || ''}`)}</td>
+                    <td><select id="dz-wlasna-${profil.id}" aria-label="Ocena ${esc(`${profil.imie || ''} ${profil.nazwisko || ''}`)}">
+                    <option value="">—</option>${[1,2,3,4,5,6].map(n => `<option value="${n}" ${stopien === n ? 'selected' : ''}>${n}</option>`).join('')}</select></td></tr>`).join('');
+            }
+
             function renderujDziennikWszystkie() {
                 const thead = document.getElementById('dz-thead');
                 const tbody = document.getElementById('dz-tbody');
@@ -1264,6 +1331,20 @@
                 const kom = document.getElementById('dz-komunikat');
                 kom.style.color = 'gray';
                 kom.textContent = 'Zapisywanie...';
+
+                if (dzWlasna) {
+                    const rows = dzDane.map(({ profil }) => {
+                        const value = document.getElementById(`dz-wlasna-${profil.id}`)?.value;
+                        return { ocena_id: dzWlasna.id, profil_id: profil.id, stopien: value ? Number(value) : null };
+                    });
+                    const { error } = await sb.from('oceny_wlasne_uczniow').upsert(rows, { onConflict: 'ocena_id,profil_id' });
+                    if (error) { kom.style.color = 'red'; kom.textContent = 'Błąd zapisu: ' + error.message; return; }
+                    dzDane.forEach((d, i) => { d.stopien = rows[i].stopien; });
+                    odswiezSrednieWlasne();
+                    kom.style.color = 'green';
+                    kom.textContent = `Zapisano oceny (${rows.length} uczniów).`;
+                    return;
+                }
 
                 let toUpsert;
                 if (dzTyp === 'wszystkie') {

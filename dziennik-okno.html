@@ -179,6 +179,7 @@
         .dz-input:focus.kolor-czerwony  { border-color: #8e1e15; box-shadow: 0 0 0 2px rgba(192,57,43,0.25); }
         .dz-input:focus.kolor-fioletowy { border-color: #453580; box-shadow: 0 0 0 2px rgba(90,71,160,0.25); }
         .dz-input:focus.kolor-zloty     { border-color: #7a4e00; box-shadow: 0 0 0 2px rgba(217,154,43,0.25); }
+        select.dz-input { width: 70px; cursor: pointer; }
         .dz-ocena-wrap { display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
         .dz-plus:not([hidden]) { font-size: 12px; font-weight: bold; color: #333; }
 
@@ -247,25 +248,37 @@
         const params = new URLSearchParams(window.location.search);
         const klasa  = params.get('klasa') || '';
         const typ    = params.get('typ')   || '';
+        const wlasnaId = /^wlasna:([0-9a-f-]{36})$/i.exec(typ)?.[1] || null;
+        let wlasnaDefinicja = null;
         let dane = [];
 
         const czyWszystkieKlasy = klasa === 'wszystkie_klasy';
 
         async function init() {
             const t = TYPY[typ];
-            if (!klasa || (!t && typ !== 'wszystkie')) {
+            if (!klasa || (!t && typ !== 'wszystkie' && !wlasnaId)) {
                 document.getElementById('ladowanie').textContent = 'Nieprawidłowe parametry.';
                 return;
             }
 
+            await sb.auth.getSession();
+            if (wlasnaId) {
+                const { data, error } = await sb.from('oceny_wlasne').select('*').eq('id', wlasnaId).single();
+                if (error || !data || data.klasa !== klasa) {
+                    document.getElementById('ladowanie').textContent = 'Nie znaleziono oceny dla tej klasy.';
+                    return;
+                }
+                wlasnaDefinicja = data;
+            }
+
             const tytulKlasa = czyWszystkieKlasy ? 'Wszystkie klasy' : `Klasa ${klasa}`;
-            const tytulLabel = typ === 'wszystkie' ? 'Wszystkie oceny' : t.label;
+            const tytulLabel = wlasnaDefinicja
+                ? `${wlasnaDefinicja.kategoria} — ${wlasnaDefinicja.nazwa} (waga ${wlasnaDefinicja.waga})`
+                : typ === 'wszystkie' ? 'Wszystkie oceny' : t.label;
             document.getElementById('tytul').textContent = `${tytulKlasa} — ${tytulLabel}`;
             document.title = `Dziennik: ${czyWszystkieKlasy ? 'Wszystkie' : klasa} / ${tytulLabel}`;
 
             // Poczekaj na przywrócenie sesji z localStorage zanim Supabase RLS przepuści zapytanie
-            await sb.auth.getSession();
-
             nazwyMap = czyWszystkieKlasy ? {} : await pobierzNazwyPrac(klasa);
 
             let q = sb.from('profiles').select('*');
@@ -275,6 +288,18 @@
             if (pe || !profiles || profiles.length === 0) {
                 document.getElementById('ladowanie').textContent =
                     pe ? 'Błąd: ' + pe.message : 'Brak uczniów.';
+                return;
+            }
+
+            if (wlasnaDefinicja) {
+                const { data: wpisy, error: bladWpisow } = await sb.from('oceny_wlasne_uczniow')
+                    .select('profil_id,stopien').eq('ocena_id', wlasnaId);
+                if (bladWpisow) { document.getElementById('ladowanie').textContent = 'Błąd: ' + bladWpisow.message; return; }
+                const stopnie = Object.fromEntries((wpisy || []).map(w => [w.profil_id, w.stopien]));
+                dane = profiles.map(p => ({ profil: p, stopien: stopnie[p.id] ?? null }));
+                renderujWlasna();
+                document.getElementById('ladowanie').style.display = 'none';
+                document.getElementById('tableWrap').style.display = 'block';
                 return;
             }
 
@@ -365,10 +390,35 @@
             }).join('');
         }
 
+        function renderujWlasna() {
+            const esc = tekst => String(tekst ?? '').replace(/[&<>"']/g, znak =>
+                ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[znak]));
+            document.getElementById('thead').innerHTML = `<tr><th class="th-nr">Nr</th><th class="th-uczen">Uczeń</th>
+                <th class="th-zielony">${esc(wlasnaDefinicja.kategoria)} — ${esc(wlasnaDefinicja.nazwa)} (waga ${esc(wlasnaDefinicja.waga)})</th></tr>`;
+            document.getElementById('tbody').innerHTML = dane.map(({ profil, stopien }) =>
+                `<tr><td class="td-nr">${esc(profil.nr ?? '—')}</td><td class="td-uczen">${esc(`${profil.imie || ''} ${profil.nazwisko || ''}`)}</td>
+                <td><select class="dz-input kolor-zielony" id="dz-wlasna-${profil.id}" aria-label="Ocena ${esc(`${profil.imie || ''} ${profil.nazwisko || ''}`)}">
+                <option value="">—</option>${[1,2,3,4,5,6].map(n => `<option value="${n}" ${stopien === n ? 'selected' : ''}>${n}</option>`).join('')}</select></td></tr>`).join('');
+        }
+
         async function zapisz() {
             const kom = document.getElementById('komunikat');
             kom.style.color = '#ccc';
             kom.textContent = 'Zapisywanie...';
+
+            if (wlasnaDefinicja) {
+                const rows = dane.map(({ profil }) => {
+                    const value = document.getElementById(`dz-wlasna-${profil.id}`)?.value;
+                    return { ocena_id: wlasnaId, profil_id: profil.id, stopien: value ? Number(value) : null };
+                });
+                const { error } = await sb.from('oceny_wlasne_uczniow').upsert(rows, { onConflict: 'ocena_id,profil_id' });
+                if (error) { kom.style.color = '#ff7070'; kom.textContent = 'Błąd: ' + error.message; return; }
+                dane.forEach((d, i) => { d.stopien = rows[i].stopien; });
+                if (window.opener && !window.opener.closed) window.opener.odswiezSrednieWlasne?.();
+                kom.style.color = '#6dcc80';
+                kom.textContent = `Zapisano (${rows.length} uczniów) ✓`;
+                return;
+            }
 
             let toUpsert;
             if (typ === 'wszystkie') {
