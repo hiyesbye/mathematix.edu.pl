@@ -28,9 +28,11 @@
         .actions { display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
         .help { color: #536673; line-height: 1.45; font-size: 13px; margin: 9px 0; }
         .def-list { display: grid; gap: 7px; max-height: 390px; overflow-y: auto; }
-        .def-item { width: 100%; text-align: left; background: #f6f9fa; border: 1px solid #cfdae0; color: #202b33; }
+        .def-row { display: flex; gap: 6px; align-items: stretch; }
+        .def-item { flex: 1; min-width: 0; text-align: left; background: #f6f9fa; border: 1px solid #cfdae0; color: #202b33; overflow-wrap: anywhere; }
         .def-item.active { background: #e5f3f8; border-color: #0b6994; }
         .def-item small { display: block; color: #536673; font-weight: normal; margin-top: 4px; }
+        .edit-name { flex: 0 0 auto; background: white; border: 1px solid #aebbc2; color: #24536a; }
         .empty { color: #5d6e78; padding: 22px 5px; }
         .student-table { width: 100%; border-collapse: collapse; }
         .student-table th { text-align: left; background: #edf4f7; }
@@ -47,7 +49,7 @@
 <body>
     <header><a href="admin.html">← Panel admina</a><strong>Własne oceny</strong></header>
     <main>
-        <p class="lead">Utwórz pozycję dla klasy, wybierz kategorię, nazwę i wagę. Następnie wpisz stopnie uczniom tej klasy. Puste pole nie wpływa na średnią.</p>
+        <p class="lead">Utwórz pozycję dla klasy, wybierz kategorię, nazwę i wagę. Aby poprawić istniejącą nazwę, wybierz klasę i kliknij „Zmień nazwę” przy pozycji. Puste pole oceny nie wpływa na średnią.</p>
         <div id="status">Sprawdzanie uprawnień...</div>
         <div class="layout" id="panel" hidden>
             <section class="card">
@@ -66,6 +68,7 @@
                     <input id="nazwa" maxlength="120" required placeholder="np. Plakat o ułamkach">
                     <label for="waga">Waga</label>
                     <input id="waga" type="number" min="0.01" max="100" step="0.01" value="1" required>
+                    <p class="help" id="tryb-opis">Nowa pozycja zostanie dodana do wybranej klasy.</p>
                     <p class="help">Jedna wpisana ocena liczy się raz do średniej arytmetycznej. W średniej ważonej liczy się z podaną wagą.</p>
                     <div class="actions"><button class="primary" type="submit" id="zapisz-def">Zapisz pozycję</button></div>
                 </form>
@@ -113,6 +116,8 @@
         function nowa() {
             wybraneId = null;
             $('formularz-tytul').textContent = 'Nowa pozycja';
+            $('tryb-opis').textContent = 'Nowa pozycja zostanie dodana do wybranej klasy.';
+            $('zapisz-def').textContent = 'Dodaj pozycję';
             $('kategoria').value = ''; $('nazwa').value = ''; $('waga').value = '1';
             $('oceny-tytul').textContent = 'Oceny uczniów';
             $('oceny-opis').textContent = 'Zapisz pozycję, aby móc wpisać stopnie.';
@@ -124,15 +129,22 @@
             const klasa = aktualnaKlasa();
             const lista = definicje.filter(d => d.klasa === klasa);
             $('lista').innerHTML = klasa
-                ? (lista.length ? lista.map(d => `<button type="button" class="def-item ${d.id === wybraneId ? 'active' : ''}" onclick="wybierz('${d.id}')"><b>${esc(d.nazwa)}</b><small>${esc(d.kategoria)} · waga ${esc(d.waga)}</small></button>`).join('') : '<div class="empty">Brak pozycji w tej klasie.</div>')
+                ? (lista.length ? lista.map(d => `<div class="def-row"><button type="button" class="def-item ${d.id === wybraneId ? 'active' : ''}" onclick="wybierz('${d.id}')"><b>${esc(d.nazwa)}</b><small>${esc(d.kategoria)} · waga ${esc(d.waga)}</small></button><button type="button" class="edit-name" onclick="edytujNazwe('${d.id}')" aria-label="Zmień nazwę: ${esc(d.nazwa)}">Zmień nazwę</button></div>`).join('') : '<div class="empty">Brak pozycji w tej klasie.</div>')
                 : '<div class="empty">Najpierw wybierz klasę.</div>';
             $('kategorie').innerHTML = [...new Set(definicje.map(d => d.kategoria))].map(k => `<option value="${esc(k)}"></option>`).join('');
+        }
+        function edytujNazwe(id) {
+            wybierz(id);
+            $('nazwa').focus();
+            $('nazwa').select();
         }
         async function wybierz(id) {
             const d = definicje.find(item => item.id === id);
             if (!d || d.klasa !== aktualnaKlasa()) return;
             wybraneId = id;
             $('formularz-tytul').textContent = 'Edytuj pozycję';
+            $('tryb-opis').textContent = 'Edytujesz istniejącą pozycję. Zmiana nazwy pojawi się także przy już wpisanych ocenach uczniów.';
+            $('zapisz-def').textContent = 'Zapisz zmiany';
             $('kategoria').value = d.kategoria; $('nazwa').value = d.nazwa; $('waga').value = d.waga;
             $('oceny-tytul').textContent = d.nazwa;
             $('oceny-opis').textContent = `${d.kategoria} · klasa ${d.klasa} · waga ${d.waga}. Puste pole usuwa stopień ze średnich.`;
@@ -167,7 +179,7 @@
                 if (error) throw error;
                 if (wybraneId) definicje = definicje.map(d => d.id === data.id ? data : d);
                 else definicje.unshift(data);
-                komunikat('Pozycja zapisana. Możesz teraz wpisać oceny uczniom.', 'success');
+                komunikat('Pozycja zapisana. Zmiana nazwy jest widoczna także przy wcześniej wpisanych ocenach.', 'success');
                 await wybierz(data.id);
                 if (window.opener && !window.opener.closed) window.opener.odswiezSrednieWlasne?.();
             } catch (e) { komunikat('Błąd zapisu pozycji: ' + e.message, 'error'); }
