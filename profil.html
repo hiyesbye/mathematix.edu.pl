@@ -465,14 +465,15 @@
                 nazwyMap = nazwyMapRes;
                 const mojeBonusy = paMapaBonusow(bonusData)[session.user.id] || {};
                 let ocenyWlasne = [];
+                let bladWlasnych = null;
                 try {
                     ocenyWlasne = await pobierzOcenyWlasneUcznia(session.user.id, profil.klasa);
                 } catch (e) {
+                    bladWlasnych = e;
                     const blad = document.createElement('p');
                     blad.className = 'duzaramka';
                     blad.textContent = 'Nie udało się pobrać własnych ocen: ' + e.message;
                     document.getElementById('newsy').prepend(blad);
-                    return;
                 }
 
                 // Pobierz punkty całej klasy (do średnich)
@@ -589,7 +590,7 @@
                 });
 
                 // Funkcja licząca średnie klasy dla danej kartkówki/PK
-                function liczSrednieKlasy(prefixPkt, prefixMax, procKey, index) {
+                function liczSrednieKlasy(prefixPkt, prefixMax, prefixSem, index) {
                     // Znajdź wspólne maksimum klasy (wszystkie testy mają ten sam max)
                     let commonMax = null;
                     for (const row of klasaDane) {
@@ -639,7 +640,7 @@
                         const myProc    = hasPoints ? Math.round(myPkt / myMax * 100) : null;
                         const procentPoZakupie = myProc == null ? null : Math.min(100, myProc + kupione);
 
-                        const { avgPkt, avgProc, avgOcena } = liczSrednieKlasy(prefixPkt, prefixMax, procKey, i);
+                        const { avgPkt, avgProc, avgOcena } = liczSrednieKlasy(prefixPkt, prefixMax, prefixSem, i);
                         const hasKlasa = avgPkt !== null || avgProc !== null || avgOcena !== null;
 
                         const id    = `karta-${prefixSem}${i}`;
@@ -761,7 +762,8 @@
                     };
                 }
 
-                const { aryt, waz } = liczSrednie(sem1);
+                const { aryt, waz } = bladWlasnych
+                    ? { aryt: null, waz: null } : liczSrednie(sem1);
                 document.getElementById('p-sr-aryt').textContent = aryt !== null ? aryt.toFixed(2) : '—';
                 document.getElementById('p-sr-waz').textContent  = waz  !== null ? waz.toFixed(2)  : '—';
 
