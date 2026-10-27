@@ -259,6 +259,7 @@
             .dz-input.kolor-fioletowy { border-color: #5a47a0; background: #f3f0ff; }
             .dz-input.kolor-zloty     { border-color: #d99a2b; background: #fff8e8; }
             #dz-komunikat  { font-size: 15px; min-height: 20px; }
+            #dz-tabela [data-praca][hidden] { display: none !important; }
             #pkt-komunikat { font-size: 15px; min-height: 20px; }
             #pkt-tabela [data-praca][hidden] { display: none !important; }
 
@@ -425,7 +426,7 @@
                                 <option value="">Wybierz klasę...</option>
                                 <option value="wszystkie_klasy">Wszystkie klasy</option>
                             </select>
-                            <select id="dz-typ" onchange="odswiezDziennik()">
+                            <select id="dz-typ" onchange="ustawFiltrPracDz(); odswiezDziennik()">
                                 <option value="">Wybierz formę sprawdzenia...</option>
                                 <option value="aktywnosc">Aktywność</option>
                                 <option value="aktdod">Aktywność dodatkowa</option>
@@ -435,6 +436,9 @@
                                 <option value="kartkowka">Kartkówki</option>
                                 <option value="praca_kontrolna">Prace kontrolne</option>
                                 <option value="wszystkie">Wszystkie oceny</option>
+                            </select>
+                            <select id="dz-praca" aria-label="Filtruj ocenę" onchange="filtrujDziennik()" disabled>
+                                <option value="">Wszystkie pozycje</option>
                             </select>
                             <button class="btn-zapisz-dz" id="btnZapiszDz" onclick="zapiszDziennik()" style="display:none;">Zapisz wszystkie</button>
                             <button class="btn-nowe-okno" id="btnNoweOkno" onclick="otworzNoweOkno()" style="display:none;">&#x2197; Nowe okno</button>
@@ -1176,6 +1180,32 @@
             let dzWlasna = null;
             window.dzPunktyMap = {};
 
+            function ustawFiltrPracDz() {
+                const filtr = document.getElementById('dz-praca');
+                const typ = document.getElementById('dz-typ').value;
+                const config = TYPY_DZ[typ];
+                filtr.replaceChildren(new Option('Wszystkie pozycje', ''));
+                document.getElementById('btnZapiszDz').textContent = 'Zapisz wszystkie';
+                filtr.disabled = !config || config.count <= 1;
+                if (filtr.disabled) return;
+                for (let i = 1; i <= config.count; i++) {
+                    const etykieta = typ === 'kartkowka' || typ === 'praca_kontrolna'
+                        ? nazwaSkrocona(typ, i) : `${config.label} ${i}`;
+                    filtr.add(new Option(etykieta, String(i)));
+                }
+            }
+
+            function filtrujDziennik() {
+                const numer = document.getElementById('dz-praca').value;
+                const typ = TYPY_DZ[dzTyp];
+                document.getElementById('btnZapiszDz').textContent = numer && typ
+                    ? `Zapisz ${dzTyp === 'kartkowka' || dzTyp === 'praca_kontrolna' ? nazwaSkrocona(dzTyp, Number(numer)) : `${typ.label} ${numer}`}`
+                    : 'Zapisz wszystkie';
+                document.querySelectorAll('#dz-tabela [data-praca]').forEach(el => {
+                    el.hidden = Boolean(numer && el.dataset.praca !== numer);
+                });
+            }
+
             function aktualizujFormyDziennika() {
                 const wyb = document.getElementById('dz-typ');
                 const wartosc = wyb.value;
@@ -1201,6 +1231,7 @@
 
             function zmienKlaseDziennika() {
                 aktualizujFormyDziennika();
+                ustawFiltrPracDz();
                 odswiezDziennik();
             }
 
@@ -1228,6 +1259,11 @@
                 kom.textContent = 'Wczytywanie...';
 
                 dzNazwyMap = (dzKlasa !== 'wszystkie_klasy') ? await pobierzNazwyPrac(dzKlasa) : {};
+                const filtrDz = document.getElementById('dz-praca');
+                if (dzTyp === 'kartkowka' || dzTyp === 'praca_kontrolna') {
+                    for (let i = 1; i <= TYPY_DZ[dzTyp].count; i++)
+                        filtrDz.options[i].textContent = `${nazwaSkrocona(dzTyp, i)} — ${nazwaPracy(dzNazwyMap, dzTyp, i, TYPY_DZ[dzTyp].label)}`;
+                }
 
                 let q = sb.from('profiles').select('*');
                 if (dzKlasa !== 'wszystkie_klasy') q = q.eq('klasa', dzKlasa);
@@ -1282,10 +1318,10 @@
                 for (let i = 1; i <= typ.count; i++) {
                     if (jestNazywalny && typ.count > 1) {
                         const pelna = nazwaPracy(dzNazwyMap, dzTyp, i, typ.label);
-                        thRow += `<th class="${typ.thKolor}" title="${pelna}" style="cursor:help;">${nazwaSkrocona(dzTyp, i)}</th>`;
+                        thRow += `<th data-praca="${i}" class="${typ.thKolor}" title="${pelna}" style="cursor:help;">${nazwaSkrocona(dzTyp, i)}</th>`;
                     } else {
                         const etykieta = typ.count > 1 ? `${typ.label} ${i}` : typ.label;
-                        thRow += `<th class="${typ.thKolor}">${etykieta}</th>`;
+                        thRow += `<th data-praca="${i}" class="${typ.thKolor}">${etykieta}</th>`;
                     }
                 }
                 thead.innerHTML = thRow + '</tr>';
@@ -1298,10 +1334,11 @@
                         const val = sem1?.[field];
                         const displayed = (val !== null && val !== undefined) ? val : '';
                         const colorCls = typ.kolor ? `kolor-${typ.kolor}` : '';
-                        tds += `<td>${poleOcenyZPlusem(`dz-${profil.id}-${i}`, profil.id, field, displayed, window.dzPunktyMap[profil.id], colorCls)}</td>`;
+                        tds += `<td data-praca="${i}">${poleOcenyZPlusem(`dz-${profil.id}-${i}`, profil.id, field, displayed, window.dzPunktyMap[profil.id], colorCls)}</td>`;
                     }
                     return `<tr>${tds}</tr>`;
                 }).join('');
+                filtrujDziennik();
             }
 
             function renderujDziennikWlasna() {
@@ -1393,9 +1430,11 @@
                     });
                 } else {
                     const typ = TYPY_DZ[dzTyp];
+                    const wybranaPraca = Number(document.getElementById('dz-praca').value);
                     toUpsert = dzDane.map(({ profil }) => {
                         const row = { profil_id: profil.id };
                         for (let i = 1; i <= typ.count; i++) {
+                            if (wybranaPraca && i !== wybranaPraca) continue;
                             const field = typ.count === 1 ? typ.prefix : `${typ.prefix}${i}`;
                             const val = document.getElementById(`dz-${profil.id}-${i}`)?.value;
                             row[field] = (val !== '' && val !== undefined) ? parseInt(val) : null;
@@ -1420,7 +1459,10 @@
                         for (let i = 1; i <= 10; i++) stare.push(sem1?.[`aktywnosc_${i}`] ?? null);
                         const row = toUpsert[idx];
                         const nowe = [];
-                        for (let i = 1; i <= 10; i++) nowe.push(row[`aktywnosc_${i}`] ?? null);
+                        for (let i = 1; i <= 10; i++) {
+                            const pole = `aktywnosc_${i}`;
+                            nowe.push(Object.hasOwn(row, pole) ? row[pole] : (sem1?.[pole] ?? null));
+                        }
                         const { utracone5, utracone6 } = paLiczUtraconeOceny(stare, nowe);
                         if (utracone5 > 0 || utracone6 > 0) {
                             laczneUtracone5 += utracone5; laczneUtracone6 += utracone6;
