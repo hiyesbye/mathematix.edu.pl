@@ -1,4 +1,13 @@
 (async () => {
+    const navbar = document.getElementById('navbar');
+    if (navbar && !navbar.querySelector('a[href="escape-room.html"]')) {
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.href = 'escape-room.html'; a.textContent = 'Escape room';
+        li.append(a);
+        const matapki = navbar.querySelector('a[href="matapki.html"]')?.closest('li');
+        if (matapki) matapki.after(li); else navbar.append(li);
+    }
     if (typeof sb === 'undefined') return;
     const { data: { session } } = await sb.auth.getSession();
 
@@ -24,5 +33,11 @@
     }
 
     const { data: adminRow } = await sb.from('admins').select('id').eq('id', session.user.id).single();
+    if (adminRow && loginLi) {
+        const a = document.createElement('a');
+        a.href = 'escape-room-admin.html'; a.textContent = 'Escape room — ustawienia';
+        loginLi.querySelector('.dropdown-content')?.prepend(a);
+    }
     if (adminRow && signupA) signupA.style.display = 'inline-block';
 })();
+
