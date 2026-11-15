@@ -36,6 +36,6 @@ main=main[:start]+'<dialog id="offlineSettings" class="offline-settings"><button
 main+='<script id="boot-config" type="application/json">'+json.dumps(config,ensure_ascii=False)+'</script>'
 for filename in ['escape-room-local.js','escape-room.js','escape-room-admin.js']:
  main+='<script>\n'+(root/filename).read_text()+'\n</script>'
-main+='''<script>document.getElementById('offlineSettingsOpen').onclick=()=>document.getElementById('offlineSettings').showModal();document.getElementById('offlineSettingsClose').onclick=()=>document.getElementById('offlineSettings').close();</script></body></html>'''
+main+='''<script>document.getElementById('offlineSettingsOpen').onclick=()=>document.getElementById('offlineSettings').showModal();document.getElementById('offlineSettingsClose').onclick=()=>document.getElementById('offlineSettings').close();document.getElementById('offlineSettings').addEventListener('close',()=>document.getElementById('lock').click());</script></body></html>'''
 main=main.replace('<div class="layout">','<p id="offlineTemplateNotice" hidden style="padding:15px;border:1px solid #d8b77c;color:#e5ca90;">To szablon. Pobierz gotowy plik offline z panelu nauczyciela na Mathematix.</p><div class="layout">')
 (root/'escape-room-offline.html').write_text(main)
