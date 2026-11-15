@@ -130,4 +130,4 @@
  (async()=>{try{if(!local){const {data:{session}}=await sb.auth.getSession();if(session){await load();return}}lock()}catch{lock();status('Podaj PIN nauczyciela lub zaloguj administratora.')}})();
 })();
 
-</script><script>document.getElementById('offlineSettingsOpen').onclick=()=>document.getElementById('offlineSettings').showModal();document.getElementById('offlineSettingsClose').onclick=()=>document.getElementById('offlineSettings').close();</script></body></html>
+</script><script>document.getElementById('offlineSettingsOpen').onclick=()=>document.getElementById('offlineSettings').showModal();document.getElementById('offlineSettingsClose').onclick=()=>document.getElementById('offlineSettings').close();document.getElementById('offlineSettings').addEventListener('close',()=>document.getElementById('lock').click());</script></body></html>
