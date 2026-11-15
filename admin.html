@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <meta charset="utf-8">
     <head>
@@ -333,6 +333,7 @@
         <ul id="navbar">
             <li><a href="index.html">Aktualności</a></li>
             <li><a href="matapki.html">MatApki</a></li>
+            <li><a href="escape-room.html">Escape room</a></li>
             <li><a href="podstawy.html">Podstawy</a></li>
             <li class="dropdown">
                 <a href="javascript:void(0)" class="dropbtn">Filmy instruktażowe</a>
@@ -351,9 +352,16 @@
         <div id="newsy">
             <div id="ladowanie">Sprawdzanie uprawnień...</div>
             <div id="blad" style="display:none;"></div>
+                                <section id="escapeRoomSummary" hidden style="margin:18px 0 26px;padding:20px;border:2px solid #947a4e;border-radius:12px;background:rgba(226,180,95,.13);">
+                        <h3 style="margin-top:0;">Escape room — konfiguracja bramy</h3>
+                        <p>PIN panelu nauczyciela: <strong id="escapePin" style="font-size:24px;letter-spacing:3px;"></strong></p>
+                        <p>Kod cyfrowy / PIN bramy: <strong id="escapeNumeric"></strong> &nbsp; · &nbsp; Kod literowy: <strong id="escapeLetters"></strong> &nbsp; · &nbsp; Kod mieszany: <strong id="escapeMixed"></strong></p>
+                        <a href="escape-room-admin.html">Ustaw kody i PIN →</a> &nbsp; | &nbsp; <a href="escape-room.html" target="_blank" rel="noopener">Otwórz bramę ↗</a>
+                    </section>
             <div id="panelContent" style="display:none;">
                 <div class="admin-box">
                     <h2>Panel admina</h2>
+
                     <details class="lista-uczniow" id="listaUczniow">
                         <summary>Wyświetlani uczniowie: <span class="licznik" id="licznik">0 / 0</span></summary>
                     <div class="filtry">
@@ -1548,5 +1556,7 @@
             init();
         </script>
             <script src="navbar-auth.js"></script>
+        <script src="escape-room-panel.js"></script>
     </body>
 </html>
+
